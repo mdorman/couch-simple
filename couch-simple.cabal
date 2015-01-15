@@ -23,3 +23,13 @@ library
   exposed-modules: Database.Couch
   ghc-options: -Wall
   hs-source-dirs: src/lib
+
+test-suite test
+  build-depends: base >= 4.6 && < 4.8,
+                 couch-simple,
+                 tasty
+  default-language: Haskell2010
+  ghc-options: -Wall
+  hs-source-dirs: test
+  main-is: test.hs
+  type: exitcode-stdio-1.0
