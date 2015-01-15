@@ -1,0 +1,18 @@
+author:              Michael Alan Dorman
+bug-reports:         https://github.com/mdorman/couch-simple/issues
+build-type:          Simple
+cabal-version:       >= 1.10
+category:            Database
+copyright:           Copyright (c) 2015, Michael Alan Dorman
+description:         Based on http-client, with intended extensions for streaming through Conduit and other libraries.
+homepage:            https://github.com/mdorman/couch-simple
+license-file:        LICENSE
+license:             MIT
+maintainer:          mdorman@jaunder.io
+name:                couch-simple
+synopsis:            A lightweight modern client for CouchDB
+version:             0.0.0.0
+
+source-repository head
+  type:     git
+  location: https://github.com/mdorman/couch-simple.git
