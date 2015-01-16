@@ -21,6 +21,7 @@ library
   build-depends: base >= 4.6 && < 4.8
                , aeson
                , attoparsec
+               , bytestring
                , exceptions
                , http-client
                , http-types
@@ -29,6 +30,7 @@ library
   default-language: Haskell2010
   exposed-modules: Database.Couch
                    Database.Couch.Internal
+                   Database.Couch.Types
   ghc-options: -Wall
   hs-source-dirs: src/lib
 
