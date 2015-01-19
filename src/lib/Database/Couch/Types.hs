@@ -33,19 +33,19 @@ import Text.Show (
   )
 
 -- | The name of the database to connect to
-newtype Db = Db Text deriving (Eq, IsString, Show)
+newtype Db = Db { unwrapDb :: Text } deriving (Eq, IsString, Show)
 
 -- | The id of the document to work on
-newtype DocId = DocId Text deriving (Eq, IsString, Show)
+newtype DocId = DocId { unwrapDocId :: Text } deriving (Eq, IsString, Show)
 
 -- | The name of the host to connect to
-newtype Host = Host Text deriving (Eq, IsString, Show)
+newtype Host = Host { unwrapHost :: Text } deriving (Eq, IsString, Show)
 
 -- | The password for the user you are connecting as
-newtype Password = Password Text deriving (Eq, IsString, Show)
+newtype Password = Password { unwrapPassword :: Text } deriving (Eq, IsString, Show)
 
 -- | The number of the port to connect to
-newtype Port = Port Int deriving (Eq, Show)
+newtype Port = Port { unwrapPort :: Int } deriving (Eq, Show)
 
 -- | The name of the user to connect as
-newtype User = User Text deriving (Eq, IsString, Show)
+newtype User = User { unwrapUser ::  Text } deriving (Eq, IsString, Show)
