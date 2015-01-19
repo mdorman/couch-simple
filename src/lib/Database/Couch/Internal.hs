@@ -15,10 +15,7 @@ even necessarily really CouchDB-specific.
 
 -}
 
-module Database.Couch.Internal (
-  CouchException,
-  jsonRequest,
-) where
+module Database.Couch.Internal where
 
 import Control.Monad (
   return,
