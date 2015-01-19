@@ -18,14 +18,11 @@ even necessarily really CouchDB-specific.
 module Database.Couch.Internal where
 
 import Control.Monad (
+  (>>=),
   return,
   )
 import Control.Monad.Catch (
-  Exception,
-  MonadThrow,
-  SomeException,
-  throwM,
-  try,
+  handle,
   )
 import Control.Monad.IO.Class (
   MonadIO,
@@ -40,22 +37,26 @@ import Data.Attoparsec.ByteString (
   parseWith,
   )
 import Data.Either (
-  Either,
+  Either (Left),
   )
 import Data.Function (
   ($),
+  (.),
+  const,
+  )
+import Data.Maybe (
+  Maybe (Nothing),
   )
 import Data.Text (
   Text,
   pack,
   )
-import Data.Typeable (
-  Typeable
-  )
 import Network.HTTP.Client (
+  HttpException,
   Manager,
   Request,
   brRead,
+  checkStatus,
   responseBody,
   responseHeaders,
   responseStatus,
@@ -66,7 +67,7 @@ import Network.HTTP.Types (
   Status,
   )
 import Text.Show (
-  Show
+  Show,
   )
 
 {- |
@@ -77,15 +78,16 @@ conflicts.
 
 -}
 
-data CouchException
+data CouchError
+  -- | Something failed at the HTTP level.
+  = HttpError HttpException
   -- | We ran out of input before we succeeded in parsing a JSON
   -- 'Data.Aeson.Value'.
-  = ParseIncomplete
+  | ParseIncomplete
   -- | There was some sort of syntactic issue with the text we were
   -- attempting to parse.
   | ParseFail Text
-  deriving (Show, Typeable)
-instance Exception CouchException
+  deriving (Show)
 
 {- |
 
@@ -99,9 +101,9 @@ It presumes:
  * we do not need to stream out the result (though the input is parsed
 incrementally)
 
-In the interest of giving the most obvious interface, this routine
-will catch any exceptions that might be thrown by lower level and
-return them as a 'Data.Either.Left' value.
+The results of parsing the stream will be handed to a routine that
+take the output and return the value the user ultimately desires.  We
+use "Data.Either" to handle indicating failure and such.
 
 Basing the rest of our library on a function where all dependencies
 are explicit should help make sure that other bits remain portable to,
@@ -109,17 +111,19 @@ say, streaming interfaces.
 
 -}
 
-jsonRequest :: (MonadIO m, MonadThrow m) => Manager -> Request -> m (Either SomeException (ResponseHeaders, Status, Value))
-jsonRequest manager request = do
-  liftIO $ try $ withResponse request manager streamParse
+jsonRequest :: MonadIO m => Manager -> Request -> ((Either CouchError (ResponseHeaders, Status, Value)) -> m (Either CouchError a)) -> m (Either CouchError a)
+jsonRequest manager request parser =
+  (liftIO $ handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager streamParse) >>= parser
   where
+    -- Simply convert any exception into an HttpError
+    errorHandler =
+       return . Left . HttpError
+    -- Incrementally parse the body, reporting failures.
     streamParse res = do
       let input = brRead (responseBody res)
       initial <- input
       result <- parseWith input json initial
-      -- Using throw here piggy-backs on the fact that the http-client
-      -- routines will throw exceptions.
-      case result of
+      return $ case result of
         (Done _ ret) -> return (responseHeaders res, responseStatus res, ret)
-        (Partial _) -> throwM ParseIncomplete
-        (Fail _ _ err) -> throwM $ ParseFail $ pack err
+        (Partial _) -> Left ParseIncomplete
+        (Fail _ _ err) -> Left $ ParseFail $ pack err
