@@ -22,6 +22,9 @@ import Data.Eq (
 import Data.Int (
   Int,
   )
+import Data.Maybe (
+  Maybe,
+  )
 import Data.String (
   IsString,
   )
@@ -29,7 +32,9 @@ import Data.Text (
   Text,
   )
 import Network.HTTP.Client (
+  CookieJar,
   HttpException,
+  Manager,
   )
 import Text.Show (
   Show,
@@ -75,3 +80,49 @@ newtype Port = Port { unwrapPort :: Int } deriving (Eq, Show)
 
 -- | The name of the user to connect as
 newtype User = User { unwrapUser ::  Text } deriving (Eq, IsString, Show)
+
+{- | The context for each CouchDB request.
+
+This contains all the bits that are unlikely to vary between requests.
+
+Eventually, we should have routines that are smart enough to pull this
+out of a suitably-set-up Monad, so you could just stash it there and
+forget about it.
+
+-}
+
+data Context
+ = Context {
+   -- | The Manager that "Network.HTTP.Client" requests require.  We
+   -- store it here for easy access.
+   ctxManager :: Manager,
+   -- | The host to connect to
+   ctxHost    :: Host,
+   -- | The port to connect to
+   ctxPort    :: Port,
+   -- | Any credentials that should be used in making requests
+   ctxCred    :: Maybe Credentials,
+   -- | We can trade credentials for a session cookie that is more
+   -- efficient, this is where it can be stored.
+   ctxCookies :: Maybe CookieJar,
+   -- | The database that should be used for database-specific
+   -- requests.
+   ctxDb      :: Maybe Db
+   }
+
+{- | The credentials for each CouchDB request.
+
+Many operations in CouchDB require some sort of authentication.  We
+will store the credentials in their various forms here (though we're
+sticking to HTTP Basic Authentication for now).
+
+There are operations on the request that know how to modify the
+request appropriately depending on which credential type is in play.
+
+-}
+
+data Credentials
+  = Basic {
+    credUser :: User,
+    credPass :: Password
+    }
