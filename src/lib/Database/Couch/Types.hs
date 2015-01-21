@@ -91,11 +91,17 @@ newtype Host = Host { unwrapHost :: Text } deriving (Eq, IsString, Show)
 -- | The password for the user you are connecting as
 newtype Password = Password { unwrapPassword :: Text } deriving (Eq, IsString, Show)
 
+basicPass :: Password -> ByteString
+basicPass = encodeUtf8 . unwrapPassword
+
 -- | The number of the port to connect to
 newtype Port = Port { unwrapPort :: Int } deriving (Eq, Show)
 
 -- | The name of the user to connect as
 newtype User = User { unwrapUser ::  Text } deriving (Eq, IsString, Show)
+
+basicUser :: User -> ByteString
+basicUser = encodeUtf8 . unwrapUser
 
 {- | The context for each CouchDB request.
 
