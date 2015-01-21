@@ -14,5 +14,4 @@ obvious or otherwise commonly-used names.
 
 -}
 
-module Database.Couch (
-) where
+module Database.Couch where
