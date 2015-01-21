@@ -48,11 +48,12 @@ import Data.Maybe (
   Maybe (Nothing),
   )
 import Data.Text (
-  Text,
   pack,
   )
+import Database.Couch.Types (
+  CouchError (HttpError, ParseFail, ParseIncomplete),
+  )
 import Network.HTTP.Client (
-  HttpException,
   Manager,
   Request,
   brRead,
@@ -66,27 +67,6 @@ import Network.HTTP.Types (
   ResponseHeaders,
   Status,
   )
-import Text.Show (
-  Show,
-  )
-
-{- | Failure modes for making CouchDB requests.
-
-These will come to cover the gamut from failure to parse a particular
-JSON value to document conflicts.
-
--}
-
-data CouchError
-  -- | Something failed at the HTTP level.
-  = HttpError HttpException
-  -- | We ran out of input before we succeeded in parsing a JSON
-  -- 'Data.Aeson.Value'.
-  | ParseIncomplete
-  -- | There was some sort of syntactic issue with the text we were
-  -- attempting to parse.
-  | ParseFail Text
-  deriving (Show)
 
 {- |
 
