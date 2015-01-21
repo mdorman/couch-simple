@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 {- |
 
@@ -70,11 +70,10 @@ import Text.Show (
   Show,
   )
 
-{- |
+{- | Failure modes for making CouchDB requests.
 
-Failure modes for making CouchDB requests.  These will come to cover
-the gamut from failure to parse a particular JSON value to document
-conflicts.
+These will come to cover the gamut from failure to parse a particular
+JSON value to document conflicts.
 
 -}
 
@@ -111,9 +110,9 @@ say, streaming interfaces.
 
 -}
 
-jsonRequest :: MonadIO m => Manager -> Request -> ((Either CouchError (ResponseHeaders, Status, Value)) -> m (Either CouchError a)) -> m (Either CouchError a)
+jsonRequest :: MonadIO m => Manager -> Request -> (Either CouchError (ResponseHeaders, Status, Value) -> m (Either CouchError a)) -> m (Either CouchError a)
 jsonRequest manager request parser =
-  (liftIO $ handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager streamParse) >>= parser
+  liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager streamParse) >>= parser
   where
     -- Simply convert any exception into an HttpError
     errorHandler =

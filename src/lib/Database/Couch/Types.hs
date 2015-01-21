@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables #-}
 
 {- |
 
