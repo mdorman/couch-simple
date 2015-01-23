@@ -18,6 +18,7 @@ even necessarily really CouchDB-specific.
 module Database.Couch.Internal where
 
 import Control.Monad (
+  (>>=),
   return,
   )
 import Control.Monad.Catch (
@@ -36,7 +37,11 @@ import Data.Attoparsec.ByteString (
   parseWith,
   )
 import Data.Either (
-  Either (Left),
+  Either (Right, Left),
+  either,
+  )
+import Data.Eq (
+  (==),
   )
 import Data.Function (
   ($),
@@ -44,13 +49,24 @@ import Data.Function (
   const,
   )
 import Data.Maybe (
-  Maybe (Nothing),
+  Maybe (Just, Nothing),
   )
 import Data.Text (
   pack,
   )
+import Database.Couch.RequestBuilder (
+  RequestBuilder,
+  runBuilder,
+  )
+import Database.Couch.ResponseParser (
+  ResponseParser,
+  runParse,
+  )
 import Database.Couch.Types (
+  Context,
   CouchError (HttpError, ParseFail, ParseIncomplete),
+  ctxCookies,
+  ctxManager,
   )
 import Network.HTTP.Client (
   CookieJar,
@@ -69,7 +85,7 @@ import Network.HTTP.Types (
   Status,
   )
 
-{- |
+{- | Make an HTTP request returning JSON
 
 This is our lowest-level non-streaming routine.  It only handles
 performing the request and parsing the result into a JSON value.
@@ -107,3 +123,32 @@ jsonRequest manager request =
         (Done _ ret) -> return (responseHeaders res, responseStatus res, responseCookieJar res, ret)
         (Partial _) -> Left ParseIncomplete
         (Fail _ _ err) -> Left $ ParseFail $ pack err
+
+{- | Define and make an HTTP request returning JSON
+
+Building on top of 'jsonRequest', this routine is designed to take a
+builder for the request and a parser for the result, and use them to
+make our transaction.  This makes for a very declarative style when
+defining individual endpoints for CouchDB.
+
+In order to support more sophisticated forms of authentication than
+'Basic', we do have to examine the cookie jar returned from the
+server, and perhaps tell the user that they should replace the cookie
+jar in their context with it.
+
+-}
+
+makeJsonRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+makeJsonRequest builder parse context = do
+  jsonRequest manager request >>= parser
+  where
+    manager =
+      ctxManager context
+    request =
+      runBuilder builder context
+    parser =
+      return . either Left parseContext
+    parseContext (h, s, c, v) =
+      runParse parse (Right (h, s, v)) >>= checkContextUpdate c
+    checkContextUpdate c a =
+      Right (a, if c == ctxCookies context then Nothing else Just c)
