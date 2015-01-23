@@ -23,16 +23,19 @@ library
                , attoparsec
                , bytestring
                , data-default
+               , either
                , exceptions
                , http-client
                , http-types
                , mtl
                , text
                , transformers
+               , unordered-containers
   default-language: Haskell2010
   exposed-modules: Database.Couch
                    Database.Couch.Internal
                    Database.Couch.RequestBuilder
+                   Database.Couch.ResponseParser
                    Database.Couch.Types
   ghc-options: -Wall
   hs-source-dirs: src/lib
