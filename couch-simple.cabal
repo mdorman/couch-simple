@@ -31,8 +31,10 @@ library
                , text
                , transformers
                , unordered-containers
+               , uuid
   default-language: Haskell2010
   exposed-modules: Database.Couch
+                   Database.Couch.Explicit.Server
                    Database.Couch.Internal
                    Database.Couch.RequestBuilder
                    Database.Couch.ResponseParser
@@ -45,6 +47,7 @@ test-suite test
                , aeson
                , couch-simple
                , data-default
+               , either
                , errors
                , hspec
                , http-client
@@ -52,7 +55,9 @@ test-suite test
                , lens < 4.4
                , tasty
                , tasty-hunit
+               , text
                , unordered-containers
+               , uuid
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: test
