@@ -34,6 +34,7 @@ library
                , uuid
   default-language: Haskell2010
   exposed-modules: Database.Couch
+                   Database.Couch.Explicit.Database
                    Database.Couch.Explicit.Server
                    Database.Couch.Internal
                    Database.Couch.RequestBuilder
@@ -53,9 +54,11 @@ test-suite test
                , http-client
                , http-types
                , lens < 4.4
+               , random
                , tasty
                , tasty-hunit
                , text
+               , transformers
                , unordered-containers
                , uuid
   default-language: Haskell2010

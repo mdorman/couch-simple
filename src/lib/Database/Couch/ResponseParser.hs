@@ -19,6 +19,7 @@ the actual response values.
 module Database.Couch.ResponseParser where
 
 import Control.Monad (
+  (>>=),
   return,
   )
 import Control.Monad.Reader (
@@ -58,7 +59,7 @@ import Data.Text (
   pack,
   )
 import Database.Couch.Types (
-  CouchError (HttpError, ImplementationError, NotFound, ParseFail, Unauthorized),
+  CouchError (AlreadyExists, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
   )
 import Network.HTTP.Client (
   HttpException (StatusCodeException),
@@ -104,9 +105,14 @@ checkStatusCode = do
   s <- responseStatus
   case statusCode s of
     200 -> return ()
+    201 -> return ()
     202 -> return ()
+    400 -> do
+      error <- getKey "reason" >>= toOutputType
+      failed $ InvalidName error
     401 -> failed Unauthorized
     404 -> failed NotFound
+    412 -> failed $ AlreadyExists
     415 -> failed $ ImplementationError "The server says we sent a bad content type, which shouldn't happen.  Please open an issue at https://github.com/mdorman/couch-simple/issues with a test case if possible."
     _   -> failed $ HttpError (StatusCodeException s h mempty)
 
