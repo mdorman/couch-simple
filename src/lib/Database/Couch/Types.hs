@@ -16,20 +16,33 @@ Types for working with a CouchDB database.
 
 module Database.Couch.Types where
 
+import Data.ByteString (
+  ByteString,
+  )
 import Data.Eq (
   Eq,
+  )
+import Data.Function (
+  (.),
   )
 import Data.Int (
   Int,
   )
 import Data.Maybe (
   Maybe,
+  maybe,
+  )
+import Data.Monoid (
+  mempty,
   )
 import Data.String (
   IsString,
   )
 import Data.Text (
   Text,
+  )
+import Data.Text.Encoding (
+  encodeUtf8,
   )
 import Network.HTTP.Client (
   CookieJar,
@@ -109,6 +122,18 @@ data Context
    -- requests.
    ctxDb      :: Maybe Db
    }
+
+-- | Pull the appropriately encoded database out of the context
+reqDb :: Context -> ByteString
+reqDb c = maybe mempty (encodeUtf8 . unwrapDb) (ctxDb c)
+
+-- | Pull the appropriately encoded host out of the context
+reqHost :: Context -> ByteString
+reqHost = encodeUtf8 . unwrapHost . ctxHost
+
+-- | Pull the appropriately encoded port out of the context
+reqPort :: Context -> Int
+reqPort = unwrapPort . ctxPort
 
 {- | The credentials for each CouchDB request.
 
