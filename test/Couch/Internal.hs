@@ -73,14 +73,14 @@ getInternalTests =
            let req = def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
            res <- runIO $ do
                   manager <- getManager
-                  jsonRequest manager req return
+                  jsonRequest manager req
            let success =
                  case res of
                    Right _ -> True
                    _ -> False
                value =
                  case res of
-                   Right (_, _, Object o) -> maybe mempty getText $ lookup "couchdb" o
+                   Right (_, _, _, Object o) -> maybe mempty getText $ lookup "couchdb" o
                    Right _ -> mempty
                    _ -> mempty
                  where
