@@ -22,14 +22,17 @@ library
                , aeson
                , attoparsec
                , bytestring
+               , data-default
                , exceptions
                , http-client
                , http-types
+               , mtl
                , text
                , transformers
   default-language: Haskell2010
   exposed-modules: Database.Couch
                    Database.Couch.Internal
+                   Database.Couch.RequestBuilder
                    Database.Couch.Types
   ghc-options: -Wall
   hs-source-dirs: src/lib
