@@ -18,7 +18,6 @@ even necessarily really CouchDB-specific.
 module Database.Couch.Internal where
 
 import Control.Monad (
-  (>>=),
   return,
   )
 import Control.Monad.Catch (
@@ -54,11 +53,13 @@ import Database.Couch.Types (
   CouchError (HttpError, ParseFail, ParseIncomplete),
   )
 import Network.HTTP.Client (
+  CookieJar,
   Manager,
   Request,
   brRead,
   checkStatus,
   responseBody,
+  responseCookieJar,
   responseHeaders,
   responseStatus,
   withResponse,
@@ -90,9 +91,9 @@ say, streaming interfaces.
 
 -}
 
-jsonRequest :: MonadIO m => Manager -> Request -> (Either CouchError (ResponseHeaders, Status, Value) -> m (Either CouchError a)) -> m (Either CouchError a)
-jsonRequest manager request parser =
-  liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager streamParse) >>= parser
+jsonRequest :: MonadIO m => Manager -> Request -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
+jsonRequest manager request =
+  liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager streamParse)
   where
     -- Simply convert any exception into an HttpError
     errorHandler =
@@ -103,6 +104,6 @@ jsonRequest manager request parser =
       initial <- input
       result <- parseWith input json initial
       return $ case result of
-        (Done _ ret) -> return (responseHeaders res, responseStatus res, ret)
+        (Done _ ret) -> return (responseHeaders res, responseStatus res, responseCookieJar res, ret)
         (Partial _) -> Left ParseIncomplete
         (Fail _ _ err) -> Left $ ParseFail $ pack err
