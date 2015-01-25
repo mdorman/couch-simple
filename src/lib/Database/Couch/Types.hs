@@ -120,7 +120,7 @@ data Context
    ctxCred    :: Maybe Credentials,
    -- | We can trade credentials for a session cookie that is more
    -- efficient, this is where it can be stored.
-   ctxCookies :: Maybe CookieJar,
+   ctxCookies :: CookieJar,
    -- | The database that should be used for database-specific
    -- requests.
    ctxDb      :: Maybe Db
