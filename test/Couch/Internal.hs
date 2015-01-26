@@ -1,40 +1,40 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 
 module Couch.Internal (
-  getInternalTests,
+  internalTests,
 ) where
 
+import Control.Lens (
+  _3,
+  _4,
+  _Right,
+  has,
+  preview,
+  view,
+  )
 import Control.Monad (
-  return
+  (>>=),
   )
-import Data.Aeson (
-  Value (Object, String),
-  )
-import Data.Bool (
-  Bool (False, True),
+import Data.Aeson.Lens (
+  _Object,
+  key,
   )
 import Data.Default (
   def,
   )
-import Data.Either (
-  Either (Right),
-  )
 import Data.Function (
   ($),
-  )
-import Data.HashMap.Strict (
-  lookup,
+  (.),
+  flip,
   )
 import Data.Maybe (
-  maybe,
-  )
-import Data.Monoid (
-  mempty,
+  Maybe (Just),
   )
 import Database.Couch.Internal (
   jsonRequest,
   )
 import Network.HTTP.Client (
+  Manager,
   RequestBody (RequestBodyLBS),
   closeManager,
   defaultManagerSettings,
@@ -49,45 +49,31 @@ import Network.HTTP.Client (
 import System.IO (
   IO,
   )
-import Test.Hspec (
-  it,
-  runIO,
-  shouldBe,
-  )
 import Test.Tasty (
   TestTree,
   testGroup,
   withResource,
   )
-import Test.Tasty.Hspec (
-  testCase
+import Test.Tasty.HUnit (
+  assertBool,
+  assertEqual,
+  testCase,
   )
 
-getInternalTests :: IO TestTree
-getInternalTests =
-  return (withResource (newManager defaultManagerSettings) (closeManager) allTests)
+internalTests :: TestTree
+internalTests =
+  withResource (newManager defaultManagerSettings) closeManager allTests
   where
-    allTests getManager = do
-      testGroup "jsonRequest tests" [
-        testCase "Retrieve simple document" $ do
-           let req = def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
-           res <- runIO $ do
-                  manager <- getManager
-                  jsonRequest manager req
-           let success =
-                 case res of
-                   Right _ -> True
-                   _ -> False
-               value =
-                 case res of
-                   Right (_, _, _, Object o) -> maybe mempty getText $ lookup "couchdb" o
-                   Right _ -> mempty
-                   _ -> mempty
-                 where
-                   getText (String x) = x
-                   getText _          = mempty
-           it "should have succeeded" $
-             success `shouldBe` True
-           it "should have a couchdb welcome message" $
-             value `shouldBe` "Welcome"
+    allTests createManager =
+      testGroup "Tests of the low-level interface" [
+        checkRoot createManager
         ]
+
+checkRoot :: IO Manager -> TestTree
+checkRoot createManager = testCase "Retrieve server meta information" $ do
+  res <- createManager >>= flip jsonRequest def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
+  assertBool "should have succeeded" $ has _Right res
+  assertEqual "should have an empty cookie jar" def $ view (_Right._3) res
+  assertBool "should have an object" $ has (_Right._4._Object) res
+  assertBool "should have a couchdb key" $ has (_Right._4.key "couchdb") res
+  assertEqual "should have a welcome message" (Just "Welcome") $ preview (_Right._4.key "couchdb") res
