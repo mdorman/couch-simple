@@ -82,7 +82,22 @@ import Test.Tasty.HUnit (
   )
 
 explicitTests :: TestTree
-explicitTests =
+explicitTests = testGroup "Tests of explicit interface"
+  [ serverTests
+  , restartTest
+  ]
+
+restartTest :: TestTree
+restartTest =
+  withResource createContext releaseContext restart
+  where
+    createContext =
+      newManager defaultManagerSettings >>= \manager -> return $ Context manager "localhost" (Port 5984) Nothing def Nothing
+    releaseContext =
+      closeManager . ctxManager
+
+serverTests :: TestTree
+serverTests =
   withResource createContext releaseContext allTests
   where
     createContext =
@@ -90,17 +105,16 @@ explicitTests =
     releaseContext =
       closeManager . ctxManager
     allTests getContext =
-      testGroup "Tests of the explicit interface" [
+      testGroup "Tests of the server interface" [
         serverMeta getContext,
         activeTasks getContext,
         allDbs getContext,
         -- dbUpdates getContext,
         stats getContext,
-        uuids getContext,
-        -- Really ought to be last
-        restart getContext
+        uuids getContext
         ]
 
+-- Server-oriented functions
 serverMeta :: IO Context -> TestTree
 serverMeta getContext = testCase "Retrieve server meta information" $ do
   res <- getContext >>= Server.meta
