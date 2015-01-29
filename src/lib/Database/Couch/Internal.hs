@@ -29,7 +29,7 @@ import Control.Monad.IO.Class (
   liftIO,
   )
 import Data.Aeson (
-  Value,
+  Value (Null),
   json,
   )
 import Data.Attoparsec.ByteString (
@@ -50,6 +50,9 @@ import Data.Function (
   )
 import Data.Maybe (
   Maybe (Just, Nothing),
+  )
+import Data.Monoid (
+  mempty,
   )
 import Data.Text (
   pack,
@@ -74,6 +77,7 @@ import Network.HTTP.Client (
   Request,
   brRead,
   checkStatus,
+  method,
   responseBody,
   responseCookieJar,
   responseHeaders,
@@ -83,6 +87,7 @@ import Network.HTTP.Client (
 import Network.HTTP.Types (
   ResponseHeaders,
   Status,
+  methodHead,
   )
 
 {- | Make an HTTP request returning JSON
@@ -109,20 +114,24 @@ say, streaming interfaces.
 
 jsonRequest :: MonadIO m => Manager -> Request -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
 jsonRequest manager request =
-  liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager streamParse)
+  liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager responseHandler)
   where
     -- Simply convert any exception into an HttpError
     errorHandler =
        return . Left . HttpError
     -- Incrementally parse the body, reporting failures.
-    streamParse res = do
-      let input = brRead (responseBody res)
-      initial <- input
-      result <- parseWith input json initial
+    responseHandler res = do
+      result <- if method request == methodHead
+                then return (Done mempty Null)
+                else parseParts res
       return $ case result of
         (Done _ ret) -> return (responseHeaders res, responseStatus res, responseCookieJar res, ret)
         (Partial _) -> Left ParseIncomplete
         (Fail _ _ err) -> Left $ ParseFail $ pack err
+    parseParts res = do
+      let input = brRead (responseBody res)
+      initial <- input
+      parseWith input json initial
 
 {- | Define and make an HTTP request returning JSON
 
