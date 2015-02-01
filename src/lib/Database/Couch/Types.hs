@@ -62,11 +62,16 @@ will consistently be ('Either' 'CouchError', a).
 -}
 
 data CouchError
-  -- | Something failed at the HTTP level.
-  = HttpError HttpException
+  -- | The database already exists
+  = AlreadyExists
+  -- | The server complained about the content of our request.  Sounds
+  -- like the library is broken. :(
+  | HttpError HttpException
   -- | The server complained about the content of our request.  Sounds
   -- like the library is broken. :(
   | ImplementationError Text
+  -- | The name you tried to give for the DB is invalid
+  | InvalidName Text
   -- | The thing you were looking for was not found
   | NotFound
   -- | We ran out of input before we succeeded in parsing a JSON
@@ -77,6 +82,8 @@ data CouchError
   | ParseFail Text
   -- | The credentials you used do not have access to this resource
   | Unauthorized
+  -- | Don't understand the failure
+  | Unknown
   deriving (Show)
 
 -- | The name of the database to connect to
