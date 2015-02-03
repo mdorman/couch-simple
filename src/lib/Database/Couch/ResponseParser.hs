@@ -87,6 +87,7 @@ import Data.Tuple (
   )
 import Database.Couch.Types (
   CouchError (AlreadyExists, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
+  DocRev (DocRev),
   )
 import Network.HTTP.Client (
   HttpException (StatusCodeException),
@@ -157,6 +158,11 @@ getContentLength :: ResponseParser Int
 getContentLength = do
   h <- getHeader "Content-Length"
   either (failed . ParseFail . pack) (return . fst) $ decimal (decodeUtf8 h)
+
+getDocRev :: ResponseParser DocRev
+getDocRev = do
+  h <- getHeader "ETag"
+  return $ DocRev $ decodeUtf8 h
 
 getKey :: Text -> ResponseParser Value
 getKey key = do

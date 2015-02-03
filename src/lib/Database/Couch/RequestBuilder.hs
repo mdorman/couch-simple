@@ -62,11 +62,13 @@ import Data.Tuple (
 import Database.Couch.Types (
   Context,
   Credentials (Basic),
+  DocRev,
   basicPass,
   basicUser,
   ctxCookies,
   ctxCred,
   reqDb,
+  reqDocRev,
   reqHost,
   reqPort,
   )
@@ -239,3 +241,13 @@ addPath :: ByteString -> RequestBuilder ()
 addPath new = do
   (BuilderState r q d p) <- get
   put $ BuilderState r q d (p <> [new])
+
+-- | Set the rev for the 'Request'.
+addRev :: DocRev -> RequestBuilder ()
+addRev rev =
+  setHeaders [("ETag", reqDocRev rev)]
+
+-- | Set the rev for the 'Request' if you have it.
+maybeAddRev :: Maybe DocRev -> RequestBuilder ()
+maybeAddRev =
+  maybe (return ()) addRev
