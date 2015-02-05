@@ -38,17 +38,30 @@ import Data.Aeson (
   Value (Object),
   fromJSON,
   )
+import Data.ByteString (
+  ByteString,
+  )
 import Data.Either (
   Either (Left, Right),
+  )
+import Data.Eq (
+  (==),
+  )
+import Data.Foldable (
+  find,
   )
 import Data.Function (
   ($),
   (.),
   )
+import Data.Functor (
+  fmap,
+  )
 import Data.HashMap.Strict (
   lookup,
   )
 import Data.Maybe (
+  Maybe,
   maybe,
   )
 import Data.Monoid (
@@ -58,6 +71,10 @@ import Data.Text (
   Text,
   pack,
   )
+import Data.Tuple (
+  fst,
+  snd,
+  )
 import Database.Couch.Types (
   CouchError (AlreadyExists, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
   )
@@ -65,6 +82,7 @@ import Network.HTTP.Client (
   HttpException (StatusCodeException),
   )
 import Network.HTTP.Types (
+  HeaderName,
   ResponseHeaders,
   Status,
   statusCode,
@@ -115,6 +133,15 @@ checkStatusCode = do
     412 -> failed $ AlreadyExists
     415 -> failed $ ImplementationError "The server says we sent a bad content type, which shouldn't happen.  Please open an issue at https://github.com/mdorman/couch-simple/issues with a test case if possible."
     _   -> failed $ HttpError (StatusCodeException s h mempty)
+
+maybeGetHeader :: HeaderName -> ResponseParser (Maybe ByteString)
+maybeGetHeader header = do
+  h <- responseHeaders
+  return $ fmap snd (find ((== header) . fst) h)
+
+getHeader :: HeaderName -> ResponseParser ByteString
+getHeader header =
+  maybeGetHeader header >>= maybe (failed NotFound) return
 
 getKey :: Text -> ResponseParser Value
 getKey key = do
