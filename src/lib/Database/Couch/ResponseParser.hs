@@ -43,6 +43,7 @@ import Data.ByteString (
   )
 import Data.Either (
   Either (Left, Right),
+  either,
   )
 import Data.Eq (
   (==),
@@ -60,6 +61,9 @@ import Data.Functor (
 import Data.HashMap.Strict (
   lookup,
   )
+import Data.Int (
+  Int,
+  )
 import Data.Maybe (
   Maybe,
   maybe,
@@ -70,6 +74,12 @@ import Data.Monoid (
 import Data.Text (
   Text,
   pack,
+  )
+import Data.Text.Encoding (
+  decodeUtf8,
+  )
+import Data.Text.Read (
+  decimal,
   )
 import Data.Tuple (
   fst,
@@ -142,6 +152,11 @@ maybeGetHeader header = do
 getHeader :: HeaderName -> ResponseParser ByteString
 getHeader header =
   maybeGetHeader header >>= maybe (failed NotFound) return
+
+getContentLength :: ResponseParser Int
+getContentLength = do
+  h <- getHeader "Content-Length"
+  either (failed . ParseFail . pack) (return . fst) $ decimal (decodeUtf8 h)
 
 getKey :: Text -> ResponseParser Value
 getKey key = do
