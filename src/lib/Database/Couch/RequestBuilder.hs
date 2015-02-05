@@ -43,6 +43,7 @@ import Data.Eq (
   )
 import Data.Function (
   ($),
+  on,
   )
 import Data.List (
   unionBy
@@ -121,7 +122,7 @@ finalize :: BuilderState -> Request
 finalize (BuilderState r q d p) =
   setQueryString q r { path = calculatedPath }
   where
-    calculatedPath =  "/" <> (intercalate "/" $ (if null d then [] else [d]) <> p)
+    calculatedPath =  "/" <> intercalate "/" ((if null d then [] else [d]) <> p)
 
 {- | The default set of modifications applied to the request.
 
@@ -159,14 +160,14 @@ defaultHeaders :: RequestHeaders -> RequestBuilder ()
 defaultHeaders new = do
   (BuilderState r q d p) <- get
   let headers = requestHeaders r
-  put $ BuilderState r { requestHeaders = unionBy (\a b -> fst a == fst b) headers new } q d p
+  put $ BuilderState r { requestHeaders = unionBy ((==) `on` fst) headers new } q d p
 
 -- | Set headers on the 'Request', removing any existing instances.
 setHeaders :: RequestHeaders -> RequestBuilder ()
 setHeaders new = do
   (BuilderState r q d p) <- get
   let headers = requestHeaders r
-  put $ BuilderState r { requestHeaders = unionBy (\a b -> fst a == fst b) new headers } q d p
+  put $ BuilderState r { requestHeaders = unionBy ((==) `on` fst) new headers } q d p
 
 -- | Add query parameters to a 'Request', leaving existing parameters
 -- undisturbed.
@@ -180,14 +181,14 @@ addQueryParam new = do
 defaultQueryParam :: [(ByteString, Maybe ByteString)] -> RequestBuilder ()
 defaultQueryParam new = do
   (BuilderState r q d p) <- get
-  put $ BuilderState r (unionBy (\a b -> fst a == fst b) q new) d p
+  put $ BuilderState r (unionBy ((==) `on` fst) q new) d p
 
 -- | Set query parameters on the 'Request', removing any existing
 -- instances.
 setQueryParam :: [(ByteString, Maybe ByteString)] -> RequestBuilder ()
 setQueryParam new = do
   (BuilderState r q d p) <- get
-  put $ BuilderState r (unionBy (\a b -> fst a == fst b) new q) d p
+  put $ BuilderState r (unionBy ((==) `on` fst) new q) d p
 
 -- | Choose the database for the 'Request', based on what's in the
 -- 'Context'.  This is the one thing that could arguably throw an

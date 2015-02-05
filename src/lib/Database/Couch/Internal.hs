@@ -148,7 +148,7 @@ jar in their context with it.
 -}
 
 makeJsonRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
-makeJsonRequest builder parse context = do
+makeJsonRequest builder parse context =
   jsonRequest manager request >>= parser
   where
     manager =

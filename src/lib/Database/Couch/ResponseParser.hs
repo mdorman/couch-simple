@@ -140,7 +140,7 @@ checkStatusCode = do
       failed $ InvalidName error
     401 -> failed Unauthorized
     404 -> failed NotFound
-    412 -> failed $ AlreadyExists
+    412 -> failed AlreadyExists
     415 -> failed $ ImplementationError "The server says we sent a bad content type, which shouldn't happen.  Please open an issue at https://github.com/mdorman/couch-simple/issues with a test case if possible."
     _   -> failed $ HttpError (StatusCodeException s h mempty)
 
@@ -167,6 +167,6 @@ getKey key = do
 
 toOutputType :: (FromJSON a) => Value -> ResponseParser a
 toOutputType v =
-  case (fromJSON v) of
+  case fromJSON v of
     Error e -> failed $ ParseFail $ pack e
     Success a -> return a

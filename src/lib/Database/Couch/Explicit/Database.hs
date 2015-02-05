@@ -100,7 +100,7 @@ meta :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
 meta =
   makeJsonRequest request parse
   where
-    request = do
+    request =
       selectDb
     parse = do
       checkStatusCode
