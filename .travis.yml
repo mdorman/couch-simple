@@ -4,15 +4,15 @@ ghc:
   - 7.6
   - 7.8
 
-install:
-  - cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls
+before_install:
+  - cabal install alex happy
 
 notifications:
-  email: true
+  email:
+    - mdorman@jaunder.io
 
 script:
-  - cabal configure --enable-tests --enable-benchmarks
-  - cabal build
+  - cabal configure --enable-tests
   - cabal test
   - cabal check
   - cabal sdist

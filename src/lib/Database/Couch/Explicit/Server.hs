@@ -44,12 +44,9 @@ import Data.Function (
 import Data.Int (
   Int,
   )
-import Data.List (
-  map,
-  )
 import Data.Maybe (
   Maybe (Just),
-  catMaybes,
+  mapMaybe,
   )
 import Data.String (
   fromString,
@@ -125,7 +122,7 @@ activeTasks :: MonadIO m => Context -> m (Either CouchError ([Value], Maybe Cook
 activeTasks =
   makeJsonRequest request parse
   where
-    request = do
+    request =
       addPath "_active_tasks"
     parse = do
       checkStatusCode
@@ -142,7 +139,7 @@ allDbs :: MonadIO m => Context -> m (Either CouchError ([Text], Maybe CookieJar)
 allDbs =
   makeJsonRequest request parse
   where
-    request = do
+    request =
       addPath "_all_dbs"
     parse = do
       checkStatusCode
@@ -163,7 +160,7 @@ dbUpdates :: MonadIO m => Context -> m (Either CouchError ([Value], Maybe Cookie
 dbUpdates =
   makeJsonRequest request parse
   where
-    request = do
+    request =
       addPath "_db_updates"
     parse = do
       checkStatusCode
@@ -235,7 +232,7 @@ stats :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
 stats =
   makeJsonRequest request parse
   where
-    request = do
+    request =
       addPath "_stats"
     parse = do
       checkStatusCode
@@ -258,7 +255,7 @@ uuids count =
     parse = do
       checkStatusCode
       val <- getKey "uuids" >>= toOutputType
-      return $ catMaybes $ map (fromASCIIBytes . encodeUtf8 . reformatUuid) val
+      return $ mapMaybe (fromASCIIBytes . encodeUtf8 . reformatUuid) val
     reformatUuid s =
       let (first, second') = splitAt 8 s
           (second, third') = splitAt 4 second'
