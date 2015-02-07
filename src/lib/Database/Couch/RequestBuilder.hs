@@ -43,6 +43,7 @@ import Data.Eq (
   )
 import Data.Function (
   ($),
+  (.),
   on,
   )
 import Data.List (
@@ -62,12 +63,14 @@ import Data.Tuple (
 import Database.Couch.Types (
   Context,
   Credentials (Basic),
+  DocId,
   DocRev,
   basicPass,
   basicUser,
   ctxCookies,
   ctxCred,
   reqDb,
+  reqDocId,
   reqDocRev,
   reqHost,
   reqPort,
@@ -251,3 +254,7 @@ addRev rev =
 maybeAddRev :: Maybe DocRev -> RequestBuilder ()
 maybeAddRev =
   maybe (return ()) addRev
+
+-- | Set the document to operate on
+selectDoc :: DocId -> RequestBuilder ()
+selectDoc = addPath . reqDocId

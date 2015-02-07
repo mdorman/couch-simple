@@ -92,6 +92,10 @@ newtype Db = Db { unwrapDb :: Text } deriving (Eq, IsString, Show)
 -- | The id of the document to work on
 newtype DocId = DocId { unwrapDocId :: Text } deriving (Eq, IsString, Show)
 
+-- | Convert a DocId directly into a 'ByteString'
+reqDocId :: DocId -> ByteString
+reqDocId = encodeUtf8 . unwrapDocId
+
 -- | The name of the host to connect to
 newtype Host = Host { unwrapHost :: Text } deriving (Eq, IsString, Show)
 
