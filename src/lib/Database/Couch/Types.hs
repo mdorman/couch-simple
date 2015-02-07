@@ -104,6 +104,13 @@ basicPass = encodeUtf8 . unwrapPassword
 -- | The number of the port to connect to
 newtype Port = Port { unwrapPort :: Int } deriving (Eq, Show)
 
+-- | The revision of the document to work on
+newtype DocRev = DocRev { unwrapDocRev :: Text } deriving (Eq, IsString, Show)
+
+-- | Convert a DocRev directly into a 'ByteString'
+reqDocRev :: DocRev -> ByteString
+reqDocRev = encodeUtf8 . unwrapDocRev
+
 -- | The name of the user to connect as
 newtype User = User { unwrapUser ::  Text } deriving (Eq, IsString, Show)
 
