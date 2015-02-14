@@ -53,7 +53,8 @@ test-suite test
                , hspec
                , http-client
                , http-types
-               , lens < 4.4
+               , lens
+               , lens-aeson
                , random
                , tasty
                , tasty-hunit
