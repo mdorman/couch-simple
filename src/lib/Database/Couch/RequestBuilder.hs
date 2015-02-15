@@ -24,7 +24,6 @@ import Control.Monad.Reader (
   runReader,
   )
 import Control.Monad.State (
-  MonadState,
   StateT,
   execStateT,
   get,
