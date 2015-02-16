@@ -29,6 +29,10 @@ import Control.Monad.State (
   get,
   put,
   )
+import Data.Aeson (
+  ToJSON,
+  encode,
+  )
 import Data.ByteString (
   ByteString,
   intercalate,
@@ -76,12 +80,14 @@ import Database.Couch.Types (
   )
 import Network.HTTP.Client (
   Request,
+  RequestBody (RequestBodyLBS),
   applyBasicAuth,
   cookieJar,
   host,
   method,
   path,
   port,
+  requestBody,
   requestHeaders,
   setQueryString,
   )
@@ -95,7 +101,7 @@ import Network.HTTP.Types (
 data BuilderState =
   BuilderState {
     -- | The request being modified
-    bsRequest ::Request,
+    bsRequest :: Request,
     -- | The request itself only stores the 'queryString', so we track
     -- these raw pairs during construction, and use them to set them
     -- at the end.
@@ -150,6 +156,11 @@ defaultRequest = do
   setConnection
   setCookieJar
   setMethod "GET"
+
+setJsonBody :: ToJSON a => a -> RequestBuilder ()
+setJsonBody new = do
+  (BuilderState r q d p) <- get
+  put $ BuilderState r { requestBody = RequestBodyLBS $ encode new } q d p
 
 -- | Add headers to a 'Request', leaving existing instances
 -- undisturbed.
