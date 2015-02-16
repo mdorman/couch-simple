@@ -93,7 +93,7 @@ import Text.Show (
 
 -- | Get most basic meta-information.
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get-- API documentation>
 --
 -- The returned data is variable enough we content ourselves with just
 -- returning a 'Value'.
@@ -112,7 +112,7 @@ meta =
 
 -- | Get a list of active tasks.
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#active-tasks API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_active_tasks API documentation>
 --
 -- The returned data is variable enough we content ourselves with just
 -- returning a 'List' of 'Value'.
@@ -130,7 +130,7 @@ activeTasks =
 
 -- | Get a list of all databases.
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#all-dbs API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_all_dbs API documentation>
 --
 -- The returned data is decoded into a 'List' of 'Text'.
 --
@@ -147,7 +147,7 @@ allDbs =
 
 -- | Get a list of all database events.
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#db-updates API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_db_updates API documentation>
 --
 -- This call does not stream out results; therefore, it also doesn't
 -- allow any specification of parameters for streaming.
@@ -168,7 +168,7 @@ dbUpdates =
 
 -- | Get the log output of the server
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#log API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_log API documentation>
 --
 -- This call doesn't return a JSON result, so we're deferring support
 -- for the moment.
@@ -179,7 +179,7 @@ log = undefined
 
 -- | Administer replication for databases on the server
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#replicate API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#post--_replicate API documentation>
 --
 -- FIXME: We need to define arguments that get translated into the
 -- appropriate query parameters, as well as combinators, localDb and
@@ -202,7 +202,7 @@ replicate =
 
 -- | Restart the server
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#restart API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#post--_restart API documentation>
 --
 -- The response should indicate whether it accepted the request,
 -- though the actual restart will happen at some arbitrary later
@@ -222,7 +222,7 @@ restart =
 
 -- | Get server statistics
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#stats API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_stats API documentation>
 --
 -- The returned data is variable enough we content ourselves with just
 -- returning a 'Value'.
@@ -240,7 +240,7 @@ stats =
 
 -- | Get a batch of UUIDs
 --
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#uuids API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_uuids API documentation>
 --
 -- Turns the string output into actual 'UUID's.
 --
