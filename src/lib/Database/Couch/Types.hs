@@ -16,6 +16,10 @@ Types for working with a CouchDB database.
 
 module Database.Couch.Types where
 
+import Data.Aeson (
+  FromJSON,
+  ToJSON,
+  )
 import Data.ByteString (
   ByteString,
   )
@@ -87,20 +91,20 @@ data CouchError
   deriving (Show)
 
 -- | The name of the database to connect to
-newtype Db = Db { unwrapDb :: Text } deriving (Eq, IsString, Show)
+newtype Db = Db { unwrapDb :: Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
 
 -- | The id of the document to work on
-newtype DocId = DocId { unwrapDocId :: Text } deriving (Eq, IsString, Show)
+newtype DocId = DocId { unwrapDocId :: Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
 
 -- | Convert a DocId directly into a 'ByteString'
 reqDocId :: DocId -> ByteString
 reqDocId = encodeUtf8 . unwrapDocId
 
 -- | The name of the host to connect to
-newtype Host = Host { unwrapHost :: Text } deriving (Eq, IsString, Show)
+newtype Host = Host { unwrapHost :: Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
 
 -- | The password for the user you are connecting as
-newtype Password = Password { unwrapPassword :: Text } deriving (Eq, IsString, Show)
+newtype Password = Password { unwrapPassword :: Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
 
 basicPass :: Password -> ByteString
 basicPass = encodeUtf8 . unwrapPassword
@@ -109,14 +113,14 @@ basicPass = encodeUtf8 . unwrapPassword
 newtype Port = Port { unwrapPort :: Int } deriving (Eq, Show)
 
 -- | The revision of the document to work on
-newtype DocRev = DocRev { unwrapDocRev :: Text } deriving (Eq, IsString, Show)
+newtype DocRev = DocRev { unwrapDocRev :: Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
 
 -- | Convert a DocRev directly into a 'ByteString'
 reqDocRev :: DocRev -> ByteString
 reqDocRev = encodeUtf8 . unwrapDocRev
 
 -- | The name of the user to connect as
-newtype User = User { unwrapUser ::  Text } deriving (Eq, IsString, Show)
+newtype User = User { unwrapUser ::  Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
 
 basicUser :: User -> ByteString
 basicUser = encodeUtf8 . unwrapUser
