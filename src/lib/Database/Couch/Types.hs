@@ -182,3 +182,11 @@ data Credentials
     credUser :: User,
     credPass :: Password
     }
+
+-- | A quick type alias for query parameters.
+type QueryParameters = [(ByteString, Maybe ByteString)]
+
+-- | A typeclass for types that can be converted to query parameters.
+class ToQueryParameters a where
+  -- | Performs the actual conversion
+  toQueryParameters :: a -> QueryParameters
