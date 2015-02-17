@@ -124,7 +124,7 @@ databaseTests =
   withResource createContext releaseContext allTests
   where
     createContext = do
-      uuid <-liftM (fromString . ("aaa" <>) . toString) (liftIO randomIO)
+      uuid <- liftM (fromString . ("aaa" <>) . toString) (liftIO randomIO)
       manager <- newManager defaultManagerSettings
       return $ Context manager "localhost" (Port 5984) Nothing def (Just uuid)
     releaseContext =

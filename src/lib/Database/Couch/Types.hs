@@ -100,6 +100,13 @@ newtype DocId = DocId { unwrapDocId :: Text } deriving (Eq, FromJSON, IsString, 
 reqDocId :: DocId -> ByteString
 reqDocId = encodeUtf8 . unwrapDocId
 
+-- | The revision of the document to work on
+newtype DocRev = DocRev { unwrapDocRev :: Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
+
+-- | Convert a DocRev directly into a 'ByteString'
+reqDocRev :: DocRev -> ByteString
+reqDocRev = encodeUtf8 . unwrapDocRev
+
 -- | The name of the host to connect to
 newtype Host = Host { unwrapHost :: Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
 
@@ -111,13 +118,6 @@ basicPass = encodeUtf8 . unwrapPassword
 
 -- | The number of the port to connect to
 newtype Port = Port { unwrapPort :: Int } deriving (Eq, Show)
-
--- | The revision of the document to work on
-newtype DocRev = DocRev { unwrapDocRev :: Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
-
--- | Convert a DocRev directly into a 'ByteString'
-reqDocRev :: DocRev -> ByteString
-reqDocRev = encodeUtf8 . unwrapDocRev
 
 -- | The name of the user to connect as
 newtype User = User { unwrapUser ::  Text } deriving (Eq, FromJSON, IsString, Show, ToJSON)
