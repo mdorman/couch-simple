@@ -30,10 +30,14 @@ import Control.Monad.IO.Class (
   )
 import Data.Aeson (
   Value (Null),
+  )
+import Data.Aeson.Parser (
   json,
+  value,
   )
 import Data.Attoparsec.ByteString (
   IResult (Done, Fail, Partial),
+  Parser,
   parseWith,
   )
 import Data.Either (
@@ -90,14 +94,14 @@ import Network.HTTP.Types (
   methodHead,
   )
 
-{- | Make an HTTP request returning JSON
+{- | Make an HTTP request returning a JSON value
 
 This is our lowest-level non-streaming routine.  It only handles
 performing the request and parsing the result into a JSON value.
 
 It presumes:
 
- * we will be receiving a deserializable JSON structure
+ * we will be receiving a deserializable JSON value
 
  * we do not need to stream out the result (though the input is parsed
 incrementally)
@@ -112,8 +116,8 @@ say, streaming interfaces.
 
 -}
 
-jsonRequest :: MonadIO m => Manager -> Request -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
-jsonRequest manager request =
+parsedRequest :: MonadIO m => Parser Value -> Manager -> Request -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
+parsedRequest parser manager request =
   liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager responseHandler)
   where
     -- Simply convert any exception into an HttpError
@@ -131,25 +135,11 @@ jsonRequest manager request =
     parseParts res = do
       let input = brRead (responseBody res)
       initial <- input
-      parseWith input json initial
+      parseWith input parser initial
 
-{- | Define and make an HTTP request returning JSON
-
-Building on top of 'jsonRequest', this routine is designed to take a
-builder for the request and a parser for the result, and use them to
-make our transaction.  This makes for a very declarative style when
-defining individual endpoints for CouchDB.
-
-In order to support more sophisticated forms of authentication than
-'Basic', we do have to examine the cookie jar returned from the
-server, and perhaps tell the user that they should replace the cookie
-jar in their context with it.
-
--}
-
-makeJsonRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
-makeJsonRequest builder parse context =
-  jsonRequest manager request >>= parser
+mkParsedRequest :: MonadIO m => Parser Value -> RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+mkParsedRequest jsonParser builder parse context =
+  parsedRequest jsonParser manager request >>= parser
   where
     manager =
       ctxManager context
@@ -161,3 +151,33 @@ makeJsonRequest builder parse context =
       runParse parse (Right (h, s, v)) >>= checkContextUpdate c
     checkContextUpdate c a =
       Right (a, if c == ctxCookies context then Nothing else Just c)
+
+
+{- | Define and make an HTTP request returning a JSON structure
+
+Building on top of 'mkParsedRequest', this routine is designed to take
+a builder for the request and a parser for the result, and use them to
+make our transaction.  This makes for a very declarative style when
+defining individual endpoints for CouchDB.
+
+In order to support more sophisticated forms of authentication than
+'Basic', we do have to examine the cookie jar returned from the
+server, and perhaps tell the user that they should replace the cookie
+jar in their context with it.
+
+-}
+
+makeJsonRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+makeJsonRequest =
+  mkParsedRequest json
+
+{- | Define and make an HTTP request returning a JSON value
+
+This works identically to 'makeJsonRequest', except it is more liberal
+in the values that it will parse.
+
+-}
+
+makeValueRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+makeValueRequest =
+  mkParsedRequest value
