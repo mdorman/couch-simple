@@ -15,6 +15,9 @@ import Control.Lens (
 import Control.Monad (
   (>>=),
   )
+import Data.Aeson.Parser (
+  json,
+  )
 import Data.Aeson.Lens (
   _Object,
   key,
@@ -31,7 +34,7 @@ import Data.Maybe (
   Maybe (Just),
   )
 import Database.Couch.Internal (
-  jsonRequest,
+  parsedRequest,
   )
 import Network.HTTP.Client (
   Manager,
@@ -71,7 +74,7 @@ internalTests =
 
 checkRoot :: IO Manager -> TestTree
 checkRoot createManager = testCase "Retrieve server meta information" $ do
-  res <- createManager >>= flip jsonRequest def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
+  res <- createManager >>= flip (parsedRequest json) def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
   assertBool "should have succeeded" $ has _Right res
   assertEqual "should have an empty cookie jar" def $ view (_Right._3) res
   assertBool "should have an object" $ has (_Right._4._Object) res
