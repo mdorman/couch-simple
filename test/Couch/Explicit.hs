@@ -11,6 +11,9 @@ import Control.Monad (
   (>>=),
   return,
   )
+import Couch.Explicit.Configuration (
+  configurationTests,
+  )
 import Couch.Explicit.Database (
   databaseTests,
   )
@@ -59,6 +62,7 @@ import Test.Tasty.HUnit (
 explicitTests :: TestTree
 explicitTests = testGroup "Tests of explicit interface"
   [ serverTests
+  , configurationTests
   , databaseTests
   , restartTest
   ]
