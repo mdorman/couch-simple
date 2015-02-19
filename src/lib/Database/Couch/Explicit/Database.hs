@@ -67,7 +67,7 @@ import Network.HTTP.Types (
 
 -- | Check that the requested database exists.
 --
--- <http://docs.couchdb.org/en/1.6.1/api/database/common.html API documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/database/common.html#head--db API documentation>
 --
 -- Returns 'False' or 'True' as appropriate.
 --
