@@ -190,3 +190,10 @@ type QueryParameters = [(ByteString, Maybe ByteString)]
 class ToQueryParameters a where
   -- | Performs the actual conversion
   toQueryParameters :: a -> QueryParameters
+
+-- | Result type for creating a new document in a database.
+data CreateResult
+  -- | In batch mode, you don't get a rev back
+  = NoRev DocId
+  -- | Otherwise, you do get the rev back for your doc
+  | WithRev DocId DocRev
