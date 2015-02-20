@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables, TupleSections #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings, RecordWildCards, ScopedTypeVariables, TupleSections #-}
 
 {- |
 
@@ -46,7 +46,8 @@ import Data.Int (
   Int,
   )
 import Data.Maybe (
-  Maybe (Just),
+  Maybe (Just, Nothing),
+  catMaybes,
   maybe,
   )
 import Data.Monoid (
@@ -226,3 +227,41 @@ intToQP name = toQP name (toStrict . toLazyByteString . intDec)
 
 textToQP :: ByteString -> Maybe Text -> Maybe (ByteString, Maybe ByteString)
 textToQP name = toQP name encodeUtf8
+
+-- | Parameters for 'allDocs'.
+data DbAllDocs
+  = DbAllDocs {
+    conflicts :: Maybe Bool,
+    descending :: Maybe Bool,
+    endKey :: Maybe Text,
+    endKeyDocId :: Maybe DocId,
+    includeDocs :: Maybe Bool,
+    inclusiveEnd :: Maybe Bool,
+    key :: Maybe Text,
+    limit :: Maybe Int,
+    skip :: Maybe Int,
+    stale :: Maybe Bool,
+    startKey :: Maybe Text,
+    startKeyDocId :: Maybe DocId,
+    updateSeq :: Maybe Bool
+    }
+instance ToQueryParameters DbAllDocs where
+  toQueryParameters DbAllDocs {..} = catMaybes [
+    boolToQP "conflicts" conflicts,
+    boolToQP "descending" descending,
+    textToQP "end_key" endKey,
+    docIdToQP "end_key_doc_id" endKeyDocId,
+    boolToQP "include_docs" includeDocs,
+    boolToQP "inclusive_end" inclusiveEnd,
+    textToQP "key" key,
+    intToQP "limit" limit,
+    intToQP "skip" skip,
+    boolToQP "stale" stale,
+    textToQP "start_key" startKey,
+    docIdToQP "start_key_doc_id" startKeyDocId,
+    boolToQP "update_seq" updateSeq
+    ]
+
+-- | The default (empty) parameters
+dbAllDocs :: DbAllDocs
+dbAllDocs = DbAllDocs Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
