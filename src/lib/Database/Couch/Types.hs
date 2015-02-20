@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables, TupleSections #-}
 
 {- |
 
@@ -20,8 +20,18 @@ import Data.Aeson (
   FromJSON,
   ToJSON,
   )
+import Data.Bool (
+  Bool,
+  )
 import Data.ByteString (
   ByteString,
+  )
+import Data.ByteString.Builder (
+  intDec,
+  toLazyByteString,
+  )
+import Data.ByteString.Lazy (
+  toStrict,
   )
 import Data.Eq (
   Eq,
@@ -29,11 +39,14 @@ import Data.Eq (
 import Data.Function (
   (.),
   )
+import Data.Functor (
+  fmap,
+  )
 import Data.Int (
   Int,
   )
 import Data.Maybe (
-  Maybe,
+  Maybe (Just),
   maybe,
   )
 import Data.Monoid (
@@ -197,3 +210,19 @@ type QueryParameters = [(ByteString, Maybe ByteString)]
 class ToQueryParameters a where
   -- | Performs the actual conversion
   toQueryParameters :: a -> QueryParameters
+
+-- | Helpers for converting values to Query Parameters
+toQP :: ByteString -> (a -> ByteString) -> Maybe a -> Maybe (ByteString, Maybe ByteString)
+toQP name fun = fmap ((name,) . Just . fun)
+
+boolToQP :: ByteString -> Maybe Bool -> Maybe (ByteString, Maybe ByteString)
+boolToQP name = toQP name (\bool -> if bool then "true" else "false")
+
+docIdToQP :: ByteString -> Maybe DocId -> Maybe (ByteString, Maybe ByteString)
+docIdToQP name = toQP name reqDocId
+
+intToQP :: ByteString -> Maybe Int -> Maybe (ByteString, Maybe ByteString)
+intToQP name = toQP name (toStrict . toLazyByteString . intDec)
+
+textToQP :: ByteString -> Maybe Text -> Maybe (ByteString, Maybe ByteString)
+textToQP name = toQP name encodeUtf8
