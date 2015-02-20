@@ -22,6 +22,7 @@ library
                , aeson
                , attoparsec
                , bytestring
+               , bytestring-builder
                , data-default
                , either
                , exceptions
