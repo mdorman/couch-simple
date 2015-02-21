@@ -6,9 +6,11 @@ import Control.Lens (
   _1,
   _Left,
   _Right,
+  at,
   has,
   makePrisms,
   preview,
+  set,
   )
 import Control.Monad (
   (>>=),
@@ -24,7 +26,11 @@ import Couch.Util (
   checkObject,
   checkRequestFailure,
   )
+import Data.Aeson (
+  Value (Number, Object, String),
+  )
 import Data.Aeson.Lens (
+  _Object,
   key,
   )
 import Data.Bool (
@@ -33,9 +39,15 @@ import Data.Bool (
 import Data.Default (
   def,
   )
+import Data.Either (
+  Either (Left, Right),
+  )
 import Data.Function (
   ($),
   (.),
+  )
+import Data.HashMap.Strict (
+  fromList,
   )
 import Data.Maybe (
   Maybe (Just, Nothing),
@@ -50,7 +62,9 @@ import Data.UUID (
   toString,
   )
 import qualified Database.Couch.Explicit.Database as Database (
+  allDocs,
   create,
+  createDoc,
   delete,
   exists,
   meta,
@@ -58,9 +72,12 @@ import qualified Database.Couch.Explicit.Database as Database (
 import Database.Couch.Types (
   Context (Context),
   CouchError (..),
+  CreateResult (..),
+  DocId (DocId),
   Port (Port),
   ctxDb,
   ctxManager,
+  dbAllDocs,
   )
 import Network.HTTP.Client (
   closeManager,
@@ -81,10 +98,15 @@ import Test.Tasty (
 import Test.Tasty.HUnit (
   assertBool,
   assertEqual,
+  assertFailure,
   testCase,
+  )
+import Text.Show (
+  show,
   )
 
 makePrisms ''CouchError
+makePrisms ''CreateResult
 
 databaseTests :: TestTree
 databaseTests =
@@ -101,7 +123,8 @@ databaseTests =
         databaseExists getContext,
         databaseMeta getContext,
         databaseCreate getContext,
-        databaseDelete getContext
+        databaseDocuments getContext
+        -- databaseDelete getContext
         ]
 
 -- Database-oriented functions
@@ -157,3 +180,43 @@ databaseDelete getContext = testGroup "Database deletion"
                                 assertBool "should have an invalid field name error" $ has (_Left._NotFound) res]
 
 -- FIXME: Need to test database deletion without privileges
+
+baseDoc :: Value
+baseDoc = Object (fromList [("foo",String "bar")])
+
+databaseDocuments :: IO Context -> TestTree
+databaseDocuments getContext = testGroup "Document handling"
+                               [testCase "Create document in sync mode" $ do
+                                   let localId = "YourHighness"
+                                       doc = set (_Object.at "_id") (Just . String $ localId) baseDoc
+                                   res <- getContext >>= Database.createDoc False doc
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       case val of
+                                         NoRev docId -> assertFailure ("Result should have rev: " <> show docId)
+                                         WithRev docId _ -> assertEqual "Check DocId is correct" (DocId localId) docId,
+                                testCase "Create document in batch mode" $ do
+                                   let localId = "YourLowness"
+                                       doc = set (_Object.at "_id") (Just . String $ localId) baseDoc
+                                   res <- getContext >>= Database.createDoc True doc
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       case val of
+                                         NoRev docId -> assertEqual "Check DocId is correct" (DocId localId) docId
+                                         WithRev docId _ -> assertFailure ("Result should not have rev: " <> show docId),
+                                testCase "Retrieve all documents" $ do
+                                   res <- getContext >>= Database.allDocs dbAllDocs
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       case val of
+                                         Object _ -> do
+                                           assertEqual "Has offset" (preview (key "offset") val) (Just . Number $ 0)
+                                           assertEqual "Has offset" (preview (key "total_rows") val) (Just . Number $ 2)
+                                         _ -> assertFailure ("Result should have been an object: " <> show val)
+                                  ]
