@@ -66,12 +66,16 @@ import qualified Database.Couch.Explicit.Database as Database (
   allDocs,
   bulkDocs,
   changes,
+  cleanup,
+  compact,
+  compactDesignDoc,
   create,
   createDoc,
   delete,
   exists,
   meta,
   someDocs,
+  sync,
   )
 import Database.Couch.Types (
   Context (Context),
@@ -259,5 +263,33 @@ databaseDocuments getContext = testGroup "Document handling"
                                          o@(Object _) -> do
                                            assertBool "Has last_seq" (has (key "last_seq") o)
                                            assertBool "Has results" (has (key "results") o)
-                                         _ -> assertFailure ("Result should have been an object: " <> show val)
+                                         _ -> assertFailure ("Result should have been an object: " <> show val),
+                                testCase "Compact _users database" $ do
+                                   res <- getContext >>= \c -> Database.compact c { ctxDb = Just "_users" }
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       assertBool "Success" val,
+                                testCase "Compact _users/auth design document" $ do
+                                   res <- getContext >>= \c -> Database.compactDesignDoc "_auth" c { ctxDb = Just "_users" }
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       assertBool "Success" val,
+                                testCase "Sync _users database" $ do
+                                   res <- getContext >>= \c -> Database.sync c { ctxDb = Just "_users" }
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       assertBool "Success" val,
+                                testCase "Clean up old view indices" $ do
+                                   res <- getContext >>= \c -> Database.cleanup c { ctxDb = Just "_users" }
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       assertBool "Success" val
                                   ]
