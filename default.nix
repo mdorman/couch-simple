@@ -1,15 +1,16 @@
-{ mkDerivation, aeson, attoparsec, base, bytestring, data-default
-, either, errors, exceptions, hlint, hspec, http-client, http-types
-, lens, lens-aeson, mtl, random, stdenv, tasty, tasty-hunit, text
-, transformers, unordered-containers, uuid
+{ mkDerivation, aeson, attoparsec, base, bytestring
+, bytestring-builder, data-default, either, errors, exceptions
+, hlint, hspec, http-client, http-types, lens, lens-aeson, mtl
+, random, stdenv, tasty, tasty-hunit, text, transformers
+, unordered-containers, uuid
 }:
 mkDerivation {
   pname = "couch-simple";
   version = "0.0.0.0";
   src = ./.;
   buildDepends = [
-    aeson attoparsec base bytestring data-default either exceptions
-    http-client http-types lens lens-aeson mtl text transformers
+    aeson attoparsec base bytestring bytestring-builder data-default
+    either exceptions http-client http-types lens mtl text transformers
     unordered-containers uuid
   ];
   testDepends = [

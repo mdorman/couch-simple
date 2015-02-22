@@ -22,7 +22,6 @@ library
                , aeson
                , attoparsec
                , bytestring
-               , bytestring-builder
                , data-default
                , either
                , exceptions
@@ -44,6 +43,9 @@ library
                    Database.Couch.Types
   ghc-options: -Wall
   hs-source-dirs: src/lib
+  if impl(ghc < 7.8)
+    build-depends: bytestring-builder
+
 
 test-suite test
   build-depends: base >= 4.6 && < 4.8
