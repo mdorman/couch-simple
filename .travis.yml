@@ -4,9 +4,6 @@ ghc:
   - 7.6
   - 7.8
 
-after_script:
-  - hpc-coveralls test
-
 before_install:
   - cabal install alex happy hpc-coveralls
 
@@ -17,6 +14,7 @@ notifications:
 script:
   - cabal configure --enable-library-coverage --enable-tests
   - run-cabal-test
+  - hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=test test
   - cabal check
   - cabal sdist
 
