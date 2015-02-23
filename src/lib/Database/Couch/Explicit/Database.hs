@@ -35,7 +35,8 @@ import Control.Monad.IO.Class (
   )
 import Data.Aeson (
   ToJSON,
-  Value,
+  Value (Object),
+  toJSON,
   )
 import Data.Bool (
   Bool (False, True)
@@ -45,9 +46,16 @@ import Data.Either (
   )
 import Data.Function (
   ($),
+  (.),
+  )
+import Data.HashMap.Strict (
+  fromList,
   )
 import Data.Maybe (
   Maybe (Just),
+  catMaybes,
+  fromJust,
+  isJust,
   )
 import Database.Couch.Internal (
   makeJsonRequest,
@@ -55,6 +63,7 @@ import Database.Couch.Internal (
 import Database.Couch.RequestBuilder (
   addPath,
   selectDb,
+  setHeaders,
   setJsonBody,
   setMethod,
   setQueryParam,
@@ -72,7 +81,11 @@ import Database.Couch.Types (
   CouchError (Unknown),
   CreateResult (WithRev, NoRev),
   DbAllDocs,
-  dbAllDocs,
+  DbBulkDocs,
+  DocId,
+  allOrNothing,
+  fullCommit,
+  newEdits,
   toQueryParameters,
   )
 import Network.HTTP.Client (
@@ -193,7 +206,7 @@ createDoc batch doc =
 -- The returned data is variable enough we content ourselves with just
 -- a 'Value' for you to take apart.
 --
--- Status: __Broken__
+-- Status: __Complete__
 allDocs :: MonadIO m => DbAllDocs -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 allDocs param =
   makeJsonRequest request parse
@@ -205,3 +218,55 @@ allDocs param =
     parse = do
       checkStatusCode
       responseValue >>= toOutputType
+
+-- | Get a list of some database documents.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#post--db-_all_docs API documentation>
+--
+-- There's some ambiguity in the documentation as to whether this
+-- accepts any query parameters.
+--
+-- The returned data is variable enough we content ourselves with just
+-- returning a 'List' of 'Value'.
+--
+-- Status: __Limited?__
+someDocs :: MonadIO m => [DocId] -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+someDocs ids =
+  makeJsonRequest request parse
+  where
+    request = do
+      setMethod "POST"
+      selectDb
+      addPath "_all_docs"
+      let parameters = Object (fromList [("keys",toJSON ids)])
+      setJsonBody parameters
+    parse = do
+      checkStatusCode
+      responseValue >>= toOutputType
+
+-- | Create or update a list of documents.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#post--db-_bulk_docs API documentation>
+--
+-- The returned data is variable enough we content ourselves with just
+-- returning a 'List' of 'Value'.
+--
+-- Status: __Complete__
+bulkDocs :: (MonadIO m, ToJSON a) => DbBulkDocs -> [a] -> Context -> m (Either CouchError ([Value], Maybe CookieJar))
+bulkDocs param docs =
+  makeJsonRequest request parse
+  where
+    request = do
+      setMethod "POST"
+      when (isJust $ fullCommit param)
+        (setHeaders [("X-Couch-Full-Commit", if fromJust $ fullCommit param then "true" else "false")])
+      selectDb
+      addPath "_bulk_docs"
+      let parameters = Object ((fromList . catMaybes) [Just ("docs",toJSON docs), boolToParam "all_or_nothing" allOrNothing, boolToParam "new_edits" newEdits])
+      setJsonBody parameters
+    parse = do
+      checkStatusCode
+      responseValue >>= toOutputType
+    boolToParam k s = do
+      v <- s param
+      return (k, if v then "true" else "false")

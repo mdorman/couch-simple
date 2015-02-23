@@ -265,3 +265,15 @@ instance ToQueryParameters DbAllDocs where
 -- | The default (empty) parameters
 dbAllDocs :: DbAllDocs
 dbAllDocs = DbAllDocs Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+-- | Parameters for 'bulkDocs'.
+data DbBulkDocs
+  = DbBulkDocs {
+    allOrNothing :: Maybe Bool,
+    fullCommit :: Maybe Bool,
+    newEdits :: Maybe Bool
+    }
+
+-- | The default (empty) parameters
+dbBulkDocsParam :: DbBulkDocs
+dbBulkDocsParam = DbBulkDocs Nothing Nothing Nothing
