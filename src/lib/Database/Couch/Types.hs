@@ -277,3 +277,76 @@ data DbBulkDocs
 -- | The default (empty) parameters
 dbBulkDocsParam :: DbBulkDocs
 dbBulkDocsParam = DbBulkDocs Nothing Nothing Nothing
+
+-- | Parameters for 'changes'.
+data DbChanges
+  = DbChanges {
+    cDocIds :: Maybe [DocId],
+    cConflicts :: Maybe Bool,
+    cDescending :: Maybe Bool,
+    cFeed :: Maybe FeedType,
+    cFilter :: Maybe Text,
+    cHeartBeat :: Maybe Int,
+    cIncludeDocs :: Maybe Bool,
+    cAttachments :: Maybe Bool,
+    cAttEncodingInfo :: Maybe Bool,
+    cLastEvent :: Maybe Text,
+    cSince :: Maybe SinceType,
+    cStyle :: Maybe StyleType,
+    cTimeout :: Maybe Int,
+    cView :: Maybe Text
+    }
+instance ToQueryParameters DbChanges where
+  toQueryParameters DbChanges {..} = catMaybes [
+    boolToQP "conflicts" cConflicts,
+    boolToQP "descending" cDescending,
+    feedTypeToQP cFeed,
+    textToQP "filter" cFilter,
+    intToQP "heartbeat" cHeartBeat,
+    boolToQP "include_docs" cIncludeDocs,
+    boolToQP "attachments" cAttachments,
+    boolToQP "att_encoding_info" cAttEncodingInfo,
+    sinceTypeToQP cSince,
+    styleTypeToQP cStyle,
+    intToQP "timeout" cTimeout,
+    textToQP "view" cView
+    ]
+
+-- | The default (empty) parameters
+dbChangesParam :: DbChanges
+dbChangesParam = DbChanges Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+-- | Types of feeds available.
+data FeedType
+  = Continuous
+  | EventSource
+  | Longpoll
+
+feedTypeToQP :: Maybe FeedType -> Maybe (ByteString, Maybe ByteString)
+feedTypeToQP = fmap (("feed",) . Just . go)
+    where
+      go Continuous = "continuous"
+      go EventSource = "eventsource"
+      go Longpoll = "longpoll"
+
+-- | Possible values of since
+data SinceType
+  = Now
+  | Since Int
+
+sinceTypeToQP :: Maybe SinceType -> Maybe (ByteString, Maybe ByteString)
+sinceTypeToQP = fmap (("since",) . Just . go)
+    where
+      go Now = "now"
+      go (Since i) = (toStrict . toLazyByteString . intDec) i
+
+-- | Possible values for style
+data StyleType
+  = StyleAll
+  | StyleMain
+
+styleTypeToQP :: Maybe StyleType -> Maybe (ByteString, Maybe ByteString)
+styleTypeToQP = fmap (("style",) . Just . go)
+    where
+      go StyleAll = "all_docs"
+      go StyleMain = "main_docs"

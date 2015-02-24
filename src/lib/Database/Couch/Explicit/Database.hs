@@ -57,6 +57,9 @@ import Data.Maybe (
   fromJust,
   isJust,
   )
+import Data.Text.Encoding (
+  encodeUtf8,
+  )
 import Database.Couch.Internal (
   makeJsonRequest,
   )
@@ -82,10 +85,12 @@ import Database.Couch.Types (
   CreateResult (WithRev, NoRev),
   DbAllDocs,
   DbBulkDocs,
+  DbChanges,
   DocId,
   bdAllOrNothing,
   bdFullCommit,
   bdNewEdits,
+  cLastEvent,
   toQueryParameters,
   )
 import Network.HTTP.Client (
@@ -270,3 +275,27 @@ bulkDocs param docs =
     boolToParam k s = do
       v <- s param
       return (k, if v then "true" else "false")
+
+-- | Get a list of all document modifications .
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/changes.html#get--db-_changes API documentation>
+--
+-- This call does not stream out results; therefore, it also doesn't
+-- allow any specification of parameters for streaming.
+--
+-- The returned data is variable enough we content ourselves with just
+-- returning a 'Value'.
+--
+-- Status: __Limited__
+changes :: MonadIO m => DbChanges -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+changes param =
+  makeJsonRequest request parse
+  where
+    request = do
+      when (isJust $ cLastEvent param)
+        (setHeaders [("Last-Event-Id", encodeUtf8 . fromJust $ cLastEvent param)])
+      selectDb
+      addPath "_changes"
+    parse = do
+      checkStatusCode
+      responseValue >>= toOutputType
