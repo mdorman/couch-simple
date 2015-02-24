@@ -49,6 +49,7 @@ import Data.Function (
   )
 import Data.HashMap.Strict (
   fromList,
+  null,
   )
 import Data.Maybe (
   Maybe (Just, Nothing),
@@ -73,6 +74,7 @@ import qualified Database.Couch.Explicit.Database as Database (
   createDoc,
   delete,
   exists,
+  getSecurity,
   meta,
   someDocs,
   sync,
@@ -291,5 +293,25 @@ databaseDocuments getContext = testGroup "Document handling"
                                      Left error -> assertFailure (show error)
                                      Right (val, cj) -> do
                                        assertEqual "Check that cookie jar is empty" cj Nothing
-                                       assertBool "Success" val
+                                       assertBool "Success" val,
+                                testCase "Get the security document" $ do
+                                   res <- getContext >>= Database.getSecurity
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       case val of
+                                         Object o -> assertBool "Is empty" (null o)
+                                         _ -> assertFailure ("Result should have been an object: " <> show val)
+                                -- testCase "Modify the security document" $ do
+                                --    res <- getContext >>= Database.setSecurity someDoc
+                                --    case res of
+                                --      Left error -> assertFailure (show error)
+                                --      Right (val, cj) -> do
+                                --        assertEqual "Check that cookie jar is empty" cj Nothing
+                                --        case val of
+                                --          o@(Object _) -> do
+                                --            assertBool "Has admins" (has (key "admins") o)
+                                --            assertBool "Has members" (has (key "members") o)
+                                --          _ -> assertFailure ("Result should have been an object: " <> show val),
                                   ]

@@ -384,3 +384,49 @@ cleanup =
     parse = do
       checkStatusCode
       getKey "ok" >>= toOutputType
+
+-- | Get security information for database
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/security.html#get--db-_security API documentation>
+--
+-- Although there are base requirements for the content this returns
+-- ("admin" and "members" keys, which each contain "users" and
+-- "roles"), the system does not prevent you from adding (and even
+-- using in validation functions) additional fields, so we keep the
+-- return value general
+--
+-- Status: __Complete__
+getSecurity :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
+getSecurity =
+  makeJsonRequest request parse
+  where
+    request = do
+      setMethod "GET"
+      selectDb
+      addPath "_security"
+    parse = do
+      checkStatusCode
+      responseValue >>= toOutputType
+
+-- | Set security information for database
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/security.html#post--db-_security API documentation>
+--
+-- Although there are base requirements for the content this returns
+-- ("admin" and "members" keys, which each contain "users" and
+-- "roles"), the system does not prevent you from adding (and even
+-- using in validation functions) additional fields, so we keep the
+-- return value general
+--
+-- Status: __Complete__
+setSecurity :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+setSecurity =
+  makeJsonRequest request parse
+  where
+    request = do
+      setMethod "POST"
+      selectDb
+      addPath "_security"
+    parse = do
+      checkStatusCode
+      getKey "ok" >>= toOutputType
