@@ -367,7 +367,7 @@ sync =
 
 -- | Cleanup any stray view definitions
 --
--- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_view_cleanup documentation>
+-- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_view_cleanup API documentation>
 --
 -- Clean up out of data view indices, which follow from changes to the
 -- view content.
