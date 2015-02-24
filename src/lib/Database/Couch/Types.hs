@@ -231,35 +231,35 @@ textToQP name = toQP name encodeUtf8
 -- | Parameters for 'allDocs'.
 data DbAllDocs
   = DbAllDocs {
-    conflicts :: Maybe Bool,
-    descending :: Maybe Bool,
-    endKey :: Maybe Text,
-    endKeyDocId :: Maybe DocId,
-    includeDocs :: Maybe Bool,
-    inclusiveEnd :: Maybe Bool,
-    key :: Maybe Text,
-    limit :: Maybe Int,
-    skip :: Maybe Int,
-    stale :: Maybe Bool,
-    startKey :: Maybe Text,
-    startKeyDocId :: Maybe DocId,
-    updateSeq :: Maybe Bool
+    adConflicts :: Maybe Bool,
+    adDescending :: Maybe Bool,
+    adEndKey :: Maybe Text,
+    adEndKeyDocId :: Maybe DocId,
+    adIncludeDocs :: Maybe Bool,
+    adInclusiveEnd :: Maybe Bool,
+    adKey :: Maybe Text,
+    adLimit :: Maybe Int,
+    adSkip :: Maybe Int,
+    adStale :: Maybe Bool,
+    adStartKey :: Maybe Text,
+    adStartKeyDocId :: Maybe DocId,
+    adUpdateSeq :: Maybe Bool
     }
 instance ToQueryParameters DbAllDocs where
   toQueryParameters DbAllDocs {..} = catMaybes [
-    boolToQP "conflicts" conflicts,
-    boolToQP "descending" descending,
-    textToQP "end_key" endKey,
-    docIdToQP "end_key_doc_id" endKeyDocId,
-    boolToQP "include_docs" includeDocs,
-    boolToQP "inclusive_end" inclusiveEnd,
-    textToQP "key" key,
-    intToQP "limit" limit,
-    intToQP "skip" skip,
-    boolToQP "stale" stale,
-    textToQP "start_key" startKey,
-    docIdToQP "start_key_doc_id" startKeyDocId,
-    boolToQP "update_seq" updateSeq
+    boolToQP "conflicts" adConflicts,
+    boolToQP "descending" adDescending,
+    textToQP "end_key" adEndKey,
+    docIdToQP "end_key_doc_id" adEndKeyDocId,
+    boolToQP "include_docs" adIncludeDocs,
+    boolToQP "inclusive_end" adInclusiveEnd,
+    textToQP "key" adKey,
+    intToQP "limit" adLimit,
+    intToQP "skip" adSkip,
+    boolToQP "stale" adStale,
+    textToQP "start_key" adStartKey,
+    docIdToQP "start_key_doc_id" adStartKeyDocId,
+    boolToQP "update_seq" adUpdateSeq
     ]
 
 -- | The default (empty) parameters
@@ -269,9 +269,9 @@ dbAllDocs = DbAllDocs Nothing Nothing Nothing Nothing Nothing Nothing Nothing No
 -- | Parameters for 'bulkDocs'.
 data DbBulkDocs
   = DbBulkDocs {
-    allOrNothing :: Maybe Bool,
-    fullCommit :: Maybe Bool,
-    newEdits :: Maybe Bool
+    bdAllOrNothing :: Maybe Bool,
+    bdFullCommit :: Maybe Bool,
+    bdNewEdits :: Maybe Bool
     }
 
 -- | The default (empty) parameters

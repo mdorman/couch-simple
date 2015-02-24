@@ -83,9 +83,9 @@ import Database.Couch.Types (
   DbAllDocs,
   DbBulkDocs,
   DocId,
-  allOrNothing,
-  fullCommit,
-  newEdits,
+  bdAllOrNothing,
+  bdFullCommit,
+  bdNewEdits,
   toQueryParameters,
   )
 import Network.HTTP.Client (
@@ -258,11 +258,11 @@ bulkDocs param docs =
   where
     request = do
       setMethod "POST"
-      when (isJust $ fullCommit param)
-        (setHeaders [("X-Couch-Full-Commit", if fromJust $ fullCommit param then "true" else "false")])
+      when (isJust $ bdFullCommit param)
+        (setHeaders [("X-Couch-Full-Commit", if fromJust $ bdFullCommit param then "true" else "false")])
       selectDb
       addPath "_bulk_docs"
-      let parameters = Object ((fromList . catMaybes) [Just ("docs",toJSON docs), boolToParam "all_or_nothing" allOrNothing, boolToParam "new_edits" newEdits])
+      let parameters = Object ((fromList . catMaybes) [Just ("docs",toJSON docs), boolToParam "all_or_nothing" bdAllOrNothing, boolToParam "new_edits" bdNewEdits])
       setJsonBody parameters
     parse = do
       checkStatusCode
