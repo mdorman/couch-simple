@@ -65,6 +65,7 @@ import Data.UUID (
 import qualified Database.Couch.Explicit.Database as Database (
   allDocs,
   bulkDocs,
+  changes,
   create,
   createDoc,
   delete,
@@ -82,6 +83,7 @@ import Database.Couch.Types (
   ctxManager,
   dbAllDocs,
   dbBulkDocsParam,
+  dbChangesParam,
   )
 import Network.HTTP.Client (
   closeManager,
@@ -246,5 +248,16 @@ databaseDocuments getContext = testGroup "Document handling"
                                            assertEqual "Has ok" (Just $ Bool True) (preview (key "ok") o)
                                            assertBool "Has id" (has (key "id") o)
                                            assertBool "Has rev" (has (key "rev") o)
+                                         _ -> assertFailure ("Result should have been an object: " <> show val),
+                                testCase "First pass at changes" $ do
+                                   res <- getContext >>= Database.changes dbChangesParam
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       case val of
+                                         o@(Object _) -> do
+                                           assertBool "Has last_seq" (has (key "last_seq") o)
+                                           assertBool "Has results" (has (key "results") o)
                                          _ -> assertFailure ("Result should have been an object: " <> show val)
                                   ]
