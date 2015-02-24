@@ -64,8 +64,10 @@ import Database.Couch.Internal (
   makeJsonRequest,
   )
 import Database.Couch.RequestBuilder (
+  RequestBuilder,
   addPath,
   selectDb,
+  selectDoc,
   setHeaders,
   setJsonBody,
   setMethod,
@@ -299,3 +301,86 @@ changes param =
     parse = do
       checkStatusCode
       responseValue >>= toOutputType
+
+-- | Encode the common bits for our two compact calls
+compactBase :: RequestBuilder ()
+compactBase = do
+      setMethod "POST"
+      selectDb
+      addPath "_compact"
+
+-- | Compact a database
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_compact API documentation>
+--
+-- Run the compaction process on an entire database
+--
+-- Status: __Complete__
+compact :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+compact =
+  makeJsonRequest request parse
+  where
+    request =
+      compactBase
+    parse = do
+      checkStatusCode
+      getKey "ok" >>= toOutputType
+
+-- | Compact the views attached to a particular design document
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_compact-ddoc API documentation>
+--
+-- Run the compaction process on the views associated with the specified design document
+--
+-- Status: __Complete__
+compactDesignDoc :: MonadIO m => DocId -> Context -> m (Either CouchError (Bool, Maybe CookieJar))
+compactDesignDoc doc =
+  makeJsonRequest request parse
+  where
+    request = do
+      compactBase
+      selectDoc doc
+    parse = do
+      checkStatusCode
+      getKey "ok" >>= toOutputType
+
+-- | Ensure that all changes to the database have made it to disk
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_ensure_full_commit API documentation>
+--
+-- The start time for the instance doesn't seem very interesting,
+-- especially for this particular operation, so I haven't bothered to
+-- try and return it.
+--
+-- Status: __Complete__
+sync :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+sync =
+  makeJsonRequest request parse
+  where
+    request = do
+      setMethod "POST"
+      selectDb
+      addPath "_ensure_full_commit"
+    parse = do
+      checkStatusCode
+      getKey "ok" >>= toOutputType
+
+-- | Cleanup any stray view definitions
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_view_cleanup documentation>
+--
+-- Clean up out of data view indices, which follow from changes to the
+-- view content.
+--
+-- Status: __Complete__
+cleanup :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+cleanup =
+  makeJsonRequest request parse
+  where
+    request = do
+      setMethod "POST"
+      selectDb
+      addPath "_view_cleanup"
+    parse = do
+      checkStatusCode
+      getKey "ok" >>= toOutputType
