@@ -30,6 +30,7 @@ import Data.Aeson (
   Value (Bool, Number, Object, String),
   )
 import Data.Aeson.Lens (
+  _Integer,
   _Object,
   key,
   nth,
@@ -78,6 +79,7 @@ import qualified Database.Couch.Explicit.Database as Database (
   meta,
   someDocs,
   sync,
+  tempView,
   )
 import Database.Couch.Types (
   Context (Context),
@@ -98,6 +100,7 @@ import Network.HTTP.Client (
   )
 import System.IO (
   IO,
+  print,
   )
 import System.Random (
   randomIO,
@@ -302,7 +305,7 @@ databaseDocuments getContext = testGroup "Document handling"
                                        assertEqual "Check that cookie jar is empty" cj Nothing
                                        case val of
                                          Object o -> assertBool "Is empty" (null o)
-                                         _ -> assertFailure ("Result should have been an object: " <> show val)
+                                         _ -> assertFailure ("Result should have been an object: " <> show val),
                                 -- testCase "Modify the security document" $ do
                                 --    res <- getContext >>= Database.setSecurity someDoc
                                 --    case res of
@@ -314,4 +317,16 @@ databaseDocuments getContext = testGroup "Document handling"
                                 --            assertBool "Has admins" (has (key "admins") o)
                                 --            assertBool "Has members" (has (key "members") o)
                                 --          _ -> assertFailure ("Result should have been an object: " <> show val),
+                                testCase "Create a temporary view" $ do
+                                   res <- getContext >>= Database.tempView "function (doc) { if (doc.foo) { emit (doc.foo, 1) } }" (Just "_count")
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       case val of
+                                         o@(Object _) -> do
+                                           print o
+                                           assertBool "Has rows" (has (key "rows") o)
+                                           assertEqual "Has value" (Just 3) (preview (key "rows".nth 0.key "value"._Integer) o)
+                                         _ -> assertFailure ("Result should have been an object: " <> show val)
                                   ]
