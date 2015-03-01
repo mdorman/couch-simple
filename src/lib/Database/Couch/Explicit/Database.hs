@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, TupleSections #-}
 
 {- |
 
@@ -48,6 +48,9 @@ import Data.Function (
   ($),
   (.),
   )
+import Data.Functor (
+  fmap,
+  )
 import Data.HashMap.Strict (
   fromList,
   )
@@ -56,6 +59,9 @@ import Data.Maybe (
   catMaybes,
   fromJust,
   isJust,
+  )
+import Data.Text (
+  Text,
   )
 import Data.Text.Encoding (
   encodeUtf8,
@@ -430,3 +436,24 @@ setSecurity =
     parse = do
       checkStatusCode
       getKey "ok" >>= toOutputType
+
+-- | Create a temporary view
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/temp-views.html#post--db-_temp_view API documentation>
+--
+-- Create a temporary view and return its results.
+--
+-- Status: __Complete__
+tempView :: MonadIO m => Text -> Maybe Text -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+tempView map reduce =
+  makeJsonRequest request parse
+  where
+    request = do
+      setMethod "POST"
+      selectDb
+      let parameters = Object (fromList $ catMaybes [Just ("map", toJSON map), fmap (("reduce",) . toJSON) reduce])
+      addPath "_temp_view"
+      setJsonBody parameters
+    parse = do
+      checkStatusCode
+      responseValue >>= toOutputType
