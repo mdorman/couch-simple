@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 
 {- |
 
@@ -24,8 +25,8 @@ conversions when that is the case.
 
 module Database.Couch.Response where
 
-import           Data.Aeson           (Result (Error, Success),
-                                       Value (Array, Object), fromJSON)
+import           Data.Aeson           (Result (Error, Success), Value (Object),
+                                       fromJSON)
 import           Data.Bool            (Bool (True))
 import           Data.Either          (Either (Left, Right))
 import           Data.Function        (const, ($), (.))
@@ -59,9 +60,10 @@ cannot consume directly, so we provide this standard conversion.
 asUUID :: Either CouchError (Value, Maybe CookieJar) -> Either CouchError ([UUID], Maybe CookieJar)
 asUUID v =
   case v of
-    Left x                 -> Left x
-    Right (a@(Array _), b) -> Right (catMaybes $ reformat a, b)
-    _                      -> Left (ParseFail "Couldn't convert to UUID type")
+    Left x              -> Left x
+    Right (Object o, b) -> maybe (Left (ParseFail "Couldn't convert to UUID type"))
+                             (Right . (,b) . catMaybes . reformat) $ lookup "uuids" o
+    _                   -> Left NotFound
   where
     reformat i =
       case fromJSON i of
