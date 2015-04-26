@@ -1,4 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 {- |
 
@@ -21,44 +22,19 @@ as) http://docs.couchdb.org/en/1.6.1/api/server/configuration.html.
 
 module Database.Couch.Explicit.Configuration where
 
-import Control.Monad.IO.Class (
-  MonadIO,
-  )
-import Data.Aeson (
-  Value,
-  )
-import Data.Either (
-  Either,
-  )
-import Data.Maybe (
-  Maybe,
-  )
-import Data.Text (
-  Text,
-  )
-import Database.Couch.Internal (
-  makeJsonRequest,
-  makeValueRequest,
-  )
-import Database.Couch.RequestBuilder (
-  RequestBuilder,
-  addPath,
-  selectDoc,
-  setJsonBody,
-  setMethod,
-  )
-import Database.Couch.ResponseParser (
-  checkStatusCode,
-  responseValue,
-  )
-import Database.Couch.Types (
-  Context,
-  CouchError,
-  DocId,
-  )
-import Network.HTTP.Client (
-  CookieJar,
-  )
+import           Control.Monad.IO.Class        (MonadIO)
+import           Data.Aeson                    (Value)
+import           Data.Either                   (Either)
+import           Data.Maybe                    (Maybe)
+import           Data.Text                     (Text)
+import           Database.Couch.Internal       (makeJsonRequest,
+                                                makeValueRequest)
+import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
+                                                selectDoc, setJsonBody,
+                                                setMethod)
+import           Database.Couch.ResponseParser (checkStatusCode, responseValue)
+import           Database.Couch.Types          (Context, CouchError, DocId)
+import           Network.HTTP.Client           (CookieJar)
 
 -- | Get the configuration for the overall server.
 --

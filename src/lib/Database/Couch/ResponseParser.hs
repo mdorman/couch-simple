@@ -1,4 +1,7 @@
-{-# LANGUAGE FlexibleContexts, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 
 {- |
 
@@ -18,86 +21,30 @@ the actual response values.
 
 module Database.Couch.ResponseParser where
 
-import Control.Monad (
-  (>>=),
-  return,
-  )
-import Control.Monad.Reader (
-  Reader,
-  runReader,
-  asks,
-  )
-import Control.Monad.Trans.Either (
-  EitherT,
-  hoistEither,
-  runEitherT
-  )
-import Data.Aeson (
-  FromJSON,
-  Result (Error, Success),
-  Value (Object),
-  fromJSON,
-  )
-import Data.ByteString (
-  ByteString,
-  )
-import Data.Either (
-  Either (Left, Right),
-  either,
-  )
-import Data.Eq (
-  (==),
-  )
-import Data.Foldable (
-  find,
-  )
-import Data.Function (
-  ($),
-  (.),
-  )
-import Data.Functor (
-  fmap,
-  )
-import Data.HashMap.Strict (
-  lookup,
-  )
-import Data.Int (
-  Int,
-  )
-import Data.Maybe (
-  Maybe,
-  maybe,
-  )
-import Data.Monoid (
-  mempty,
-  )
-import Data.Text (
-  Text,
-  pack,
-  )
-import Data.Text.Encoding (
-  decodeUtf8,
-  )
-import Data.Text.Read (
-  decimal,
-  )
-import Data.Tuple (
-  fst,
-  snd,
-  )
-import Database.Couch.Types (
-  CouchError (AlreadyExists, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
-  DocRev (DocRev),
-  )
-import Network.HTTP.Client (
-  HttpException (StatusCodeException),
-  )
-import Network.HTTP.Types (
-  HeaderName,
-  ResponseHeaders,
-  Status,
-  statusCode,
-  )
+import           Control.Monad              (return, (>>=))
+import           Control.Monad.Reader       (Reader, asks, runReader)
+import           Control.Monad.Trans.Either (EitherT, hoistEither, runEitherT)
+import           Data.Aeson                 (FromJSON, Result (Error, Success),
+                                             Value (Object), fromJSON)
+import           Data.ByteString            (ByteString)
+import           Data.Either                (Either (Left, Right), either)
+import           Data.Eq                    ((==))
+import           Data.Foldable              (find)
+import           Data.Function              (($), (.))
+import           Data.Functor               (fmap)
+import           Data.HashMap.Strict        (lookup)
+import           Data.Int                   (Int)
+import           Data.Maybe                 (Maybe, maybe)
+import           Data.Monoid                (mempty)
+import           Data.Text                  (Text, pack)
+import           Data.Text.Encoding         (decodeUtf8)
+import           Data.Text.Read             (decimal)
+import           Data.Tuple                 (fst, snd)
+import           Database.Couch.Types       (CouchError (AlreadyExists, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
+                                             DocRev (DocRev))
+import           Network.HTTP.Client        (HttpException (StatusCodeException))
+import           Network.HTTP.Types         (HeaderName, ResponseHeaders,
+                                             Status, statusCode)
 
 -- Just so we don't have to type this out Every. Damned. Time.
 type ResponseParser = EitherT CouchError (Reader (ResponseHeaders, Status, Value))

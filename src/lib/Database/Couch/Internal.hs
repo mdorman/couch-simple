@@ -17,82 +17,30 @@ even necessarily really CouchDB-specific.
 
 module Database.Couch.Internal where
 
-import Control.Monad (
-  (>>=),
-  return,
-  )
-import Control.Monad.Catch (
-  handle,
-  )
-import Control.Monad.IO.Class (
-  MonadIO,
-  liftIO,
-  )
-import Data.Aeson (
-  Value (Null),
-  )
-import Data.Aeson.Parser (
-  json,
-  value,
-  )
-import Data.Attoparsec.ByteString (
-  IResult (Done, Fail, Partial),
-  Parser,
-  parseWith,
-  )
-import Data.Either (
-  Either (Right, Left),
-  either,
-  )
-import Data.Eq (
-  (==),
-  )
-import Data.Function (
-  ($),
-  (.),
-  const,
-  )
-import Data.Maybe (
-  Maybe (Just, Nothing),
-  )
-import Data.Monoid (
-  mempty,
-  )
-import Data.Text (
-  pack,
-  )
-import Database.Couch.RequestBuilder (
-  RequestBuilder,
-  runBuilder,
-  )
-import Database.Couch.ResponseParser (
-  ResponseParser,
-  runParse,
-  )
-import Database.Couch.Types (
-  Context,
-  CouchError (HttpError, ParseFail, ParseIncomplete),
-  ctxCookies,
-  ctxManager,
-  )
-import Network.HTTP.Client (
-  CookieJar,
-  Manager,
-  Request,
-  brRead,
-  checkStatus,
-  method,
-  responseBody,
-  responseCookieJar,
-  responseHeaders,
-  responseStatus,
-  withResponse,
-  )
-import Network.HTTP.Types (
-  ResponseHeaders,
-  Status,
-  methodHead,
-  )
+import           Control.Monad                 (return, (>>=))
+import           Control.Monad.Catch           (handle)
+import           Control.Monad.IO.Class        (MonadIO, liftIO)
+import           Data.Aeson                    (Value (Null))
+import           Data.Aeson.Parser             (json, value)
+import           Data.Attoparsec.ByteString    (IResult (Done, Fail, Partial),
+                                                Parser, parseWith)
+import           Data.Either                   (Either (Right, Left), either)
+import           Data.Eq                       ((==))
+import           Data.Function                 (const, ($), (.))
+import           Data.Maybe                    (Maybe (Just, Nothing))
+import           Data.Monoid                   (mempty)
+import           Data.Text                     (pack)
+import           Database.Couch.RequestBuilder (RequestBuilder, runBuilder)
+import           Database.Couch.ResponseParser (ResponseParser, runParse)
+import           Database.Couch.Types          (Context, CouchError (HttpError, ParseFail, ParseIncomplete),
+                                                ctxCookies, ctxManager)
+import           Network.HTTP.Client           (CookieJar, Manager, Request,
+                                                brRead, checkStatus, method,
+                                                responseBody, responseCookieJar,
+                                                responseHeaders, responseStatus,
+                                                withResponse)
+import           Network.HTTP.Types            (ResponseHeaders, Status,
+                                                methodHead)
 
 {- | Make an HTTP request returning a JSON value
 
