@@ -223,29 +223,7 @@ databaseDocuments getContext = testGroup "Document handling"
                                        case val of
                                          NoRev docId -> assertEqual "Check DocId is correct" (DocId localId) docId
                                          WithRev docId _ -> assertFailure ("Result should not have rev: " <> show docId),
-                                testCase "Retrieve all documents" $ do
-                                   res <- getContext >>= Database.allDocs dbAllDocs
-                                   case res of
-                                     Left error -> assertFailure (show error)
-                                     Right (val, cj) -> do
-                                       assertEqual "Check that cookie jar is empty" cj Nothing
-                                       case val of
-                                         Object _ -> do
-                                           assertEqual "Has offset" (preview (key "offset") val) (Just . Number $ 0)
-                                           assertEqual "Has total_rows" (preview (key "total_rows") val) (Just . Number $ 2)
-                                         _ -> assertFailure ("Result should have been an object: " <> show val),
-                                testCase "Retrieve some documents" $ do
-                                   res <- getContext >>= Database.someDocs ["YourHighness"]
-                                   case res of
-                                     Left error -> assertFailure (show error)
-                                     Right (val, cj) -> do
-                                       assertEqual "Check that cookie jar is empty" cj Nothing
-                                       case val of
-                                         o@(Object _) -> do
-                                           assertEqual "Has offset" (Just . Number $ 0) (preview (key "offset") o)
-                                           assertEqual "Has total_rows" (Just . Number $ 2) (preview (key "total_rows") o)
-                                           assertEqual "Has correct id" (Just "YourHighness") (preview (key "rows".nth 0.key "id") o)
-                                         _ -> assertFailure ("Result should have been an object: " <> show val),
+                                -- Having this after batch should force them to disk
                                 testCase "Bulk add documents" $ do
                                    res <- getContext >>= Database.bulkDocs dbBulkDocsParam [baseDoc]
                                    case res of
@@ -257,6 +235,29 @@ databaseDocuments getContext = testGroup "Document handling"
                                            assertEqual "Has ok" (Just $ Bool True) (preview (key "ok") o)
                                            assertBool "Has id" (has (key "id") o)
                                            assertBool "Has rev" (has (key "rev") o)
+                                         _ -> assertFailure ("Result should have been an object: " <> show val),
+                                testCase "Retrieve some documents" $ do
+                                   res <- getContext >>= Database.someDocs ["YourHighness"]
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       case val of
+                                         o@(Object _) -> do
+                                           assertEqual "Has offset" (Just . Number $ 0) (preview (key "offset") o)
+                                           assertEqual "Has total_rows" (Just . Number $ 3) (preview (key "total_rows") o)
+                                           assertEqual "Has correct id" (Just "YourHighness") (preview (key "rows".nth 0.key "id") o)
+                                         _ -> assertFailure ("Result should have been an object: " <> show val),
+                                testCase "Retrieve all documents" $ do
+                                   res <- getContext >>= Database.allDocs dbAllDocs
+                                   case res of
+                                     Left error -> assertFailure (show error)
+                                     Right (val, cj) -> do
+                                       assertEqual "Check that cookie jar is empty" cj Nothing
+                                       case val of
+                                         Object _ -> do
+                                           assertEqual "Has offset" (preview (key "offset") val) (Just . Number $ 0)
+                                           assertEqual "Has total_rows" (preview (key "total_rows") val) (Just . Number $ 3)
                                          _ -> assertFailure ("Result should have been an object: " <> show val),
                                 testCase "First pass at changes" $ do
                                    res <- getContext >>= Database.changes dbChangesParam
@@ -325,7 +326,6 @@ databaseDocuments getContext = testGroup "Document handling"
                                        assertEqual "Check that cookie jar is empty" cj Nothing
                                        case val of
                                          o@(Object _) -> do
-                                           print o
                                            assertBool "Has rows" (has (key "rows") o)
                                            assertEqual "Has value" (Just 3) (preview (key "rows".nth 0.key "value"._Integer) o)
                                          _ -> assertFailure ("Result should have been an object: " <> show val)
