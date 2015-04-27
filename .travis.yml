@@ -5,16 +5,18 @@ ghc:
   - 7.8
 
 before_install:
-  - cabal install alex happy hpc-coveralls
+  - cabal install alex happy # hpc-coveralls
 
 notifications:
   email:
     - mdorman@jaunder.io
 
 script:
-  - cabal configure --enable-library-coverage --enable-tests
-  - run-cabal-test
-  - hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=test test
+#  - cabal configure --enable-library-coverage --enable-tests
+  - cabal configure --enable-tests
+  - cabal test
+#  - run-cabal-test
+#  - hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=test test
   - cabal check
   - cabal sdist
 
