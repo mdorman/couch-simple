@@ -1,4 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, TupleSections #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 
 {- |
 
@@ -21,92 +23,36 @@ as) http://docs.couchdb.org/en/1.6.1/api/database/index.html.
 
 module Database.Couch.Explicit.Database where
 
-import Control.Applicative (
-  (<$>),
-  (<*>),
-  )
-import Control.Monad (
-  (>>=),
-  return,
-  when,
-  )
-import Control.Monad.IO.Class (
-  MonadIO,
-  )
-import Data.Aeson (
-  ToJSON,
-  Value (Object),
-  toJSON,
-  )
-import Data.Bool (
-  Bool (False, True)
-  )
-import Data.Either (
-  Either,
-  )
-import Data.Function (
-  ($),
-  (.),
-  )
-import Data.Functor (
-  fmap,
-  )
-import Data.HashMap.Strict (
-  fromList,
-  )
-import Data.Maybe (
-  Maybe (Just),
-  catMaybes,
-  fromJust,
-  isJust,
-  )
-import Data.Text (
-  Text,
-  )
-import Data.Text.Encoding (
-  encodeUtf8,
-  )
-import Database.Couch.Internal (
-  makeJsonRequest,
-  )
-import Database.Couch.RequestBuilder (
-  RequestBuilder,
-  addPath,
-  selectDb,
-  selectDoc,
-  setHeaders,
-  setJsonBody,
-  setMethod,
-  setQueryParam,
-  )
-import Database.Couch.ResponseParser (
-  checkStatusCode,
-  failed,
-  getKey,
-  responseStatus,
-  responseValue,
-  toOutputType,
-  )
-import Database.Couch.Types (
-  Context,
-  CouchError (Unknown),
-  CreateResult (WithRev, NoRev),
-  DbAllDocs,
-  DbBulkDocs,
-  DbChanges,
-  DocId,
-  bdAllOrNothing,
-  bdFullCommit,
-  bdNewEdits,
-  cLastEvent,
-  toQueryParameters,
-  )
-import Network.HTTP.Client (
-  CookieJar,
-  )
-import Network.HTTP.Types (
-  statusCode,
-  )
+import           Control.Applicative           ((<$>), (<*>))
+import           Control.Monad                 (return, when, (>>=))
+import           Control.Monad.IO.Class        (MonadIO)
+import           Data.Aeson                    (ToJSON, Value (Object), toJSON)
+import           Data.Bool                     (Bool (False, True))
+import           Data.Either                   (Either)
+import           Data.Function                 (($), (.))
+import           Data.Functor                  (fmap)
+import           Data.HashMap.Strict           (fromList)
+import           Data.Maybe                    (Maybe (Just), catMaybes,
+                                                fromJust, isJust)
+import           Data.Text                     (Text)
+import           Data.Text.Encoding            (encodeUtf8)
+import           Database.Couch.Internal       (makeJsonRequest)
+import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
+                                                selectDb, selectDoc, setHeaders,
+                                                setJsonBody, setMethod,
+                                                setQueryParam)
+import           Database.Couch.ResponseParser (checkStatusCode, failed, getKey,
+                                                responseStatus, responseValue,
+                                                toOutputType)
+import           Database.Couch.Types          (Context, CouchError (Unknown),
+                                                CreateResult (WithRev, NoRev),
+                                                DbAllDocs, DbBulkDocs,
+                                                DbChanges, DocId,
+                                                bdAllOrNothing, bdFullCommit,
+                                                bdNewEdits, cLastEvent,
+                                                toQueryParameters)
+import           Network.HTTP.Client           (CookieJar)
+import           Network.HTTP.Types            (statusCode)
 
 -- | Check that the requested database exists.
 --

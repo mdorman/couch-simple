@@ -1,4 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 {- |
 
@@ -21,75 +22,27 @@ as) http://docs.couchdb.org/en/1.6.1/api/server/index.html.
 
 module Database.Couch.Explicit.Server where
 
-import Control.Monad (
-  (>>=),
-  return,
-  )
-import Control.Monad.IO.Class (
-  MonadIO,
-  )
-import Data.Aeson (
-  Value,
-  )
-import Data.Bool (
-  Bool
-  )
-import Data.Either (
-  Either,
-  )
-import Data.Function (
-  ($),
-  (.),
-  )
-import Data.Int (
-  Int,
-  )
-import Data.Maybe (
-  Maybe (Just),
-  mapMaybe,
-  )
-import Data.String (
-  fromString,
-  )
-import Data.Text (
-  Text,
-  intercalate,
-  splitAt,
-  )
-import Data.Text.Encoding (
-  encodeUtf8,
-  )
-import Data.UUID (
-  UUID,
-  fromASCIIBytes,
-  )
-import Database.Couch.Internal (
-  makeJsonRequest,
-  )
-import Database.Couch.RequestBuilder (
-  setMethod,
-  addPath,
-  addQueryParam,
-  )
-import Database.Couch.ResponseParser (
-  checkStatusCode,
-  getKey,
-  responseValue,
-  toOutputType,
-  )
-import Database.Couch.Types (
-  Context,
-  CouchError,
-  )
-import GHC.Err (
-  undefined,
-  )
-import Network.HTTP.Client (
-  CookieJar,
-  )
-import Text.Show (
-  show
-  )
+import           Control.Monad                 (return, (>>=))
+import           Control.Monad.IO.Class        (MonadIO)
+import           Data.Aeson                    (Value)
+import           Data.Bool                     (Bool)
+import           Data.Either                   (Either)
+import           Data.Function                 (($), (.))
+import           Data.Int                      (Int)
+import           Data.Maybe                    (Maybe (Just), mapMaybe)
+import           Data.String                   (fromString)
+import           Data.Text                     (Text, intercalate, splitAt)
+import           Data.Text.Encoding            (encodeUtf8)
+import           Data.UUID                     (UUID, fromASCIIBytes)
+import           Database.Couch.Internal       (makeJsonRequest)
+import           Database.Couch.RequestBuilder (addPath, addQueryParam,
+                                                setMethod)
+import           Database.Couch.ResponseParser (checkStatusCode, getKey,
+                                                responseValue, toOutputType)
+import           Database.Couch.Types          (Context, CouchError)
+import           GHC.Err                       (undefined)
+import           Network.HTTP.Client           (CookieJar)
+import           Text.Show                     (show)
 
 -- | Get most basic meta-information.
 --

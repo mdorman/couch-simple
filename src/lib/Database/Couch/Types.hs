@@ -16,60 +16,22 @@ Types for working with a CouchDB database.
 
 module Database.Couch.Types where
 
-import Data.Aeson (
-  FromJSON,
-  ToJSON,
-  )
-import Data.Bool (
-  Bool,
-  )
-import Data.ByteString (
-  ByteString,
-  )
-import Data.ByteString.Builder (
-  intDec,
-  toLazyByteString,
-  )
-import Data.ByteString.Lazy (
-  toStrict,
-  )
-import Data.Eq (
-  Eq,
-  )
-import Data.Function (
-  (.),
-  )
-import Data.Functor (
-  fmap,
-  )
-import Data.Int (
-  Int,
-  )
-import Data.Maybe (
-  Maybe (Just, Nothing),
-  catMaybes,
-  maybe,
-  )
-import Data.Monoid (
-  mempty,
-  )
-import Data.String (
-  IsString,
-  )
-import Data.Text (
-  Text,
-  )
-import Data.Text.Encoding (
-  encodeUtf8,
-  )
-import Network.HTTP.Client (
-  CookieJar,
-  HttpException,
-  Manager,
-  )
-import Text.Show (
-  Show,
-  )
+import Data.Aeson (FromJSON, ToJSON)
+import Data.Bool (Bool)
+import Data.ByteString (ByteString)
+import Data.ByteString.Builder (intDec, toLazyByteString)
+import Data.ByteString.Lazy (toStrict)
+import Data.Eq (Eq)
+import Data.Function ((.))
+import Data.Functor (fmap)
+import Data.Int (Int)
+import Data.Maybe (Maybe(Just, Nothing), catMaybes, maybe)
+import Data.Monoid (mempty)
+import Data.String (IsString)
+import Data.Text (Text)
+import Data.Text.Encoding (encodeUtf8)
+import Network.HTTP.Client (CookieJar, HttpException, Manager)
+import Text.Show (Show)
 
 {- | Failure modes for making CouchDB requests.
 

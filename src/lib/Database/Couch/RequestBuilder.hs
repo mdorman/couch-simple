@@ -1,4 +1,6 @@
-{-# LANGUAGE FlexibleContexts, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 {- |
 
@@ -14,88 +16,27 @@ Portability : POSIX
 
 module Database.Couch.RequestBuilder where
 
-import Control.Monad (
-  (>>),
-  return,
-  )
-import Control.Monad.Reader (
-  Reader,
-  ask,
-  runReader,
-  )
-import Control.Monad.State (
-  StateT,
-  execStateT,
-  get,
-  put,
-  )
-import Data.Aeson (
-  ToJSON,
-  encode,
-  )
-import Data.ByteString (
-  ByteString,
-  intercalate,
-  null,
-  )
-import Data.Default (
-  def
-  )
-import Data.Eq (
-  (==),
-  )
-import Data.Function (
-  ($),
-  (.),
-  on,
-  )
-import Data.List (
-  unionBy
-  )
-import Data.Maybe (
-  Maybe (Just),
-  maybe,
-  )
-import Data.Monoid (
-  (<>),
-  mempty,
-  )
-import Data.Tuple (
-  fst,
-  )
-import Database.Couch.Types (
-  Context,
-  Credentials (Basic),
-  DocId,
-  DocRev,
-  basicPass,
-  basicUser,
-  ctxCookies,
-  ctxCred,
-  reqDb,
-  reqDocId,
-  reqDocRev,
-  reqHost,
-  reqPort,
-  )
-import Network.HTTP.Client (
-  Request,
-  RequestBody (RequestBodyLBS),
-  applyBasicAuth,
-  cookieJar,
-  host,
-  method,
-  path,
-  port,
-  requestBody,
-  requestHeaders,
-  setQueryString,
-  )
-import Network.HTTP.Types (
-  RequestHeaders,
-  hAccept,
-  hContentType,
-  )
+import           Control.Monad        (return, (>>))
+import           Control.Monad.Reader (Reader, ask, runReader)
+import           Control.Monad.State  (StateT, execStateT, get, put)
+import           Data.Aeson           (ToJSON, encode)
+import           Data.ByteString      (ByteString, intercalate, null)
+import           Data.Default         (def)
+import           Data.Eq              ((==))
+import           Data.Function        (on, ($), (.))
+import           Data.List            (unionBy)
+import           Data.Maybe           (Maybe (Just), maybe)
+import           Data.Monoid          (mempty, (<>))
+import           Data.Tuple           (fst)
+import           Database.Couch.Types (Context, Credentials (Basic), DocId,
+                                       DocRev, basicPass, basicUser, ctxCookies,
+                                       ctxCred, reqDb, reqDocId, reqDocRev,
+                                       reqHost, reqPort)
+import           Network.HTTP.Client  (Request, RequestBody (RequestBodyLBS),
+                                       applyBasicAuth, cookieJar, host, method,
+                                       path, port, requestBody, requestHeaders,
+                                       setQueryString)
+import           Network.HTTP.Types   (RequestHeaders, hAccept, hContentType)
 
 -- | We have several things to track
 data BuilderState =
