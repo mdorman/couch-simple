@@ -123,3 +123,8 @@ toOutputType v =
   case fromJSON v of
     Error e -> failed $ ParseFail $ pack e
     Success a -> return a
+
+standardParse :: FromJSON a => ResponseParser a
+standardParse = do
+  checkStatusCode
+  responseValue >>= toOutputType
