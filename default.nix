@@ -1,5 +1,5 @@
-{ mkDerivation, aeson, attoparsec, base, bytestring
-, bytestring-builder, data-default, either, errors, exceptions
+{ mkDerivation, aeson, attoparsec, base, bytestring, data-default
+, directory, either, errors, exceptions, filepath, hjsonschema
 , hlint, hspec, http-client, http-types, lens, lens-aeson, mtl
 , random, stdenv, tasty, tasty-hunit, text, transformers
 , unordered-containers, uuid
@@ -9,14 +9,15 @@ mkDerivation {
   version = "0.0.0.0";
   src = ./.;
   buildDepends = [
-    aeson attoparsec base bytestring bytestring-builder data-default
-    either exceptions http-client http-types lens mtl text transformers
-    unordered-containers uuid
+    aeson attoparsec base bytestring data-default either exceptions
+    http-client http-types mtl text transformers unordered-containers
+    uuid
   ];
   testDepends = [
-    aeson base data-default either errors hlint hspec http-client
-    http-types lens lens-aeson random tasty tasty-hunit text
-    transformers unordered-containers uuid
+    aeson base bytestring data-default directory either errors filepath
+    hjsonschema hlint hspec http-client http-types lens lens-aeson
+    random tasty tasty-hunit text transformers unordered-containers
+    uuid
   ];
   homepage = "https://github.com/mdorman/couch-simple";
   description = "A lightweight modern client for CouchDB";

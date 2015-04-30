@@ -47,13 +47,17 @@ library
     build-depends: bytestring-builder
 
 
-test-suite test
+test-suite functionality
   build-depends: base >= 4.6 && < 4.10
                , aeson
+               , bytestring
                , couch-simple
                , data-default
+               , directory
                , either
                , errors
+               , filepath
+               , hjsonschema
                , hspec
                , http-client
                , http-types
@@ -69,7 +73,7 @@ test-suite test
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: test
-  main-is: test.hs
+  main-is: Functionality.hs
   type: exitcode-stdio-1.0
 
 test-suite style
