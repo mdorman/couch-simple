@@ -1,0 +1,3 @@
+[submodule "test/schema"]
+	path = test/schema
+	url = https://github.com/mdorman/couch-schema.git
