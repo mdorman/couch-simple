@@ -22,23 +22,18 @@ as) http://docs.couchdb.org/en/1.6.1/api/server/index.html.
 
 module Database.Couch.Explicit.Server where
 
-import           Control.Monad                 (return, (>>=))
+import           Control.Monad                 (return)
 import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (Value)
-import           Data.Bool                     (Bool)
+import           Data.Aeson                    (FromJSON)
 import           Data.Either                   (Either)
-import           Data.Function                 (($), (.))
+import           Data.Function                 (($))
 import           Data.Int                      (Int)
-import           Data.Maybe                    (Maybe (Just), mapMaybe)
+import           Data.Maybe                    (Maybe (Just))
 import           Data.String                   (fromString)
-import           Data.Text                     (Text, intercalate, splitAt)
-import           Data.Text.Encoding            (encodeUtf8)
-import           Data.UUID                     (UUID, fromASCIIBytes)
-import           Database.Couch.Internal       (structureRequest)
+import           Data.Text                     (Text)
+import           Database.Couch.Internal       (standardRequest)
 import           Database.Couch.RequestBuilder (addPath, addQueryParam,
                                                 setMethod)
-import           Database.Couch.ResponseParser (checkStatusCode, getKey,
-                                                responseValue, toOutputType)
 import           Database.Couch.Types          (Context, CouchError)
 import           GHC.Err                       (undefined)
 import           Network.HTTP.Client           (CookieJar)
@@ -48,55 +43,44 @@ import           Text.Show                     (show)
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get-- API documentation>
 --
--- The returned data is variable enough we content ourselves with just
--- returning a 'Value'.
+-- The return value is easily decoded as a 'Value'.
 --
 -- Status: __Complete__
-meta :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
+meta :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 meta =
-  structureRequest request parse
+  standardRequest request
   where
     -- This is actually the default request
     request =
       return ()
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Get a list of active tasks.
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_active_tasks API documentation>
 --
--- The returned data is variable enough we content ourselves with just
--- returning a 'List' of 'Value'.
+-- The return value is easily decoded into a 'List' of 'Value'.
 --
 -- Status: __Complete__
-activeTasks :: MonadIO m => Context -> m (Either CouchError ([Value], Maybe CookieJar))
+activeTasks :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 activeTasks =
-  structureRequest request parse
+  standardRequest request
   where
     request =
       addPath "_active_tasks"
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
--- | Get a list of all databases.
+-- | Get a list of all databases, cooked version.
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_all_dbs API documentation>
 --
--- The returned data is decoded into a 'List' of 'Text'.
+-- The return value is easily decoded into a 'List' of 'Text'.
 --
 -- Status: __Complete__
-allDbs :: MonadIO m => Context -> m (Either CouchError ([Text], Maybe CookieJar))
+allDbs :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 allDbs =
-  structureRequest request parse
+  standardRequest request
   where
     request =
       addPath "_all_dbs"
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Get a list of all database events.
 --
@@ -105,19 +89,15 @@ allDbs =
 -- This call does not stream out results; therefore, it also doesn't
 -- allow any specification of parameters for streaming.
 --
--- The returned data is variable enough we content ourselves with just
--- returning a 'List' of 'Value'.
+-- The return value is easily decoded into a 'List' of 'Value'.
 --
 -- Status: __Limited__
-dbUpdates :: MonadIO m => Context -> m (Either CouchError ([Value], Maybe CookieJar))
+dbUpdates :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 dbUpdates =
-  structureRequest request parse
+  standardRequest request
   where
     request =
       addPath "_db_updates"
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Get the log output of the server
 --
@@ -138,80 +118,57 @@ log = undefined
 -- appropriate query parameters, as well as combinators, localDb and
 -- remoteDb that will produce appropriate Url parameters.
 --
--- The returned data is variable enough we content ourselves with just
--- returning a 'Value'.
+-- The return value is easily decoded into a 'Value'.
 --
 -- Status: __Broken__
-replicate :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
+replicate :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 replicate =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "POST"
       addPath "_replicate"
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Restart the server
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#post--_restart API documentation>
 --
--- The response should indicate whether it accepted the request,
--- though the actual restart will happen at some arbitrary later
--- point.
+-- The return value is easily decoded into a 'Boolean' using 'asBool'.
 --
 -- Status: __Complete__
-restart :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+restart :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 restart =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "POST"
       addPath "_restart"
-    parse = do
-      checkStatusCode
-      getKey "ok" >>= toOutputType
 
 -- | Get server statistics
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_stats API documentation>
 --
--- The returned data is variable enough we content ourselves with just
--- returning a 'Value'.
+-- The return value is easily decoded into a 'Value'.
 --
 -- Status: __Complete__
-stats :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
+stats :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 stats =
-  structureRequest request parse
+  standardRequest request
   where
     request =
       addPath "_stats"
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Get a batch of UUIDs
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--_uuids API documentation>
 --
--- Turns the string output into actual 'UUID's.
+-- The return 'Value' is easily decoded into a list of 'UUID's using 'asUUID'.
 --
 -- Status: __Complete__
-uuids :: MonadIO m => Int -> Context -> m (Either CouchError ([UUID], Maybe CookieJar))
+uuids :: (FromJSON a, MonadIO m) => Int -> Context -> m (Either CouchError (a, Maybe CookieJar))
 uuids count =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       addPath "_uuids"
       addQueryParam [("count", Just $ fromString $ show count)]
-    parse = do
-      checkStatusCode
-      val <- getKey "uuids" >>= toOutputType
-      return $ mapMaybe (fromASCIIBytes . encodeUtf8 . reformatUuid) val
-    reformatUuid s =
-      let (first, second') = splitAt 8 s
-          (second, third') = splitAt 4 second'
-          (third, fourth') = splitAt 4 third'
-          (fourth, fifth) = splitAt 4 fourth'
-      in intercalate "-" [first, second, third, fourth, fifth]
