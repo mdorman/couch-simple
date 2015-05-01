@@ -20,18 +20,19 @@ module Database.Couch.Internal where
 import           Control.Monad                 (return, (>>=))
 import           Control.Monad.Catch           (handle)
 import           Control.Monad.IO.Class        (MonadIO, liftIO)
-import           Data.Aeson                    (Value (Null))
+import           Data.Aeson                    (FromJSON, Value (Null))
 import           Data.Aeson.Parser             (json, value)
 import           Data.Attoparsec.ByteString    (IResult (Done, Fail, Partial),
                                                 Parser, parseWith)
 import           Data.Either                   (Either (Right, Left), either)
 import           Data.Eq                       ((==))
-import           Data.Function                 (const, ($), (.))
+import           Data.Function                 (const, flip, ($), (.))
 import           Data.Maybe                    (Maybe (Just, Nothing))
 import           Data.Monoid                   (mempty)
 import           Data.Text                     (pack)
 import           Database.Couch.RequestBuilder (RequestBuilder, runBuilder)
-import           Database.Couch.ResponseParser (ResponseParser, runParse)
+import           Database.Couch.ResponseParser (ResponseParser, runParse,
+                                                standardParse)
 import           Database.Couch.Types          (Context, CouchError (HttpError, ParseFail, ParseIncomplete),
                                                 ctxCookies, ctxManager)
 import           Network.HTTP.Client           (CookieJar, Manager, Request,
@@ -139,3 +140,14 @@ structures (so a bare "null" or a string or a number).
 valueRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
 valueRequest =
   jsonRequestWithParser value
+
+{- | Make a HTTP request with standard CouchDB semantics
+
+This builds on 'structureRequest', with a standard parser for the
+response.
+
+-}
+
+standardRequest :: (FromJSON a, MonadIO m) => RequestBuilder () -> Context -> m (Either CouchError (a, Maybe CookieJar))
+standardRequest =
+  flip structureRequest standardParse
