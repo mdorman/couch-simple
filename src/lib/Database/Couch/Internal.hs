@@ -85,9 +85,19 @@ rawJsonRequest parser manager request =
       initial <- input
       parseWith input parser initial
 
-mkParsedRequest :: MonadIO m => Parser Value -> RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
-mkParsedRequest jsonParser builder parse context =
-  parsedRequest jsonParser manager request >>= parser
+{- | Higher-level wrapper around 'rawJsonRequest'
+
+Building on top of 'rawJsonRequest', this routine does a lot of the
+repetitious work of setting things up for the lower-level routine.
+
+It's still just a higher-level building-block, intended to be fitted
+with an appropriate JSON parser.
+
+-}
+
+jsonRequestWithParser :: MonadIO m => Parser Value -> RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+jsonRequestWithParser jsonParser builder parse context =
+  rawJsonRequest jsonParser manager request >>= parser
   where
     manager =
       ctxManager context
@@ -100,10 +110,9 @@ mkParsedRequest jsonParser builder parse context =
     checkContextUpdate c a =
       Right (a, if c == ctxCookies context then Nothing else Just c)
 
-
 {- | Define and make an HTTP request returning a JSON structure
 
-Building on top of 'mkParsedRequest', this routine is designed to take
+Building on top of 'jsonRequestWithParser', this routine is designed to take
 a builder for the request and a parser for the result, and use them to
 make our transaction.  This makes for a very declarative style when
 defining individual endpoints for CouchDB.
@@ -117,7 +126,7 @@ jar in their context with it.
 
 makeJsonRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
 makeJsonRequest =
-  mkParsedRequest json
+  jsonRequestWithParser json
 
 {- | Define and make an HTTP request returning a JSON value
 
@@ -128,4 +137,4 @@ in the values that it will parse.
 
 makeValueRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
 makeValueRequest =
-  mkParsedRequest value
+  jsonRequestWithParser value
