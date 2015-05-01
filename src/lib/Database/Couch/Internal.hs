@@ -131,10 +131,11 @@ structureRequest =
 {- | Define and make an HTTP request returning a JSON value
 
 This works identically to 'structureRequest', except it is more liberal
-in the values that it will parse.
+in the values that it will parse---it can parse values that aren't
+structures (so a bare "null" or a string or a number).
 
 -}
 
-makeValueRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
-makeValueRequest =
+valueRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+valueRequest =
   jsonRequestWithParser value

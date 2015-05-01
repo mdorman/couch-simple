@@ -27,8 +27,7 @@ import           Data.Aeson                    (Value)
 import           Data.Either                   (Either)
 import           Data.Maybe                    (Maybe)
 import           Data.Text                     (Text)
-import           Database.Couch.Internal       (makeValueRequest,
-                                                structureRequest)
+import           Database.Couch.Internal       (structureRequest, valueRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDoc, setJsonBody,
                                                 setMethod)
@@ -80,7 +79,7 @@ section s =
 -- Status: __Complete__
 getValue :: MonadIO m => DocId -> DocId -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 getValue s k =
-  makeValueRequest request parse
+  valueRequest request parse
   where
     request =
       configPath s k
@@ -97,7 +96,7 @@ getValue s k =
 -- Status: __Complete__
 setValue :: MonadIO m => DocId -> DocId -> Text -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 setValue s k v =
-  makeValueRequest request parse
+  valueRequest request parse
   where
     request = do
       setMethod "PUT"
@@ -116,7 +115,7 @@ setValue s k v =
 -- Status: __Complete__
 delValue :: MonadIO m => DocId -> DocId -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 delValue s k =
-  makeValueRequest request parse
+  valueRequest request parse
   where
     request = do
       setMethod "DELETE"
