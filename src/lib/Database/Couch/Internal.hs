@@ -124,13 +124,13 @@ jar in their context with it.
 
 -}
 
-makeJsonRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
-makeJsonRequest =
+structureRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+structureRequest =
   jsonRequestWithParser json
 
 {- | Define and make an HTTP request returning a JSON value
 
-This works identically to 'makeJsonRequest', except it is more liberal
+This works identically to 'structureRequest', except it is more liberal
 in the values that it will parse.
 
 -}

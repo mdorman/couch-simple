@@ -36,7 +36,7 @@ import           Data.Maybe                    (Maybe (Just), catMaybes,
                                                 fromJust, isJust)
 import           Data.Text                     (Text)
 import           Data.Text.Encoding            (encodeUtf8)
-import           Database.Couch.Internal       (makeJsonRequest)
+import           Database.Couch.Internal       (structureRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDb, selectDoc, setHeaders,
                                                 setJsonBody, setMethod,
@@ -63,7 +63,7 @@ import           Network.HTTP.Types            (statusCode)
 -- Status: __Complete__
 exists :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
 exists =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       selectDb
@@ -87,7 +87,7 @@ exists =
 -- Status: __Complete__
 meta :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
 meta =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request =
       selectDb
@@ -105,7 +105,7 @@ meta =
 -- Status: __Complete__
 create :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
 create =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       selectDb
@@ -124,7 +124,7 @@ create =
 -- Status: __Complete__
 delete :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
 delete =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       selectDb
@@ -144,7 +144,7 @@ delete =
 -- Status: __Complete__
 createDoc :: (MonadIO m, ToJSON a) => Bool -> a -> Context -> m (Either CouchError (CreateResult, Maybe CookieJar))
 createDoc batch doc =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       selectDb
@@ -168,7 +168,7 @@ createDoc batch doc =
 -- Status: __Complete__
 allDocs :: MonadIO m => DbAllDocs -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 allDocs param =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       selectDb
@@ -191,7 +191,7 @@ allDocs param =
 -- Status: __Limited?__
 someDocs :: MonadIO m => [DocId] -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 someDocs ids =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "POST"
@@ -213,7 +213,7 @@ someDocs ids =
 -- Status: __Complete__
 bulkDocs :: (MonadIO m, ToJSON a) => DbBulkDocs -> [a] -> Context -> m (Either CouchError ([Value], Maybe CookieJar))
 bulkDocs param docs =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "POST"
@@ -243,7 +243,7 @@ bulkDocs param docs =
 -- Status: __Limited__
 changes :: MonadIO m => DbChanges -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 changes param =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       when (isJust $ cLastEvent param)
@@ -270,7 +270,7 @@ compactBase = do
 -- Status: __Complete__
 compact :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
 compact =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request =
       compactBase
@@ -287,7 +287,7 @@ compact =
 -- Status: __Complete__
 compactDesignDoc :: MonadIO m => DocId -> Context -> m (Either CouchError (Bool, Maybe CookieJar))
 compactDesignDoc doc =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       compactBase
@@ -307,7 +307,7 @@ compactDesignDoc doc =
 -- Status: __Complete__
 sync :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
 sync =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "POST"
@@ -327,7 +327,7 @@ sync =
 -- Status: __Complete__
 cleanup :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
 cleanup =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "POST"
@@ -350,7 +350,7 @@ cleanup =
 -- Status: __Complete__
 getSecurity :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
 getSecurity =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "GET"
@@ -373,7 +373,7 @@ getSecurity =
 -- Status: __Complete__
 setSecurity :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
 setSecurity =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "POST"
@@ -392,7 +392,7 @@ setSecurity =
 -- Status: __Complete__
 tempView :: MonadIO m => Text -> Maybe Text -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 tempView map reduce =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "POST"

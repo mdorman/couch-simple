@@ -27,8 +27,8 @@ import           Data.Aeson                    (Value)
 import           Data.Either                   (Either)
 import           Data.Maybe                    (Maybe)
 import           Data.Text                     (Text)
-import           Database.Couch.Internal       (makeJsonRequest,
-                                                makeValueRequest)
+import           Database.Couch.Internal       (makeValueRequest,
+                                                structureRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDoc, setJsonBody,
                                                 setMethod)
@@ -45,7 +45,7 @@ import           Network.HTTP.Client           (CookieJar)
 -- Status: __Complete__
 server :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
 server =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request =
       addPath "_config"
@@ -62,7 +62,7 @@ server =
 -- Status: __Complete__
 section :: MonadIO m => DocId -> Context -> m (Either CouchError (Value, Maybe CookieJar))
 section s =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       addPath "_config"
