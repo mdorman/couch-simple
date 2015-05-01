@@ -64,8 +64,8 @@ say, streaming interfaces.
 
 -}
 
-parsedRequest :: MonadIO m => Parser Value -> Manager -> Request -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
-parsedRequest parser manager request =
+rawJsonRequest :: MonadIO m => Parser Value -> Manager -> Request -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
+rawJsonRequest parser manager request =
   liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager responseHandler)
   where
     -- Simply convert any exception into an HttpError
