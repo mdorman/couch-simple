@@ -12,7 +12,7 @@ import           Data.Function           (($), (.))
 import           Data.Functor            (fmap)
 import           Data.Maybe              (Maybe (Just))
 import           Data.Tuple              (fst, snd)
-import           Database.Couch.Internal (parsedRequest)
+import           Database.Couch.Internal (rawJsonRequest)
 import           Functionality.Util      (checkSchema, runTests)
 import           Network.HTTP.Client     (Manager, RequestBody (RequestBodyLBS),
                                           host, method, path, port, requestBody,
@@ -32,9 +32,9 @@ tests manager = testGroup "Raw JSON interface" [requestRoot manager]
 
 -- The root of the couchdb server provides predictable content
 requestRoot :: Manager -> TestTree
-requestRoot manager = testCaseSteps "Check parsedRequest" $ \step -> do
+requestRoot manager = testCaseSteps "Check rawJsonRequest" $ \step -> do
   step "Request root"
-  res <- parsedRequest json manager def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
+  res <- rawJsonRequest json manager def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
   step "No exception"
   case res of
     Left error -> assertFailure (show error)

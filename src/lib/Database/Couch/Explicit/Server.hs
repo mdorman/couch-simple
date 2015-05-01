@@ -34,7 +34,7 @@ import           Data.String                   (fromString)
 import           Data.Text                     (Text, intercalate, splitAt)
 import           Data.Text.Encoding            (encodeUtf8)
 import           Data.UUID                     (UUID, fromASCIIBytes)
-import           Database.Couch.Internal       (makeJsonRequest)
+import           Database.Couch.Internal       (structureRequest)
 import           Database.Couch.RequestBuilder (addPath, addQueryParam,
                                                 setMethod)
 import           Database.Couch.ResponseParser (checkStatusCode, getKey,
@@ -54,7 +54,7 @@ import           Text.Show                     (show)
 -- Status: __Complete__
 meta :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
 meta =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     -- This is actually the default request
     request =
@@ -73,7 +73,7 @@ meta =
 -- Status: __Complete__
 activeTasks :: MonadIO m => Context -> m (Either CouchError ([Value], Maybe CookieJar))
 activeTasks =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request =
       addPath "_active_tasks"
@@ -90,7 +90,7 @@ activeTasks =
 -- Status: __Complete__
 allDbs :: MonadIO m => Context -> m (Either CouchError ([Text], Maybe CookieJar))
 allDbs =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request =
       addPath "_all_dbs"
@@ -111,7 +111,7 @@ allDbs =
 -- Status: __Limited__
 dbUpdates :: MonadIO m => Context -> m (Either CouchError ([Value], Maybe CookieJar))
 dbUpdates =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request =
       addPath "_db_updates"
@@ -144,7 +144,7 @@ log = undefined
 -- Status: __Broken__
 replicate :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
 replicate =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "POST"
@@ -164,7 +164,7 @@ replicate =
 -- Status: __Complete__
 restart :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
 restart =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       setMethod "POST"
@@ -183,7 +183,7 @@ restart =
 -- Status: __Complete__
 stats :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
 stats =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request =
       addPath "_stats"
@@ -200,7 +200,7 @@ stats =
 -- Status: __Complete__
 uuids :: MonadIO m => Int -> Context -> m (Either CouchError ([UUID], Maybe CookieJar))
 uuids count =
-  makeJsonRequest request parse
+  structureRequest request parse
   where
     request = do
       addPath "_uuids"
