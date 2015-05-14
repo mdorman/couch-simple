@@ -25,14 +25,15 @@ conversions when that is the case.
 
 module Database.Couch.Response where
 
+import           Control.Monad        ((>>=))
 import           Data.Aeson           (FromJSON, Result (Error, Success),
                                        Value (Object), fromJSON)
-import           Data.Bool            (Bool (True))
+import           Data.Bool            (Bool)
 import           Data.Either          (Either (Left, Right))
-import           Data.Function        (const, ($), (.))
+import           Data.Function        (($), (.))
 import           Data.Functor         (fmap)
 import           Data.HashMap.Strict  (lookup)
-import           Data.Maybe           (Maybe, catMaybes, maybe)
+import           Data.Maybe           (Maybe (Just, Nothing), catMaybes, maybe)
 import           Data.String          (fromString)
 import           Data.Text            (intercalate, splitAt)
 import           Data.Text.Encoding   (encodeUtf8)
@@ -61,8 +62,13 @@ asBool :: Either CouchError (Value, Maybe CookieJar) -> Either CouchError (Bool,
 asBool v =
   case v of
     Left x              -> Left x
-    Right (Object o, b) -> maybe (Left NotFound) (Right . const (True, b)) $ lookup "ok" o
+    Right (Object o, b) -> maybe (Left NotFound) (Right . (, b)) $ lookup "ok" o >>= reformat
     _                   -> Left NotFound
+  where
+    reformat i =
+      case fromJSON i of
+        Error _   -> Nothing
+        Success a -> Just a
 
 {- | Attempt to construct a list of 'Data.UUID.UUID' values.
 
