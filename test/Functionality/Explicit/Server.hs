@@ -4,8 +4,6 @@
 module Functionality.Explicit.Server where
 
 import           Control.Applicative            ((<$>))
-import           Control.Monad                  ((>>=))
-import           Data.Either                    (Either (Left, Right))
 import           Data.Foldable                  (for_)
 import           Data.Function                  (($), (.))
 import           Data.List                      (length)
@@ -15,15 +13,13 @@ import qualified Database.Couch.Explicit.Server as Server (activeTasks, allDbs,
                                                            uuids)
 import           Database.Couch.Response        as Response (asUUID)
 import           Database.Couch.Types           (Context)
-import           Functionality.Util             (checkCookiesAndSchema,
-                                                 runTests, serverContext,
-                                                 testAgainstSchema)
+import           Functionality.Util             (runTests, serverContext,
+                                                 testAgainstSchema,
+                                                 testAgainstSchemaAndValue)
 import           Network.HTTP.Client            (Manager)
 import           System.IO                      (IO)
 import           Test.Tasty                     (TestTree, testGroup)
-import           Test.Tasty.HUnit               (assertFailure, testCaseSteps,
-                                                 (@=?))
-import           Text.Show                      (show)
+import           Test.Tasty.HUnit               ((@=?))
 
 _main :: IO ()
 _main = runTests tests
@@ -60,13 +56,8 @@ stats :: IO Context -> TestTree
 stats = testAgainstSchema "Retrieve statistics" Server.stats "get--_stats.json"
 
 uuids :: IO Context -> TestTree
-uuids getContext = testCaseSteps "Retrieve UUIDs" $ \step -> do
-  step "Make request"
-  res <- getContext >>= Server.uuids 1
-  checkCookiesAndSchema step "get--_uuids.json" res
-  case Response.asUUID res of
-    Left error -> assertFailure (show error)
-    Right (values, _) -> do
-      step "Check length of list"
-      length values @=? 1
-      for_ values $ \u -> (length . toString) u @=? 36
+uuids = testAgainstSchemaAndValue "Retrieve UUIDs" (Server.uuids 1) "get--_stats.json" Response.asUUID $ \step val -> do
+  step "Check length of list"
+  length val @=? 1
+  step "Check lengths of items"
+  for_ val $ \u -> (length . toString) u @=? 36

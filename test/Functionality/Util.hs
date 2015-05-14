@@ -10,7 +10,7 @@ import           Data.ByteString.Lazy   (readFile)
 import           Data.Default           (def)
 import           Data.Either            (Either (Left, Right))
 import           Data.Eq                ((==))
-import           Data.Function          (($), (.))
+import           Data.Function          (const, id, ($), (.))
 import           Data.JsonSchema        (RawSchema (..), compile, draft4,
                                          validate)
 import           Data.Maybe             (Maybe (Just, Nothing))
@@ -45,20 +45,45 @@ releaseContext =
 runTests :: (Manager -> TestTree) -> IO ()
 runTests tests = withManager defaultManagerSettings (defaultMain . tests)
 
-testAgainstSchema :: String -> (Context -> IO (Either CouchError (Value, Maybe CookieJar))) -> FilePath -> IO Context -> TestTree
-testAgainstSchema desc function schema getContext = testCaseSteps desc $ \step -> do
-  step "Make request"
-  getContext >>= function >>= checkCookiesAndSchema step schema
+testAgainstSchema :: String
+                  -> (Context -> IO (Either CouchError (Value, Maybe CookieJar)))
+                  -> FilePath
+                  -> IO Context
+                  -> TestTree
+testAgainstSchema desc function schema =
+  testAgainstSchemaAndValue desc function schema id (const . const (return ()))
 
-checkCookiesAndSchema :: (String -> IO ()) -> FilePath -> Either CouchError (Value, Maybe CookieJar) -> IO ()
-checkCookiesAndSchema step schemaFile res = do
+testAgainstSchemaAndValue :: String
+                          -> (Context -> IO (Either CouchError (Value, Maybe CookieJar)))
+                          -> FilePath
+                          -> (Either CouchError (Value, Maybe CookieJar) -> Either CouchError (a, Maybe CookieJar))
+                          -> ((String -> IO ()) -> a -> IO ())
+                          -> IO Context
+                          -> TestTree
+testAgainstSchemaAndValue desc function schema decoder checker getContext = testCaseSteps desc $ \step -> do
+  step "Make request"
+  getContext >>= function >>= checkCookiesAndSchema step schema decoder checker
+
+checkCookiesAndSchema :: (String -> IO ())
+                      -> FilePath
+                      -> (Either CouchError (Value, Maybe CookieJar) -> Either CouchError (a, Maybe CookieJar))
+                      -> ((String -> IO ()) -> a -> IO ())
+                      -> Either CouchError (Value, Maybe CookieJar)
+                      -> IO ()
+checkCookiesAndSchema step schemaFile decoder checker res = do
   step "No exception"
   case res of
     Left err -> assertFailure (show err)
-    Right (value, cookieJar) -> do
+    Right (json, cookieJar) -> do
       step "Empty cookie jar"
       def @=? cookieJar
-      checkSchema step value schemaFile
+      checkSchema step json schemaFile
+      step $ "Decoding json: " <> show json
+      case decoder res of
+        Left err -> assertFailure (show err)
+        Right (val, _) -> do
+          step "Checking value"
+          checker step val
 
 checkSchema :: IsString s => (s -> IO ()) -> Value -> FilePath -> IO ()
 checkSchema step value schemaName = do
