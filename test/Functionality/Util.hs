@@ -63,7 +63,7 @@ checkCookiesAndSchema step schemaFile res = do
 checkSchema :: IsString s => (s -> IO ()) -> Value -> FilePath -> IO ()
 checkSchema step value schemaName = do
   step "Checking result against schema"
-  schema <- loadSchema ("test/schema" </> schemaName)
+  schema <- loadSchema ("test/schema/schema" </> schemaName)
   validate (compile draft4 mempty schema) value @=? mempty
 
 loadSchema :: FilePath -> IO RawSchema
