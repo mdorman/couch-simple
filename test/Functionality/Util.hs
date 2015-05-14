@@ -32,15 +32,14 @@ import           Text.Show              (show)
 
 dbContext :: MonadIO m => Manager -> m Context
 dbContext manager = do
-  uuid <- liftM (fromString . ("aaa" <>) . toString) (liftIO randomIO)
+  uuid <- liftM (fromString . ("test-" <>) . toString) (liftIO randomIO)
   return $ Context manager "localhost" (Port 5984) Nothing def (Just uuid)
 
 serverContext :: MonadIO m => Manager -> m Context
 serverContext manager = return $ Context manager "localhost" (Port 5984) Nothing def Nothing
 
 releaseContext :: Context -> IO ()
-releaseContext =
-  closeManager . ctxManager
+releaseContext = closeManager . ctxManager
 
 runTests :: (Manager -> TestTree) -> IO ()
 runTests tests = withManager defaultManagerSettings (defaultMain . tests)
