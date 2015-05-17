@@ -44,6 +44,26 @@ releaseContext = closeManager . ctxManager
 runTests :: (Manager -> TestTree) -> IO ()
 runTests tests = withManager defaultManagerSettings (defaultMain . tests)
 
+testAgainstFailure :: String
+                  -> (Context -> IO (Either CouchError (Value, Maybe CookieJar)))
+                  -> CouchError
+                  -> IO Context
+                  -> TestTree
+testAgainstFailure desc function exception getContext = testCaseSteps desc $ \step -> do
+  step "Make request"
+  getContext >>= function >>= checkException step exception
+
+checkException :: (String -> IO ())
+               -> CouchError
+               -> Either CouchError (Value, Maybe CookieJar)
+               -> IO ()
+checkException step exception res = do
+  step "Got an exception"
+  case res of
+    -- HttpException isn't Eqable, so we simply coerce with show
+    Left err -> show exception @=? show err
+    Right _ -> assertFailure "Didn't get expected exception"
+
 testAgainstSchema :: String
                   -> (Context -> IO (Either CouchError (Value, Maybe CookieJar)))
                   -> FilePath
