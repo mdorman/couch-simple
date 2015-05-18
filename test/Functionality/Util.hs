@@ -3,32 +3,39 @@
 
 module Functionality.Util where
 
-import           Control.Monad          (liftM, return, (>>=))
-import           Control.Monad.IO.Class (MonadIO, liftIO)
-import           Data.Aeson             (Value (Object), decode)
-import           Data.ByteString.Lazy   (readFile)
-import           Data.Default           (def)
-import           Data.Either            (Either (Left, Right))
-import           Data.Eq                ((==))
-import           Data.Function          (const, id, ($), (.))
-import           Data.JsonSchema        (RawSchema (..), compile, draft4,
-                                         validate)
-import           Data.Maybe             (Maybe (Just, Nothing))
-import           Data.Monoid            (mempty, (<>))
-import           Data.String            (IsString, String, fromString)
-import           Data.UUID              (toString)
-import           Database.Couch.Types   (Context (Context), CouchError (..),
-                                         Port (Port), ctxManager)
-import           GHC.Err                (error)
-import           Network.HTTP.Client    (CookieJar, Manager, closeManager,
-                                         defaultManagerSettings, withManager)
-import           System.Directory       (doesFileExist, getCurrentDirectory)
-import           System.FilePath        (takeDirectory, (</>))
-import           System.IO              (FilePath, IO)
-import           System.Random          (randomIO)
-import           Test.Tasty             (TestTree, defaultMain)
-import           Test.Tasty.HUnit       (assertFailure, testCaseSteps, (@=?))
-import           Text.Show              (show)
+import           Control.Monad                    (liftM, return, (>=>), (>>=))
+import           Control.Monad.IO.Class           (MonadIO, liftIO)
+import           Data.Aeson                       (Value (Object), decode)
+import           Data.ByteString.Lazy             (readFile)
+import           Data.Default                     (def)
+import           Data.Either                      (Either (Left, Right))
+import           Data.Eq                          ((==))
+import           Data.Function                    (const, id, ($), (.))
+import           Data.JsonSchema                  (RawSchema (..), compile,
+                                                   draft4, validate)
+import           Data.Maybe                       (Maybe (Just, Nothing))
+import           Data.Monoid                      (mempty, (<>))
+import           Data.String                      (IsString, String, fromString)
+import           Data.UUID                        (toString)
+import qualified Database.Couch.Explicit.Database as Database (create, delete)
+import           Database.Couch.Types             (Context (Context),
+                                                   CouchError (..), Port (Port),
+                                                   ctxManager)
+import           GHC.Err                          (error)
+import           Network.HTTP.Client              (CookieJar, Manager,
+                                                   closeManager,
+                                                   defaultManagerSettings,
+                                                   withManager)
+import           System.Directory                 (doesFileExist,
+                                                   getCurrentDirectory)
+import           System.FilePath                  (takeDirectory, (</>))
+import           System.IO                        (FilePath, IO)
+import           System.Random                    (randomIO)
+import           Test.Tasty                       (TestTree, defaultMain,
+                                                   withResource)
+import           Test.Tasty.HUnit                 (assertFailure, testCaseSteps,
+                                                   (@=?))
+import           Text.Show                        (show)
 
 dbContext :: MonadIO m => Manager -> m Context
 dbContext manager = do
@@ -63,6 +70,20 @@ checkException step exception res = do
     -- HttpException isn't Eqable, so we simply coerce with show
     Left err -> show exception @=? show err
     Right _ -> assertFailure "Didn't get expected exception"
+
+throwOnError :: Either CouchError (a, Maybe CookieJar) -> IO ()
+throwOnError res =
+  case res of
+   Left err -> error $ show err
+   Right _ -> return ()
+
+withDb :: IO Context -> (IO Context -> TestTree) -> TestTree
+withDb getContext =
+  withResource (getContext >>= createTempDb) (Database.delete >=> throwOnError)
+  where
+    createTempDb ctx = do
+      Database.create ctx >>= throwOnError
+      return ctx
 
 testAgainstSchema :: String
                   -> (Context -> IO (Either CouchError (Value, Maybe CookieJar)))
