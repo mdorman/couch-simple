@@ -129,7 +129,9 @@ checkSchema :: IsString s => (s -> IO ()) -> Value -> FilePath -> IO ()
 checkSchema step value schemaName = do
   step "Checking result against schema"
   schema <- loadSchema ("test/schema/schema" </> schemaName)
-  validate (compile draft4 mempty schema) value @=? mempty
+  case validate (compile draft4 mempty schema) value of
+    Left err -> assertFailure (show err)
+    Right _ -> return ()
 
 loadSchema :: FilePath -> IO RawSchema
 loadSchema file = do
