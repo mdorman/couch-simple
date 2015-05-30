@@ -58,7 +58,7 @@ test-suite functionality
                , either
                , errors
                , filepath
-               , hjsonschema
+               , hjsonschema >= 0.6
                , hspec
                , http-client
                , http-types
