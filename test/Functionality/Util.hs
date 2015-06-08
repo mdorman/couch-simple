@@ -69,7 +69,7 @@ checkException step exception res = do
   case res of
     -- HttpException isn't Eqable, so we simply coerce with show
     Left err -> show exception @=? show err
-    Right _ -> assertFailure "Didn't get expected exception"
+    Right val -> assertFailure $ unwords ["Didn't get expected exception", show exception, "instead", show val]
 
 throwOnError :: Either CouchError (a, Maybe CookieJar) -> IO ()
 throwOnError res =
