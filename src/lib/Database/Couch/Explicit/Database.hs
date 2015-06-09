@@ -266,16 +266,13 @@ compact =
 -- Run the compaction process on the views associated with the specified design document
 --
 -- Status: __Complete__
-compactDesignDoc :: MonadIO m => DocId -> Context -> m (Either CouchError (Bool, Maybe CookieJar))
+compactDesignDoc :: (FromJSON a, MonadIO m) => DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
 compactDesignDoc doc =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       compactBase
       selectDoc doc
-    parse = do
-      checkStatusCode
-      getKey "ok" >>= toOutputType
 
 -- | Ensure that all changes to the database have made it to disk
 --
