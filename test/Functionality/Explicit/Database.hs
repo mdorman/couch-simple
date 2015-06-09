@@ -12,14 +12,16 @@ import           Data.Bool                        (Bool (False, True))
 import           Data.Function                    (($))
 import           Data.HashMap.Strict              (lookup)
 import           Data.Maybe                       (Maybe (Just))
-import qualified Database.Couch.Explicit.Database as Database (allDocs, create,
+import qualified Database.Couch.Explicit.Database as Database (allDocs,
+                                                               bulkDocs, create,
                                                                createDoc,
                                                                delete, exists,
                                                                meta, someDocs)
 import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
 import           Database.Couch.Types             (Context (ctxDb),
-                                                   CouchError (..), dbAllDocs)
+                                                   CouchError (..), dbAllDocs,
+                                                   dbBulkDocsParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema,
@@ -42,6 +44,7 @@ tests = makeTests "Tests of the database interface"
           , databaseCreateDoc
           , databaseAllDocs
           , databaseSomeDocs
+          , databaseBulkDocs
           ]
 
 -- Database-oriented functions
@@ -146,3 +149,10 @@ databaseSomeDocs =
                                                               Response.asAnything $ \step (val :: Object) -> do
                                                      step "Check number of items in database"
                                                      lookup "total_rows" val @=? Just (Number 2)]
+
+databaseBulkDocs :: IO Context -> TestTree
+databaseBulkDocs =
+  makeTests "Database update documents in bulk"
+    [ withDb $ testAgainstSchema "Empty list of documents" (Database.bulkDocs dbBulkDocsParam [])
+      "post--db-_bulk_docs.json"
+    ]
