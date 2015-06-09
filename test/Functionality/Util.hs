@@ -5,19 +5,23 @@ module Functionality.Util where
 
 import           Control.Monad                    (liftM, return, (>=>), (>>=))
 import           Control.Monad.IO.Class           (MonadIO, liftIO)
-import           Data.Aeson                       (Value (Object), decode)
+import           Data.Aeson                       (FromJSON, Value (Object),
+                                                   decode)
 import           Data.ByteString.Lazy             (readFile)
 import           Data.Default                     (def)
 import           Data.Either                      (Either (Left, Right))
 import           Data.Eq                          ((==))
 import           Data.Function                    (const, id, ($), (.))
+import           Data.Functor                     (fmap, (<$>))
 import           Data.JsonSchema                  (RawSchema (..), compile,
                                                    draft4, validate)
 import           Data.Maybe                       (Maybe (Just, Nothing))
 import           Data.Monoid                      (mempty, (<>))
-import           Data.String                      (IsString, String, fromString, unwords)
+import           Data.String                      (IsString, String, fromString,
+                                                   unwords)
 import           Data.UUID                        (toString)
 import qualified Database.Couch.Explicit.Database as Database (create, delete)
+import qualified Database.Couch.Response          as Response (asBool)
 import           Database.Couch.Types             (Context (Context),
                                                    CouchError (..), Port (Port),
                                                    ctxManager)
@@ -71,7 +75,7 @@ checkException step exception res = do
     Left err -> show exception @=? show err
     Right val -> assertFailure $ unwords ["Didn't get expected exception", show exception, "instead", show val]
 
-throwOnError :: Either CouchError (a, Maybe CookieJar) -> IO ()
+throwOnError :: FromJSON a => Either CouchError (a, Maybe CookieJar) -> IO ()
 throwOnError res =
   case res of
    Left err -> error $ show err
@@ -79,10 +83,10 @@ throwOnError res =
 
 withDb :: IO Context -> (IO Context -> TestTree) -> TestTree
 withDb getContext =
-  withResource (getContext >>= createTempDb) (Database.delete >=> throwOnError)
+  withResource (getContext >>= createTempDb) (fmap Response.asBool . Database.delete >=> throwOnError)
   where
     createTempDb ctx = do
-      Database.create ctx >>= throwOnError
+      Response.asBool <$> Database.create ctx >>= throwOnError
       return ctx
 
 testAgainstSchema :: String

@@ -26,7 +26,8 @@ module Database.Couch.Explicit.Database where
 import           Control.Applicative           ((<$>), (<*>))
 import           Control.Monad                 (return, when, (>>=))
 import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (ToJSON, Value (Object), toJSON)
+import           Data.Aeson                    (FromJSON, ToJSON,
+                                                Value (Object), toJSON)
 import           Data.Bool                     (Bool (False, True))
 import           Data.Either                   (Either)
 import           Data.Function                 (($), (.))
@@ -36,7 +37,8 @@ import           Data.Maybe                    (Maybe (Just), catMaybes,
                                                 fromJust, isJust)
 import           Data.Text                     (Text)
 import           Data.Text.Encoding            (encodeUtf8)
-import           Database.Couch.Internal       (structureRequest)
+import           Database.Couch.Internal       (standardRequest,
+                                                structureRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDb, selectDoc, setHeaders,
                                                 setJsonBody, setMethod,
@@ -103,16 +105,13 @@ meta =
 -- returning a 'Value'.
 --
 -- Status: __Complete__
-create :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+create :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 create =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       selectDb
       setMethod "PUT"
-    parse = do
-      checkStatusCode
-      return True
 
 -- | delete a database
 --
@@ -122,16 +121,13 @@ create =
 -- returning a 'Value'.
 --
 -- Status: __Complete__
-delete :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+delete :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 delete =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       selectDb
       setMethod "DELETE"
-    parse = do
-      checkStatusCode
-      return True
 
 -- | create a new document in a database
 --
