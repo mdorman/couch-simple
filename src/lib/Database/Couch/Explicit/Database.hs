@@ -27,8 +27,8 @@ import           Control.Applicative           ((<$>), (<*>))
 import           Control.Monad                 (return, when, (>>=))
 import           Control.Monad.IO.Class        (MonadIO)
 import           Data.Aeson                    (FromJSON, ToJSON,
-                                                Value (Object), toJSON)
-import           Data.Bool                     (Bool (False, True))
+                                                Value (Object), object, toJSON)
+import           Data.Bool                     (Bool (True))
 import           Data.Either                   (Either)
 import           Data.Function                 (($), (.))
 import           Data.Functor                  (fmap)
@@ -46,7 +46,8 @@ import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
 import           Database.Couch.ResponseParser (checkStatusCode, failed, getKey,
                                                 responseStatus, responseValue,
                                                 toOutputType)
-import           Database.Couch.Types          (Context, CouchError (Unknown),
+import           Database.Couch.Types          (Context,
+                                                CouchError (NotFound, Unknown),
                                                 CreateResult (WithRev, NoRev),
                                                 DbAllDocs, DbBulkDocs,
                                                 DbChanges, DocId,
@@ -63,7 +64,7 @@ import           Network.HTTP.Types            (statusCode)
 -- Returns 'False' or 'True' as appropriate.
 --
 -- Status: __Complete__
-exists :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+exists :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 exists =
   structureRequest request parse
   where
@@ -71,13 +72,12 @@ exists =
       selectDb
       setMethod "HEAD"
     parse = do
-      -- Check status codes by hand because we don't want 404 to be an
-      -- error, just False
+      -- Check status codes by hand because we don't want 404 to be an error, just False
       s <- responseStatus
       case statusCode s of
-       200 -> return True
-       404 -> return False
-       _   -> failed Unknown
+        200 -> toOutputType $ object [("ok", toJSON True)]
+        404 -> failed NotFound
+        _   -> failed Unknown
 
 -- | Get most basic meta-information.
 --
