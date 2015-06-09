@@ -15,7 +15,7 @@ import           Data.JsonSchema                  (RawSchema (..), compile,
                                                    draft4, validate)
 import           Data.Maybe                       (Maybe (Just, Nothing))
 import           Data.Monoid                      (mempty, (<>))
-import           Data.String                      (IsString, String, fromString)
+import           Data.String                      (IsString, String, fromString, unwords)
 import           Data.UUID                        (toString)
 import qualified Database.Couch.Explicit.Database as Database (create, delete)
 import           Database.Couch.Types             (Context (Context),
@@ -69,7 +69,7 @@ checkException step exception res = do
   case res of
     -- HttpException isn't Eqable, so we simply coerce with show
     Left err -> show exception @=? show err
-    Right _ -> assertFailure "Didn't get expected exception"
+    Right val -> assertFailure $ unwords ["Didn't get expected exception", show exception, "instead", show val]
 
 throwOnError :: Either CouchError (a, Maybe CookieJar) -> IO ()
 throwOnError res =
@@ -130,7 +130,7 @@ checkSchema step value schemaName = do
   step "Checking result against schema"
   schema <- loadSchema ("test/schema/schema" </> schemaName)
   case validate (compile draft4 mempty schema) value of
-    Left err -> assertFailure (show err)
+    Left err -> assertFailure $ unwords ["Failed to validate", show value, ":", show err]
     Right _ -> return ()
 
 loadSchema :: FilePath -> IO RawSchema
