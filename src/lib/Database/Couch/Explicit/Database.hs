@@ -171,19 +171,16 @@ allDocs param =
 -- returning a 'List' of 'Value'.
 --
 -- Status: __Limited?__
-someDocs :: MonadIO m => [DocId] -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+someDocs :: (FromJSON a, MonadIO m) => [DocId] -> Context -> m (Either CouchError (a, Maybe CookieJar))
 someDocs ids =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "POST"
       selectDb
       addPath "_all_docs"
-      let parameters = Object (fromList [("keys",toJSON ids)])
+      let parameters = Object (fromList [("keys", toJSON ids)])
       setJsonBody parameters
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Create or update a list of documents.
 --

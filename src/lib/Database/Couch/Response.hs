@@ -25,19 +25,32 @@ conversions when that is the case.
 
 module Database.Couch.Response where
 
-import           Data.Aeson           (Result (Error, Success), Value (Object),
-                                       fromJSON)
+import           Data.Aeson           (FromJSON, Result (Error, Success),
+                                       Value (Object), fromJSON)
 import           Data.Bool            (Bool (True))
 import           Data.Either          (Either (Left, Right))
 import           Data.Function        (const, ($), (.))
 import           Data.Functor         (fmap)
 import           Data.HashMap.Strict  (lookup)
 import           Data.Maybe           (Maybe, catMaybes, maybe)
+import           Data.String          (fromString)
 import           Data.Text            (intercalate, splitAt)
 import           Data.Text.Encoding   (encodeUtf8)
 import           Data.UUID            (UUID, fromASCIIBytes)
 import           Database.Couch.Types (CouchError (NotFound, ParseFail))
 import           Network.HTTP.Client  (CookieJar)
+
+{- | Attempt to decode the value into anything with a FromJSON constraint.
+
+-}
+
+asAnything :: FromJSON a => Either CouchError (Value, Maybe CookieJar) -> Either CouchError (a, Maybe CookieJar)
+asAnything v =
+  case v of
+    Left x             -> Left x
+    Right (a, b) -> case fromJSON a of
+      Error e   -> (Left . ParseFail . fromString) e
+      Success s -> Right (s, b)
 
 {- | Attempt to construct a 'Data.Bool.Bool' value.
 
