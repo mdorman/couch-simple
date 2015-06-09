@@ -241,9 +241,9 @@ changes param =
 -- | Encode the common bits for our two compact calls
 compactBase :: RequestBuilder ()
 compactBase = do
-      setMethod "POST"
-      selectDb
-      addPath "_compact"
+  setMethod "POST"
+  selectDb
+  addPath "_compact"
 
 -- | Compact a database
 --
