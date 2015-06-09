@@ -13,7 +13,8 @@ import           Data.Function                    (($))
 import           Data.HashMap.Strict              (lookup)
 import           Data.Maybe                       (Maybe (Just))
 import qualified Database.Couch.Explicit.Database as Database (allDocs,
-                                                               bulkDocs, create,
+                                                               bulkDocs,
+                                                               changes, create,
                                                                createDoc,
                                                                delete, exists,
                                                                meta, someDocs)
@@ -21,7 +22,8 @@ import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
 import           Database.Couch.Types             (Context (ctxDb),
                                                    CouchError (..), dbAllDocs,
-                                                   dbBulkDocsParam)
+                                                   dbBulkDocsParam,
+                                                   dbChangesParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema,
@@ -45,6 +47,7 @@ tests = makeTests "Tests of the database interface"
           , databaseAllDocs
           , databaseSomeDocs
           , databaseBulkDocs
+          , databaseChanges
           ]
 
 -- Database-oriented functions
@@ -156,3 +159,10 @@ databaseBulkDocs =
     [ withDb $ testAgainstSchema "Empty list of documents" (Database.bulkDocs dbBulkDocsParam [])
       "post--db-_bulk_docs.json"
     ]
+
+databaseChanges :: IO Context -> TestTree
+databaseChanges =
+  makeTests "Database update documents in bulk"
+  [ withDb $ testAgainstSchema "Empty list of documents" (Database.changes dbChangesParam)
+    "get--db-_changes.json"
+  ]
