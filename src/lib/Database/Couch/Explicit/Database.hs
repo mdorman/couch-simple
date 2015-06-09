@@ -252,15 +252,12 @@ compactBase = do
 -- Run the compaction process on an entire database
 --
 -- Status: __Complete__
-compact :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+compact :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 compact =
-  structureRequest request parse
+  standardRequest request
   where
     request =
       compactBase
-    parse = do
-      checkStatusCode
-      getKey "ok" >>= toOutputType
 
 -- | Compact the views attached to a particular design document
 --
