@@ -87,15 +87,12 @@ exists =
 -- returning a 'Value'.
 --
 -- Status: __Complete__
-meta :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
+meta :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 meta =
-  structureRequest request parse
+  standardRequest request
   where
     request =
       selectDb
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Create a database
 --
