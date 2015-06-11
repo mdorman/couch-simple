@@ -40,7 +40,7 @@ import           Data.Text                  (Text, pack)
 import           Data.Text.Encoding         (decodeUtf8)
 import           Data.Text.Read             (decimal)
 import           Data.Tuple                 (fst, snd)
-import           Database.Couch.Types       (CouchError (AlreadyExists, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
+import           Database.Couch.Types       (CouchError (AlreadyExists, Conflict, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
                                              DocRev (DocRev))
 import           Network.HTTP.Client        (HttpException (StatusCodeException))
 import           Network.HTTP.Types         (HeaderName, ResponseHeaders,
@@ -88,6 +88,7 @@ checkStatusCode = do
       failed $ InvalidName error
     401 -> failed Unauthorized
     404 -> failed NotFound
+    409 -> failed Conflict
     412 -> failed AlreadyExists
     415 -> failed $ ImplementationError "The server says we sent a bad content type, which shouldn't happen.  Please open an issue at https://github.com/mdorman/couch-simple/issues with a test case if possible."
     _   -> failed $ HttpError (StatusCodeException s h mempty)
