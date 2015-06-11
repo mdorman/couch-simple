@@ -135,21 +135,15 @@ delete =
 -- 'DocRev' in that circumstance.
 --
 -- Status: __Complete__
-createDoc :: (MonadIO m, ToJSON a) => Bool -> a -> Context -> m (Either CouchError (CreateResult, Maybe CookieJar))
+createDoc :: (FromJSON a, MonadIO m, ToJSON a) => Bool -> a -> Context -> m (Either CouchError (a, Maybe CookieJar))
 createDoc batch doc =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       selectDb
       setMethod "POST"
-      when batch
-        (setQueryParam [("batch", Just "ok")])
+      when batch (setQueryParam [("batch", Just "ok")])
       setJsonBody doc
-    parse = do
-      checkStatusCode
-      if batch
-        then NoRev <$> (getKey "id" >>= toOutputType)
-        else WithRev <$> (getKey "id" >>= toOutputType) <*> (getKey "rev" >>= toOutputType)
 
 -- | Get a list of all database documents.
 --
