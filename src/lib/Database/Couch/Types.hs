@@ -44,6 +44,8 @@ will consistently be ('Either' 'CouchError', a).
 data CouchError
   -- | The database already exists
   = AlreadyExists
+  -- | The document already exists, and without the appropriate rev
+  | Conflict
   -- | The server complained about the content of our request.  Sounds
   -- like the library is broken. :(
   | HttpError HttpException
