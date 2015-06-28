@@ -23,7 +23,6 @@ as) http://docs.couchdb.org/en/1.6.1/api/database/index.html.
 
 module Database.Couch.Explicit.Database where
 
-import           Control.Applicative           ((<$>), (<*>))
 import           Control.Monad                 (return, when, (>>=))
 import           Control.Monad.IO.Class        (MonadIO)
 import           Data.Aeson                    (FromJSON, ToJSON,
@@ -48,7 +47,6 @@ import           Database.Couch.ResponseParser (checkStatusCode, failed, getKey,
                                                 toOutputType)
 import           Database.Couch.Types          (Context,
                                                 CouchError (NotFound, Unknown),
-                                                CreateResult (WithRev, NoRev),
                                                 DbAllDocs, DbBulkDocs,
                                                 DbChanges, DocId,
                                                 bdAllOrNothing, bdFullCommit,
