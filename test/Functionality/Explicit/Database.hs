@@ -10,13 +10,13 @@ import           Data.Bool                        (Bool (False, True))
 import           Data.Function                    (($))
 import           Data.Functor                     (fmap)
 import           Data.Maybe                       (Maybe (Just))
-import qualified Database.Couch.Explicit.Database as Database (create,
+import qualified Database.Couch.Explicit.Database as Database (allDocs, create,
                                                                createDoc,
                                                                delete, exists,
                                                                meta)
 import qualified Database.Couch.Response          as Response (asBool)
 import           Database.Couch.Types             (Context (ctxDb),
-                                                   CouchError (..))
+                                                   CouchError (..), dbAllDocs)
 import           Functionality.Util               (dbContext, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema, withDb)
@@ -29,7 +29,7 @@ _main = runTests tests
 
 tests :: Manager -> TestTree
 tests manager = testGroup "Tests of the database interface" $
-  ($ dbContext manager) <$> [databaseExists, databaseMeta, databaseCreate, databaseDelete, databaseCreateDoc]
+  ($ dbContext manager) <$> [databaseExists, databaseMeta, databaseCreate, databaseDelete, databaseCreateDoc, databaseAllDocs]
 
 -- Database-oriented functions
 databaseExists :: IO Context -> TestTree
@@ -78,4 +78,14 @@ databaseCreateDoc getContext =
       withDb getContext $ testAgainstFailure "Try to create a document twice" (\c -> do
                                                                                    void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                                                                                    Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c) Conflict
+  ]
+
+databaseAllDocs :: IO Context -> TestTree
+databaseAllDocs getContext =
+  testGroup "Database retrieve all document"
+  [
+    withDb getContext $ testAgainstSchema "Result of completely fresh database"  (Database.allDocs dbAllDocs) "get--db-_all_docs.json",
+    withDb getContext $ testAgainstSchema "Add a record and get all docs"  (\c -> do
+                                                                                      void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                                                                                      Database.allDocs dbAllDocs c) "get--db-_all_docs.json"
   ]

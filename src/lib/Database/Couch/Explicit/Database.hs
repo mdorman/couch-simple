@@ -151,17 +151,14 @@ createDoc batch doc =
 -- a 'Value' for you to take apart.
 --
 -- Status: __Complete__
-allDocs :: MonadIO m => DbAllDocs -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+allDocs :: (FromJSON a, MonadIO m) => DbAllDocs -> Context -> m (Either CouchError (a, Maybe CookieJar))
 allDocs param =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       selectDb
       addPath "_all_docs"
       setQueryParam $ toQueryParameters param
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Get a list of some database documents.
 --
