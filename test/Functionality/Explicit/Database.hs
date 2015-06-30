@@ -1,35 +1,42 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Functionality.Explicit.Database where
 
 import           Control.Applicative              ((<$>))
 import           Control.Monad                    (void, (>>))
-import           Data.Aeson                       (Value (Bool), object)
+import           Data.Aeson                       (Object, Value (Bool, Number),
+                                                   object)
 import           Data.Bool                        (Bool (False, True))
 import           Data.Function                    (($))
 import           Data.Functor                     (fmap)
+import           Data.HashMap.Strict              (lookup)
 import           Data.Maybe                       (Maybe (Just))
 import qualified Database.Couch.Explicit.Database as Database (allDocs, create,
                                                                createDoc,
                                                                delete, exists,
-                                                               meta)
-import qualified Database.Couch.Response          as Response (asBool)
+                                                               meta, someDocs)
+import qualified Database.Couch.Response          as Response (asAnything,
+                                                               asBool)
 import           Database.Couch.Types             (Context (ctxDb),
                                                    CouchError (..), dbAllDocs)
 import           Functionality.Util               (dbContext, runTests,
                                                    testAgainstFailure,
-                                                   testAgainstSchema, withDb)
+                                                   testAgainstSchema,
+                                                   testAgainstSchemaAndValue,
+                                                   withDb)
 import           Network.HTTP.Client              (Manager)
 import           System.IO                        (IO)
 import           Test.Tasty                       (TestTree, testGroup)
+import           Test.Tasty.HUnit                 ((@=?))
 
 _main :: IO ()
 _main = runTests tests
 
 tests :: Manager -> TestTree
 tests manager = testGroup "Tests of the database interface" $
-  ($ dbContext manager) <$> [databaseExists, databaseMeta, databaseCreate, databaseDelete, databaseCreateDoc, databaseAllDocs]
+  ($ dbContext manager) <$> [databaseExists, databaseMeta, databaseCreate, databaseDelete, databaseCreateDoc, databaseAllDocs, databaseSomeDocs]
 
 -- Database-oriented functions
 databaseExists :: IO Context -> TestTree
@@ -89,3 +96,18 @@ databaseAllDocs getContext =
                                                                                       void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                                                                                       Database.allDocs dbAllDocs c) "get--db-_all_docs.json"
   ]
+
+databaseSomeDocs :: IO Context -> TestTree
+databaseSomeDocs getContext =
+  testGroup "Database retrieve some documents"
+  [
+    withDb getContext $ testAgainstSchemaAndValue "Result of completely fresh database" (Database.someDocs ["llama", "tron"]) "get--db-_all_docs.json" Response.asAnything $ \step (val :: Object) -> do
+        step "Check number of items in database"
+        lookup "total_rows" val @=? Just (Number 0),
+    withDb getContext $ testAgainstSchemaAndValue "Add a record and get all docs"  (\c -> do
+                                                                                        void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                                                                                        void $ Database.createDoc False (object [("_id", "bar"), ("llamas", Bool True)]) c
+                                                                                        Database.someDocs ["foo"] c) "get--db-_all_docs.json" Response.asAnything $ \step (val :: Object) -> do
+      step "Check number of items in database"
+      lookup "total_rows" val @=? Just (Number 2)
+ ]
