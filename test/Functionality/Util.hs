@@ -81,9 +81,9 @@ throwOnError res =
    Left err -> error $ show err
    Right _ -> return ()
 
-withDb :: IO Context -> (IO Context -> TestTree) -> TestTree
-withDb getContext =
-  withResource (getContext >>= createTempDb) (fmap Response.asBool . Database.delete >=> throwOnError)
+withDb :: (IO Context -> TestTree) -> IO Context -> TestTree
+withDb test getContext =
+  withResource (getContext >>= createTempDb) (fmap Response.asBool . Database.delete >=> throwOnError) test
   where
     createTempDb ctx = do
       Response.asBool <$> Database.create ctx >>= throwOnError

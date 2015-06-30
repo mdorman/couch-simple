@@ -44,7 +44,7 @@ databaseExists getContext =
   testGroup "Database existence"
     [
       testAgainstFailure "Randomly named database should not exist" Database.exists NotFound getContext,
-      withDb getContext $ testAgainstSchema "Check for an existing database" Database.exists "head--db.json"
+      withDb (testAgainstSchema "Check for an existing database" Database.exists "head--db.json") getContext
     ]
 
 databaseMeta :: IO Context -> TestTree
@@ -52,7 +52,7 @@ databaseMeta getContext =
   testGroup "Database metadata"
   [
       testAgainstFailure "No metadata on non-existent database" Database.meta NotFound getContext,
-      withDb getContext $ testAgainstSchema "Metadata for an existing database" Database.meta "get--db.json"
+      withDb (testAgainstSchema "Metadata for an existing database" Database.meta "get--db.json") getContext
   ]
 
 databaseCreate :: IO Context -> TestTree
@@ -60,7 +60,7 @@ databaseCreate getContext =
   testGroup "Database creation"
   [
     testAgainstFailure "Invalid name is not accepted" Database.create (InvalidName "Name: '1111'. Only lowercase characters (a-z), digits (0-9), and any of the characters _, $, (, ), +, -, and / are allowed. Must begin with a letter.") (fmap (\c -> c { ctxDb = Just "1111" }) getContext),
-    withDb getContext $ testAgainstFailure "Invalid name is not accepted" Database.create AlreadyExists,
+    withDb (testAgainstFailure "Invalid name is not accepted" Database.create AlreadyExists) getContext,
     testAgainstSchema "Result of creating a new database" Database.create "put--db.json" getContext
   ]
 
@@ -77,37 +77,37 @@ databaseCreateDoc :: IO Context -> TestTree
 databaseCreateDoc getContext =
   testGroup "Database create document"
   [
-      withDb getContext $ testAgainstSchema "Create a document without _id, immediate mode" (Database.createDoc False (object [("llamas", Bool True)])) "post--db.json",
-      withDb getContext $ testAgainstSchema "Create a document without _id, batch mode" (Database.createDoc True (object [("llamas", Bool True)])) "post--db.json",
-      withDb getContext $ testAgainstSchema "Create a document with _id, immediate mode" (Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)])) "post--db.json",
-      withDb getContext $ testAgainstSchema "Create a document with _id, batch mode" (Database.createDoc True (object [("_id", "foo"), ("llamas", Bool True)])) "post--db.json",
-      withDb getContext $ testAgainstFailure "Try to create a document with an invalid name" (Database.createDoc False (object [("_id", "_111111%%%"), ("llamas", Bool True)])) (InvalidName "Only reserved document ids may start with underscore."),
-      withDb getContext $ testAgainstFailure "Try to create a document twice" (\c -> do
+      withDb (testAgainstSchema "Create a document without _id, immediate mode" (Database.createDoc False (object [("llamas", Bool True)])) "post--db.json") getContext,
+      withDb (testAgainstSchema "Create a document without _id, batch mode" (Database.createDoc True (object [("llamas", Bool True)])) "post--db.json") getContext,
+      withDb (testAgainstSchema "Create a document with _id, immediate mode" (Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)])) "post--db.json") getContext,
+      withDb (testAgainstSchema "Create a document with _id, batch mode" (Database.createDoc True (object [("_id", "foo"), ("llamas", Bool True)])) "post--db.json") getContext,
+      withDb (testAgainstFailure "Try to create a document with an invalid name" (Database.createDoc False (object [("_id", "_111111%%%"), ("llamas", Bool True)])) (InvalidName "Only reserved document ids may start with underscore.")) getContext,
+      withDb (testAgainstFailure "Try to create a document twice" (\c -> do
                                                                                    void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
-                                                                                   Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c) Conflict
+                                                                                   Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c) Conflict) getContext
   ]
 
 databaseAllDocs :: IO Context -> TestTree
 databaseAllDocs getContext =
   testGroup "Database retrieve all document"
   [
-    withDb getContext $ testAgainstSchema "Result of completely fresh database"  (Database.allDocs dbAllDocs) "get--db-_all_docs.json",
-    withDb getContext $ testAgainstSchema "Add a record and get all docs"  (\c -> do
+    withDb (testAgainstSchema "Result of completely fresh database"  (Database.allDocs dbAllDocs) "get--db-_all_docs.json") getContext,
+    withDb (testAgainstSchema "Add a record and get all docs"  (\c -> do
                                                                                       void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
-                                                                                      Database.allDocs dbAllDocs c) "get--db-_all_docs.json"
+                                                                                      Database.allDocs dbAllDocs c) "get--db-_all_docs.json") getContext
   ]
 
 databaseSomeDocs :: IO Context -> TestTree
 databaseSomeDocs getContext =
   testGroup "Database retrieve some documents"
   [
-    withDb getContext $ testAgainstSchemaAndValue "Result of completely fresh database" (Database.someDocs ["llama", "tron"]) "get--db-_all_docs.json" Response.asAnything $ \step (val :: Object) -> do
+    withDb (testAgainstSchemaAndValue "Result of completely fresh database" (Database.someDocs ["llama", "tron"]) "get--db-_all_docs.json" Response.asAnything $ \step (val :: Object) -> do
         step "Check number of items in database"
-        lookup "total_rows" val @=? Just (Number 0),
-    withDb getContext $ testAgainstSchemaAndValue "Add a record and get all docs"  (\c -> do
-                                                                                        void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
-                                                                                        void $ Database.createDoc False (object [("_id", "bar"), ("llamas", Bool True)]) c
-                                                                                        Database.someDocs ["foo"] c) "get--db-_all_docs.json" Response.asAnything $ \step (val :: Object) -> do
-      step "Check number of items in database"
-      lookup "total_rows" val @=? Just (Number 2)
+        lookup "total_rows" val @=? Just (Number 0)) getContext,
+    withDb (testAgainstSchemaAndValue "Add a record and get all docs"  (\c -> do
+                                                                            void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                                                                            void $ Database.createDoc False (object [("_id", "bar"), ("llamas", Bool True)]) c
+                                                                            Database.someDocs ["foo"] c) "get--db-_all_docs.json" Response.asAnything $ \step (val :: Object) -> do
+                step "Check number of items in database"
+                lookup "total_rows" val @=? Just (Number 2)) getContext
  ]
