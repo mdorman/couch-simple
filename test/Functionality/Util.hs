@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -35,7 +36,8 @@ import           System.Directory                 (doesFileExist,
 import           System.FilePath                  (takeDirectory, (</>))
 import           System.IO                        (FilePath, IO)
 import           System.Random                    (randomIO)
-import           Test.Tasty                       (TestTree, defaultMain,
+import           Test.Tasty                       (TestName, TestTree,
+                                                   defaultMain, testGroup,
                                                    withResource)
 import           Test.Tasty.HUnit                 (assertFailure, testCaseSteps,
                                                    (@=?))
@@ -53,13 +55,13 @@ releaseContext :: Context -> IO ()
 releaseContext = closeManager . ctxManager
 
 runTests :: (Manager -> TestTree) -> IO ()
-runTests tests = withManager defaultManagerSettings (defaultMain . tests)
+runTests = withManager defaultManagerSettings . (defaultMain .)
 
 testAgainstFailure :: String
-                  -> (Context -> IO (Either CouchError (Value, Maybe CookieJar)))
-                  -> CouchError
-                  -> IO Context
-                  -> TestTree
+                   -> (Context -> IO (Either CouchError (Value, Maybe CookieJar)))
+                   -> CouchError
+                   -> IO Context
+                   -> TestTree
 testAgainstFailure desc function exception getContext = testCaseSteps desc $ \step -> do
   step "Make request"
   getContext >>= function >>= checkException step exception
@@ -73,17 +75,25 @@ checkException step exception res = do
   case res of
     -- HttpException isn't Eqable, so we simply coerce with show
     Left err -> show exception @=? show err
-    Right val -> assertFailure $ unwords ["Didn't get expected exception", show exception, "instead", show val]
+    Right val -> assertFailure $ unwords
+                                   [ "Didn't get expected exception"
+                                   , show exception
+                                   , "instead"
+                                   , show val
+                                   ]
 
 throwOnError :: FromJSON a => Either CouchError (a, Maybe CookieJar) -> IO ()
 throwOnError res =
   case res of
-   Left err -> error $ show err
-   Right _ -> return ()
+    Left err -> error $ show err
+    Right _  -> return ()
 
 withDb :: (IO Context -> TestTree) -> IO Context -> TestTree
 withDb test getContext =
-  withResource (getContext >>= createTempDb) (fmap Response.asBool . Database.delete >=> throwOnError) test
+  withResource
+    (getContext >>= createTempDb)
+    (fmap Response.asBool . Database.delete >=> throwOnError)
+    test
   where
     createTempDb ctx = do
       Response.asBool <$> Database.create ctx >>= throwOnError
@@ -135,7 +145,7 @@ checkSchema step value schemaName = do
   schema <- loadSchema ("test/schema/schema" </> schemaName)
   case validate (compile draft4 mempty schema) value of
     Left err -> assertFailure $ unwords ["Failed to validate", show value, ":", show err]
-    Right _ -> return ()
+    Right _  -> return ()
 
 loadSchema :: FilePath -> IO RawSchema
 loadSchema file = do
@@ -156,3 +166,15 @@ loadSchema file = do
                                                   in if upOne == dir
                                                        then error "Cannot find file to embed as resource"
                                                        else checkDir upOne
+
+class TestInput a where
+  makeTests :: TestInput a => TestName -> [IO Context -> TestTree] -> a -> TestTree
+  makeTests desc tests input = testGroup desc $ fmap (applyInput input) tests
+
+  applyInput :: a -> (IO Context -> TestTree) -> TestTree
+
+instance TestInput Manager where
+  applyInput input = ($ dbContext input)
+
+instance TestInput (IO Context) where
+  applyInput input = ($ input)
