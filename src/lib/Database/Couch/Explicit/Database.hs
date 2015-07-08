@@ -190,24 +190,32 @@ someDocs ids =
 -- returning a 'List' of 'Value'.
 --
 -- Status: __Complete__
-bulkDocs :: (MonadIO m, ToJSON a) => DbBulkDocs -> [a] -> Context -> m (Either CouchError ([Value], Maybe CookieJar))
+bulkDocs :: (FromJSON a, MonadIO m, ToJSON a) => DbBulkDocs -> [a] -> Context -> m (Either CouchError (a, Maybe CookieJar))
 bulkDocs param docs =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "POST"
       when (isJust $ bdFullCommit param)
-        (setHeaders [("X-Couch-Full-Commit", if fromJust $ bdFullCommit param then "true" else "false")])
+        (setHeaders
+           [("X-Couch-Full-Commit", if fromJust $ bdFullCommit param
+                                      then "true"
+                                      else "false")])
       selectDb
       addPath "_bulk_docs"
-      let parameters = Object ((fromList . catMaybes) [Just ("docs",toJSON docs), boolToParam "all_or_nothing" bdAllOrNothing, boolToParam "new_edits" bdNewEdits])
+      let parameters = Object
+                         ((fromList . catMaybes)
+                            [ Just ("docs", toJSON docs)
+                            , boolToParam "all_or_nothing" bdAllOrNothing
+                            , boolToParam "new_edits" bdNewEdits
+                            ])
       setJsonBody parameters
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
     boolToParam k s = do
       v <- s param
-      return (k, if v then "true" else "false")
+      return
+        (k, if v
+              then "true"
+              else "false")
 
 -- | Get a list of all document modifications .
 --
