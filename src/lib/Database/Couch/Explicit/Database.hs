@@ -228,18 +228,15 @@ bulkDocs param docs =
 -- returning a 'Value'.
 --
 -- Status: __Limited__
-changes :: MonadIO m => DbChanges -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+changes :: (FromJSON a, MonadIO m) => DbChanges -> Context -> m (Either CouchError (a, Maybe CookieJar))
 changes param =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       when (isJust $ cLastEvent param)
         (setHeaders [("Last-Event-Id", encodeUtf8 . fromJust $ cLastEvent param)])
       selectDb
       addPath "_changes"
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Encode the common bits for our two compact calls
 compactBase :: RequestBuilder ()
