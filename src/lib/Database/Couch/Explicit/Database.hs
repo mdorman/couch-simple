@@ -241,9 +241,9 @@ changes param =
 -- | Encode the common bits for our two compact calls
 compactBase :: RequestBuilder ()
 compactBase = do
-      setMethod "POST"
-      selectDb
-      addPath "_compact"
+  setMethod "POST"
+  selectDb
+  addPath "_compact"
 
 -- | Compact a database
 --
@@ -252,15 +252,12 @@ compactBase = do
 -- Run the compaction process on an entire database
 --
 -- Status: __Complete__
-compact :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+compact :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 compact =
-  structureRequest request parse
+  standardRequest request
   where
     request =
       compactBase
-    parse = do
-      checkStatusCode
-      getKey "ok" >>= toOutputType
 
 -- | Compact the views attached to a particular design document
 --
@@ -269,16 +266,13 @@ compact =
 -- Run the compaction process on the views associated with the specified design document
 --
 -- Status: __Complete__
-compactDesignDoc :: MonadIO m => DocId -> Context -> m (Either CouchError (Bool, Maybe CookieJar))
+compactDesignDoc :: (FromJSON a, MonadIO m) => DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
 compactDesignDoc doc =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       compactBase
       selectDoc doc
-    parse = do
-      checkStatusCode
-      getKey "ok" >>= toOutputType
 
 -- | Ensure that all changes to the database have made it to disk
 --
