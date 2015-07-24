@@ -24,13 +24,11 @@ import           Data.UUID                        (toString)
 import qualified Database.Couch.Explicit.Database as Database (create, delete)
 import qualified Database.Couch.Response          as Response (asBool)
 import           Database.Couch.Types             (Context (Context),
-                                                   CouchError (..), Port (Port),
-                                                   ctxManager)
+                                                   CouchError (..), Port (Port))
 import           GHC.Err                          (error)
 import           Network.HTTP.Client              (CookieJar, Manager,
-                                                   closeManager,
                                                    defaultManagerSettings,
-                                                   withManager)
+                                                   newManager)
 import           System.Directory                 (doesFileExist,
                                                    getCurrentDirectory)
 import           System.FilePath                  (takeDirectory, (</>))
@@ -52,10 +50,12 @@ serverContext :: MonadIO m => Manager -> m Context
 serverContext manager = return $ Context manager "localhost" (Port 5984) Nothing def Nothing
 
 releaseContext :: Context -> IO ()
-releaseContext = closeManager . ctxManager
+releaseContext = const $ return ()
 
 runTests :: (Manager -> TestTree) -> IO ()
-runTests = withManager defaultManagerSettings . (defaultMain .)
+runTests testTree = do
+  manager <- newManager defaultManagerSettings
+  defaultMain $ testTree manager
 
 testAgainstFailure :: String
                    -> (Context -> IO (Either CouchError (Value, Maybe CookieJar)))
