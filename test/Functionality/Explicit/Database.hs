@@ -19,7 +19,8 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                create,
                                                                createDoc,
                                                                delete, exists,
-                                                               meta, someDocs)
+                                                               meta, someDocs,
+                                                               sync)
 import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
 import           Database.Couch.Types             (Context (ctxDb),
@@ -52,6 +53,7 @@ tests = makeTests "Tests of the database interface"
           , databaseChanges
           , databaseCompact
           , databaseCompactDesignDoc
+          , databaseSync
           ]
 
 -- Database-oriented functions
@@ -181,4 +183,10 @@ databaseCompactDesignDoc :: IO Context -> TestTree
 databaseCompactDesignDoc =
   makeTests "Database compact database design document"
   [ testAgainstSchema "Empty list of documents" (\c -> Database.compactDesignDoc "_auth" c { ctxDb = Just "_users" }) "post--db-_compact-ddoc.json"
+  ]
+
+databaseSync :: IO Context -> TestTree
+databaseSync =
+  makeTests "Database sync commit"
+  [ testAgainstSchema "_users database" (\c -> Database.sync c { ctxDb = Just "_users" }) "post--db-_ensure_full_commit.json"
   ]
