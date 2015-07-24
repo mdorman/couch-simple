@@ -283,17 +283,14 @@ compactDesignDoc doc =
 -- try and return it.
 --
 -- Status: __Complete__
-sync :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+sync :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 sync =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "POST"
       selectDb
       addPath "_ensure_full_commit"
-    parse = do
-      checkStatusCode
-      getKey "ok" >>= toOutputType
 
 -- | Cleanup any stray view definitions
 --
