@@ -320,17 +320,14 @@ cleanup =
 -- return value general
 --
 -- Status: __Complete__
-getSecurity :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
+getSecurity :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 getSecurity =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "GET"
       selectDb
       addPath "_security"
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
 
 -- | Set security information for database
 --
