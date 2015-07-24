@@ -357,16 +357,17 @@ setSecurity doc =
 -- Create a temporary view and return its results.
 --
 -- Status: __Complete__
-tempView :: MonadIO m => Text -> Maybe Text -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+tempView :: (FromJSON a, MonadIO m) => Text -> Maybe Text -> Context -> m (Either CouchError (a, Maybe CookieJar))
 tempView map reduce =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "POST"
       selectDb
-      let parameters = Object (fromList $ catMaybes [Just ("map", toJSON map), fmap (("reduce",) . toJSON) reduce])
+      let parameters = Object
+                         (fromList $ catMaybes
+                                       [ Just ("map", toJSON map)
+                                       , fmap (("reduce",) . toJSON) reduce
+                                       ])
       addPath "_temp_view"
       setJsonBody parameters
-    parse = do
-      checkStatusCode
-      responseValue >>= toOutputType
