@@ -300,17 +300,14 @@ sync =
 -- view content.
 --
 -- Status: __Complete__
-cleanup :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
+cleanup :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 cleanup =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "POST"
       selectDb
       addPath "_view_cleanup"
-    parse = do
-      checkStatusCode
-      getKey "ok" >>= toOutputType
 
 -- | Get security information for database
 --
