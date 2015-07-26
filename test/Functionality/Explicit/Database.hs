@@ -14,7 +14,8 @@ import           Data.HashMap.Strict              (lookup)
 import           Data.Maybe                       (Maybe (Just))
 import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                bulkDocs,
-                                                               changes, compact,
+                                                               changes, cleanup,
+                                                               compact,
                                                                compactDesignDoc,
                                                                create,
                                                                createDoc,
@@ -54,6 +55,7 @@ tests = makeTests "Tests of the database interface"
           , databaseCompact
           , databaseCompactDesignDoc
           , databaseSync
+          , databaseCleanup
           ]
 
 -- Database-oriented functions
@@ -171,6 +173,12 @@ databaseChanges =
   makeTests "Database update documents in bulk"
   [ withDb $ testAgainstSchema "Empty list of documents" (Database.changes dbChangesParam)
     "get--db-_changes.json"
+  ]
+
+databaseCleanup :: IO Context -> TestTree
+databaseCleanup =
+  makeTests "Database view cleanup"
+  [ testAgainstSchema "_users database" (\c -> Database.cleanup c { ctxDb = Just "_users" }) "post--db-_view_cleanup.json"
   ]
 
 databaseCompact :: IO Context -> TestTree
