@@ -20,6 +20,7 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                create,
                                                                createDoc,
                                                                delete, exists,
+                                                               getSecurity,
                                                                meta, someDocs,
                                                                sync)
 import qualified Database.Couch.Response          as Response (asAnything,
@@ -56,6 +57,7 @@ tests = makeTests "Tests of the database interface"
           , databaseCompactDesignDoc
           , databaseSync
           , databaseCleanup
+          , databaseGetSecurity
           ]
 
 -- Database-oriented functions
@@ -197,4 +199,10 @@ databaseSync :: IO Context -> TestTree
 databaseSync =
   makeTests "Database sync commit"
   [ testAgainstSchema "_users database" (\c -> Database.sync c { ctxDb = Just "_users" }) "post--db-_ensure_full_commit.json"
+  ]
+
+databaseGetSecurity :: IO Context -> TestTree
+databaseGetSecurity =
+  makeTests "Database get security"
+  [ testAgainstSchema "_users database" (\c -> Database.getSecurity c { ctxDb = Just "_users" }) "get--db-_security.json"
   ]
