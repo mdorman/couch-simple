@@ -21,8 +21,9 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                createDoc,
                                                                delete, exists,
                                                                getSecurity,
-                                                               meta, someDocs,
-                                                               sync)
+                                                               meta,
+                                                               setSecurity,
+                                                               someDocs, sync)
 import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
 import           Database.Couch.Types             (Context (ctxDb),
@@ -58,6 +59,7 @@ tests = makeTests "Tests of the database interface"
           , databaseSync
           , databaseCleanup
           , databaseGetSecurity
+          , databaseSetSecurity
           ]
 
 -- Database-oriented functions
@@ -206,3 +208,10 @@ databaseGetSecurity =
   makeTests "Database get security"
   [ testAgainstSchema "_users database" (\c -> Database.getSecurity c { ctxDb = Just "_users" }) "get--db-_security.json"
   ]
+
+databaseSetSecurity :: IO Context -> TestTree
+databaseSetSecurity =
+  makeTests "Database set security"
+  [ withDb $ testAgainstSchema "Random database" (Database.setSecurity $ object []) "put--db-_security.json"
+  ]
+
