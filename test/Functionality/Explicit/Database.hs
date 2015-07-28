@@ -23,7 +23,8 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                getSecurity,
                                                                meta,
                                                                setSecurity,
-                                                               someDocs, sync)
+                                                               someDocs, sync,
+                                                               tempView)
 import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
 import           Database.Couch.Types             (Context (ctxDb),
@@ -60,6 +61,7 @@ tests = makeTests "Tests of the database interface"
           , databaseCleanup
           , databaseGetSecurity
           , databaseSetSecurity
+          , databaseTempView
           ]
 
 -- Database-oriented functions
@@ -215,3 +217,10 @@ databaseSetSecurity =
   [ withDb $ testAgainstSchema "Random database" (Database.setSecurity $ object []) "put--db-_security.json"
   ]
 
+databaseTempView :: IO Context -> TestTree
+databaseTempView =
+  makeTests "Database temporary view"
+  [ withDb $ testAgainstSchema "Random database" (\c -> do
+                                                      void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                                                      Database.tempView "function (doc) { emit (1); }" (Just "_count") c) "post--db-_temp_view.json"
+  ]
