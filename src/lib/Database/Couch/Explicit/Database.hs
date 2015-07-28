@@ -333,24 +333,22 @@ getSecurity =
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/database/security.html#post--db-_security API documentation>
 --
--- Although there are base requirements for the content this returns
+-- Although there are base requirements for the content this accepts
 -- ("admin" and "members" keys, which each contain "users" and
 -- "roles"), the system does not prevent you from adding (and even
 -- using in validation functions) additional fields, so we keep the
--- return value general
+-- input value general
 --
 -- Status: __Complete__
-setSecurity :: MonadIO m => Context -> m (Either CouchError (Bool, Maybe CookieJar))
-setSecurity =
-  structureRequest request parse
+setSecurity :: (FromJSON b, MonadIO m, ToJSON a) => a -> Context -> m (Either CouchError (b, Maybe CookieJar))
+setSecurity doc =
+  standardRequest request
   where
     request = do
-      setMethod "POST"
+      setMethod "PUT"
       selectDb
       addPath "_security"
-    parse = do
-      checkStatusCode
-      getKey "ok" >>= toOutputType
+      setJsonBody doc
 
 -- | Create a temporary view
 --
