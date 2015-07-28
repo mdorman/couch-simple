@@ -33,8 +33,11 @@ import           Data.String                   (fromString)
 import           Data.Text                     (Text)
 import           Database.Couch.Internal       (standardRequest)
 import           Database.Couch.RequestBuilder (addPath, addQueryParam,
-                                                setMethod)
-import           Database.Couch.Types          (Context, CouchError)
+                                                setMethod, setQueryParam)
+import           Database.Couch.ResponseParser (checkStatusCode, getKey,
+                                                responseValue, toOutputType)
+import           Database.Couch.Types          (Context, CouchError, DbUpdates,
+                                                toQueryParameters)
 import           GHC.Err                       (undefined)
 import           Network.HTTP.Client           (CookieJar)
 import           Text.Show                     (show)
@@ -92,12 +95,13 @@ allDbs =
 -- The return value is easily decoded into a 'List' of 'Value'.
 --
 -- Status: __Limited__
-dbUpdates :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
-dbUpdates =
+dbUpdates :: (FromJSON a, MonadIO m) => DbUpdates -> Context -> m (Either CouchError (a, Maybe CookieJar))
+dbUpdates param =
   standardRequest request
   where
-    request =
+    request = do
       addPath "_db_updates"
+      setQueryParam $ toQueryParameters param
 
 -- | Get the log output of the server
 --

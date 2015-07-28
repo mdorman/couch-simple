@@ -280,6 +280,24 @@ instance ToQueryParameters DbChanges where
 dbChangesParam :: DbChanges
 dbChangesParam = DbChanges Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
+-- | Parameters for 'dbUpdates'.
+data DbUpdates
+  = DbUpdates {
+    feed :: Maybe FeedType,
+    timeOut :: Maybe Int,
+    heartBeat :: Maybe Bool
+    }
+instance ToQueryParameters DbUpdates where
+  toQueryParameters DbUpdates {..} = catMaybes [
+    feedTypeToQP feed,
+    intToQP "timeout" timeOut,
+    boolToQP "heartbeat" heartBeat
+    ]
+
+-- | The default (empty) parameters
+dbUpdatesParam :: DbUpdates
+dbUpdatesParam = DbUpdates Nothing Nothing Nothing
+
 -- | Types of feeds available.
 data FeedType
   = Continuous
