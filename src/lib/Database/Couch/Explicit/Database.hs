@@ -414,3 +414,16 @@ missingRevs docRevs =
     request = do
       docRevBase docRevs
       addPath "_missing_revs"
+
+-- | Find document revisions not present in the database
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_revs_diff API documentation>
+--
+-- Status: __Complete__
+revsDiff :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Either CouchError (a, Maybe CookieJar))
+revsDiff docRevs =
+  standardRequest request
+  where
+    request = do
+      docRevBase docRevs
+      addPath "_revs_diff"
