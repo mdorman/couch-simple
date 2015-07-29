@@ -47,7 +47,7 @@ import           Database.Couch.ResponseParser (failed, responseStatus,
 import           Database.Couch.Types          (Context,
                                                 CouchError (NotFound, Unknown),
                                                 DbAllDocs, DbBulkDocs,
-                                                DbChanges, DocId,
+                                                DbChanges, DocId, DocRevMap,
                                                 bdAllOrNothing, bdFullCommit,
                                                 bdNewEdits, cLastEvent,
                                                 toQueryParameters)
@@ -370,3 +370,30 @@ tempView map reduce =
                                        ])
       addPath "_temp_view"
       setJsonBody parameters
+
+-- Common setup for the next three items
+docRevBase :: ToJSON a => a -> RequestBuilder ()
+docRevBase docRevs = do
+  setMethod "POST"
+  selectDb
+  let parameters = toJSON docRevs
+  setJsonBody parameters
+
+-- | Purge document revisions from the database
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_purge API documentation>
+--
+-- Purge particular document revisions from the database
+--
+-- Easily parsed into an (Int, DocRevMap) pair using:
+--
+-- (,) <$> (getKey "purge_seq" >>= toOutputType) <*> (getKey "purged" >>= toOutputType)
+--
+-- Status: __Complete__
+purge :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Either CouchError (a, Maybe CookieJar))
+purge docRevs =
+  standardRequest request
+  where
+    request = do
+      docRevBase docRevs
+      addPath "_purge"
