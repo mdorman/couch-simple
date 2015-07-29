@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings, RecordWildCards, ScopedTypeVariables, TupleSections #-}
+{-# LANGUAGE DeriveGeneric, GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings, RecordWildCards, ScopedTypeVariables, TupleSections #-}
 
 {- |
 
@@ -30,6 +30,7 @@ import Data.Monoid (mempty)
 import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
+import GHC.Generics (Generic)
 import Network.HTTP.Client (CookieJar, HttpException, Manager)
 import Text.Show (Show)
 
@@ -332,3 +333,10 @@ styleTypeToQP = fmap (("style",) . Just . go)
     where
       go StyleAll = "all_docs"
       go StyleMain = "main_docs"
+
+data DocRevMap
+  = DocRevMap [(DocId, [DocRev])]
+  deriving (Generic, Eq, Show)
+
+instance FromJSON DocRevMap
+instance ToJSON DocRevMap
