@@ -397,3 +397,20 @@ purge docRevs =
     request = do
       docRevBase docRevs
       addPath "_purge"
+
+-- | Find document revisions not present in the database
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_missing_revs API documentation>
+--
+-- Easily parsed into an DocRevMap using:
+--
+-- getKey "missed_revs" >>= toOutputType
+--
+-- Status: __Complete__
+missingRevs :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Either CouchError (a, Maybe CookieJar))
+missingRevs docRevs =
+  standardRequest request
+  where
+    request = do
+      docRevBase docRevs
+      addPath "_missing_revs"
