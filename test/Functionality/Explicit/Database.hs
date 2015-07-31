@@ -21,15 +21,18 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                createDoc,
                                                                delete, exists,
                                                                getSecurity,
-                                                               meta,
+                                                               meta, purge,
                                                                setSecurity,
                                                                someDocs, sync,
                                                                tempView)
 import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
 import           Database.Couch.Types             (Context (ctxDb),
-                                                   CouchError (..), dbAllDocs,
-                                                   dbBulkDocsParam,
+                                                   CouchError (..),
+                                                   DocId (DocId),
+                                                   DocRev (DocRev),
+                                                   DocRevMap (DocRevMap),
+                                                   dbAllDocs, dbBulkDocsParam,
                                                    dbChangesParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
@@ -62,6 +65,7 @@ tests = makeTests "Tests of the database interface"
           , databaseGetSecurity
           , databaseSetSecurity
           , databaseTempView
+          , databasePurge
           ]
 
 -- Database-oriented functions
@@ -223,4 +227,10 @@ databaseTempView =
   [ withDb $ testAgainstSchema "Random database" (\c -> do
                                                       void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                                                       Database.tempView "function (doc) { emit (1); }" (Just "_count") c) "post--db-_temp_view.json"
+  ]
+
+databasePurge :: IO Context -> TestTree
+databasePurge =
+  makeTests "Database purge"
+  [ withDb $ testAgainstSchema "Random database" (Database.purge $ DocRevMap [(DocId "junebug", [DocRev "1-1"])]) "post--db-_purge.json"
   ]
