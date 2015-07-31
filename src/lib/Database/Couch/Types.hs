@@ -16,20 +16,25 @@ Types for working with a CouchDB database.
 
 module Database.Couch.Types where
 
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Biapplicative ((<<*>>))
+import Control.Applicative ((<$>), (<*>))
+import Control.Monad (mapM, mzero, return)
+import Data.Aeson (FromJSON, ToJSON, Value (Array, Object, String), parseJSON, toJSON)
 import Data.Bool (Bool)
 import Data.ByteString (ByteString)
 import Data.ByteString.Builder (intDec, toLazyByteString)
 import Data.ByteString.Lazy (toStrict)
 import Data.Eq (Eq)
-import Data.Function ((.))
+import Data.Function ((.), ($))
 import Data.Functor (fmap)
+import qualified Data.HashMap.Strict as HashMap (fromList, toList)
 import Data.Int (Int)
 import Data.Maybe (Maybe(Just, Nothing), catMaybes, maybe)
 import Data.Monoid (mempty)
 import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
+import qualified Data.Vector as Vector (fromList)
 import GHC.Generics (Generic)
 import Network.HTTP.Client (CookieJar, HttpException, Manager)
 import Text.Show (Show)
@@ -338,5 +343,9 @@ data DocRevMap
   = DocRevMap [(DocId, [DocRev])]
   deriving (Generic, Eq, Show)
 
-instance FromJSON DocRevMap
-instance ToJSON DocRevMap
+instance FromJSON DocRevMap where
+  parseJSON (Object o) = DocRevMap <$> mapM (\(k, v) -> (,) <$> (return . DocId $ k) <*> parseJSON v) (HashMap.toList o)
+  parseJSON _ = mzero
+instance ToJSON DocRevMap where
+  -- The lack of symmetry in the outer and inner conversions annoys me, but I don't see how to make the outer point-free
+  toJSON (DocRevMap d) = Object . HashMap.fromList $ fmap ((unwrapDocId, Array . Vector.fromList . fmap (String . unwrapDocRev)) <<*>>) d
