@@ -21,7 +21,9 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                createDoc,
                                                                delete, exists,
                                                                getSecurity,
-                                                               meta, purge,
+                                                               meta,
+                                                               missingRevs,
+                                                               purge,
                                                                setSecurity,
                                                                someDocs, sync,
                                                                tempView)
@@ -66,6 +68,7 @@ tests = makeTests "Tests of the database interface"
           , databaseSetSecurity
           , databaseTempView
           , databasePurge
+          , databaseMissingRevs
           ]
 
 -- Database-oriented functions
@@ -234,3 +237,10 @@ databasePurge =
   makeTests "Database purge"
   [ withDb $ testAgainstSchema "Random database" (Database.purge $ DocRevMap [(DocId "junebug", [DocRev "1-1"])]) "post--db-_purge.json"
   ]
+
+databaseMissingRevs :: IO Context -> TestTree
+databaseMissingRevs =
+  makeTests "Database missing revs"
+  [ withDb $ testAgainstSchema "Random database" (Database.missingRevs $ DocRevMap [(DocId "junebug", [DocRev "1-1"])]) "post--db-_missing_revs.json"
+  ]
+
