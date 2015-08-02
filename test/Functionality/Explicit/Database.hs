@@ -23,7 +23,7 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                getSecurity,
                                                                meta,
                                                                missingRevs,
-                                                               purge,
+                                                               purge, revsDiff,
                                                                setSecurity,
                                                                someDocs, sync,
                                                                tempView)
@@ -69,6 +69,7 @@ tests = makeTests "Tests of the database interface"
           , databaseTempView
           , databasePurge
           , databaseMissingRevs
+          , databaseRevsDiff
           ]
 
 -- Database-oriented functions
@@ -244,3 +245,8 @@ databaseMissingRevs =
   [ withDb $ testAgainstSchema "Random database" (Database.missingRevs $ DocRevMap [(DocId "junebug", [DocRev "1-1"])]) "post--db-_missing_revs.json"
   ]
 
+databaseRevsDiff :: IO Context -> TestTree
+databaseRevsDiff =
+  makeTests "Database revs diff"
+  [ withDb $ testAgainstSchema "Random database" (Database.revsDiff $ DocRevMap [(DocId "junebug", [DocRev "1-1"])]) "post--db-_revs_diff.json"
+  ]
