@@ -3,19 +3,20 @@
 
 module Main where
 
-import           Control.Applicative             ((<$>))
-import           Data.Function                   (($))
-import qualified Functionality.Explicit.Database as Database (tests)
-import qualified Functionality.Explicit.Server   as Server (tests)
-import qualified Functionality.Internal          as Internal (tests)
-import           Functionality.Util              (runTests)
-import           Network.HTTP.Client             (Manager)
-import           System.IO                       (IO)
-import           Test.Tasty                      (TestTree, testGroup)
+import           Control.Applicative                  ((<$>))
+import           Data.Function                        (($))
+import qualified Functionality.Explicit.Configuration as Configuration (tests)
+import qualified Functionality.Explicit.Database      as Database (tests)
+import qualified Functionality.Explicit.Server        as Server (tests)
+import qualified Functionality.Internal               as Internal (tests)
+import           Functionality.Util                   (runTests)
+import           Network.HTTP.Client                  (Manager)
+import           System.IO                            (IO)
+import           Test.Tasty                           (TestTree, testGroup)
 
 main :: IO ()
 main = runTests tests
 
 tests :: Manager -> TestTree
 tests manager = testGroup "All Tests" $
-                  ($ manager) <$> [Internal.tests, Server.tests, Database.tests]
+                  ($ manager) <$> [Internal.tests, Server.tests, Configuration.tests, Database.tests]
