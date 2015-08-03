@@ -32,6 +32,7 @@ import           Data.Either                   (Either)
 import           Data.Function                 (($), (.))
 import           Data.Functor                  (fmap)
 import           Data.HashMap.Strict           (fromList)
+import           Data.Int                      (Int)
 import           Data.Maybe                    (Maybe (Just), catMaybes,
                                                 fromJust, isJust)
 import           Data.Text                     (Text)
@@ -440,3 +441,18 @@ getRevsLimit =
     request = do
       selectDb
       addPath "_revs_limit"
+
+-- | Set the revision limit
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#put--db-_revs_limit API documentation>
+--
+-- Status: __Complete__
+setRevsLimit :: (FromJSON a, MonadIO m) => Int -> Context -> m (Either CouchError (a, Maybe CookieJar))
+setRevsLimit limit =
+  standardRequest request
+  where
+    request = do
+      setMethod "PUT"
+      selectDb
+      addPath "_revs_limit"
+      setJsonBody limit
