@@ -19,7 +19,7 @@ source-repository head
 
 library
   build-depends: base >= 4.6 && < 4.10
-               , aeson
+               , aeson >= 0.9
                , attoparsec
                , bifunctors
                , bytestring
