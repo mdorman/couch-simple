@@ -25,6 +25,7 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                meta,
                                                                missingRevs,
                                                                purge, revsDiff,
+                                                               setRevsLimit,
                                                                setSecurity,
                                                                someDocs, sync,
                                                                tempView)
@@ -72,6 +73,7 @@ tests = makeTests "Tests of the database interface"
           , databaseMissingRevs
           , databaseRevsDiff
           , databaseGetRevsLimit
+          , databaseSetRevsLimit
           ]
 
 -- Database-oriented functions
@@ -257,4 +259,10 @@ databaseGetRevsLimit :: IO Context -> TestTree
 databaseGetRevsLimit =
   makeTests "Database revs limit"
   [ withDb $ testAgainstSchema "Random database" Database.getRevsLimit "get--db-_revs_limit.json"
+  ]
+
+databaseSetRevsLimit :: IO Context -> TestTree
+databaseSetRevsLimit =
+  makeTests "Set database revs limit"
+  [ withDb $ testAgainstSchema "Random database" (Database.setRevsLimit 17) "put--db-_revs_limit.json"
   ]
