@@ -23,11 +23,12 @@ as) http://docs.couchdb.org/en/1.6.1/api/server/configuration.html.
 module Database.Couch.Explicit.Configuration where
 
 import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (Value)
+import           Data.Aeson                    (FromJSON, Value)
 import           Data.Either                   (Either)
 import           Data.Maybe                    (Maybe)
 import           Data.Text                     (Text)
-import           Database.Couch.Internal       (structureRequest, valueRequest)
+import           Database.Couch.Internal       (standardRequest,
+                                                structureRequest, valueRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDoc, setJsonBody,
                                                 setMethod)
@@ -42,15 +43,12 @@ import           Network.HTTP.Client           (CookieJar)
 -- Returns a (structured) JSON Value.
 --
 -- Status: __Complete__
-server :: MonadIO m => Context -> m (Either CouchError (Value, Maybe CookieJar))
+server :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
 server =
-  structureRequest request parse
+  standardRequest request
   where
     request =
       addPath "_config"
-    parse = do
-      checkStatusCode
-      responseValue
 
 -- | Get the configuration for one section.
 --
