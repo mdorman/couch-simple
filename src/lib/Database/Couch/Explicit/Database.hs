@@ -427,3 +427,16 @@ revsDiff docRevs =
     request = do
       docRevBase docRevs
       addPath "_revs_diff"
+
+-- | Get the revision limit setting
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#get--db-_revs_limit API documentation>
+--
+-- Status: __Complete__
+getRevsLimit :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+getRevsLimit =
+  standardRequest request
+  where
+    request = do
+      selectDb
+      addPath "_revs_limit"
