@@ -4,9 +4,10 @@
 module Functionality.Explicit.Configuration where
 
 import           Control.Applicative                   ((<$>))
+import           Data.Aeson                            (Value (String))
 import           Data.Function                         (($))
 import qualified Database.Couch.Explicit.Configuration as Configuration (getValue, section,
-                                                                         server)
+                                                                         server, setValue)
 import           Database.Couch.Types                  (Context)
 import           Functionality.Util                    (runTests, serverContext,
                                                         testAgainstSchema)
@@ -21,7 +22,7 @@ _main = runTests tests
 tests :: Manager -> TestTree
 tests manager =
   testGroup "Tests of the config interface" $
-  ($ serverContext manager) <$> [server, section, getValue]
+  ($ serverContext manager) <$> [server, section, getValue, setValue]
 
 -- Server-oriented functions
 server :: IO Context -> TestTree
@@ -32,3 +33,6 @@ section = testAgainstSchema "Get section config" (Configuration.section "couchdb
 
 getValue :: IO Context -> TestTree
 getValue = testAgainstSchema "Get config item" (Configuration.getValue "couchdb" "max_document_size") "get--_config-section-key.json"
+
+setValue :: IO Context -> TestTree
+setValue = testAgainstSchema "Set config item" (Configuration.setValue "testsection" "testkey" $ String "foo") "put--_config-section-key.json"
