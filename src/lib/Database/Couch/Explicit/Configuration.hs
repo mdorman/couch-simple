@@ -65,6 +65,12 @@ section s =
       addPath "_config"
       selectDoc s
 
+configPath :: DocId -> DocId -> RequestBuilder ()
+configPath s k = do
+  addPath "_config"
+  selectDoc s
+  selectDoc k
+
 -- | Get the configuration for one item.
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/server/configuration.html#get--_config-section API documentation>
@@ -72,15 +78,12 @@ section s =
 -- Returns the JSON Value.
 --
 -- Status: __Complete__
-getValue :: MonadIO m => DocId -> DocId -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+getValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
 getValue s k =
-  valueRequest request parse
+  standardRequest request
   where
     request =
       configPath s k
-    parse = do
-      checkStatusCode
-      responseValue
 
 -- | Set the configuration value for one item.
 --
@@ -118,9 +121,3 @@ delValue s k =
     parse = do
       checkStatusCode
       responseValue
-
-configPath :: DocId -> DocId -> RequestBuilder ()
-configPath s k = do
-  addPath "_config"
-  selectDoc s
-  selectDoc k
