@@ -23,7 +23,7 @@ as) http://docs.couchdb.org/en/1.6.1/api/server/configuration.html.
 module Database.Couch.Explicit.Configuration where
 
 import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (FromJSON, Value)
+import           Data.Aeson                    (FromJSON, ToJSON, Value)
 import           Data.Either                   (Either)
 import           Data.Maybe                    (Maybe)
 import           Data.Text                     (Text)
@@ -92,17 +92,14 @@ getValue s k =
 -- Returns the previous JSON Value.
 --
 -- Status: __Complete__
-setValue :: MonadIO m => DocId -> DocId -> Text -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+setValue :: (ToJSON a, FromJSON b, MonadIO m) => DocId -> DocId -> a -> Context -> m (Either CouchError (b, Maybe CookieJar))
 setValue s k v =
-  valueRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "PUT"
       configPath s k
       setJsonBody v
-    parse = do
-      checkStatusCode
-      responseValue
 
 -- | Remove the configuration value for one item.
 --
