@@ -1,17 +1,20 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Functionality.Explicit.Configuration where
 
 import           Control.Applicative                   ((<$>))
 import           Data.Aeson                            (Value (String))
+import           Data.Either                           (Either)
 import           Data.Function                         (($))
-import qualified Database.Couch.Explicit.Configuration as Configuration (getValue, section,
+import           Data.Maybe                            (Maybe)
+import qualified Database.Couch.Explicit.Configuration as Configuration (delValue, getValue, section,
                                                                          server, setValue)
-import           Database.Couch.Types                  (Context)
+import           Database.Couch.Types                  (Context, CouchError)
 import           Functionality.Util                    (runTests, serverContext,
                                                         testAgainstSchema)
-import           Network.HTTP.Client                   (Manager)
+import           Network.HTTP.Client                   (CookieJar, Manager)
 import           System.IO                             (IO)
 import           Test.Tasty                            (TestTree, testGroup)
 
@@ -22,7 +25,7 @@ _main = runTests tests
 tests :: Manager -> TestTree
 tests manager =
   testGroup "Tests of the config interface" $
-  ($ serverContext manager) <$> [server, section, getValue, setValue]
+  ($ serverContext manager) <$> [server, section, getValue, setValue, delValue]
 
 -- Server-oriented functions
 server :: IO Context -> TestTree
@@ -36,3 +39,8 @@ getValue = testAgainstSchema "Get config item" (Configuration.getValue "couchdb"
 
 setValue :: IO Context -> TestTree
 setValue = testAgainstSchema "Set config item" (Configuration.setValue "testsection" "testkey" $ String "foo") "put--_config-section-key.json"
+
+delValue :: IO Context -> TestTree
+delValue = testAgainstSchema "Delete config item" (\c -> do
+                                                       _ :: Either CouchError (Value, Maybe CookieJar) <- Configuration.setValue "testsection" "testkey" (String "foo") c
+                                                       Configuration.delValue "testsection" "testkey" c) "delete--_config-section-key.json"

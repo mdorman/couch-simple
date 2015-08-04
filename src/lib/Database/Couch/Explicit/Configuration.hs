@@ -23,16 +23,13 @@ as) http://docs.couchdb.org/en/1.6.1/api/server/configuration.html.
 module Database.Couch.Explicit.Configuration where
 
 import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (FromJSON, ToJSON, Value)
+import           Data.Aeson                    (FromJSON, ToJSON)
 import           Data.Either                   (Either)
 import           Data.Maybe                    (Maybe)
-import           Data.Text                     (Text)
-import           Database.Couch.Internal       (standardRequest,
-                                                structureRequest, valueRequest)
+import           Database.Couch.Internal       (standardRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDoc, setJsonBody,
                                                 setMethod)
-import           Database.Couch.ResponseParser (checkStatusCode, responseValue)
 import           Database.Couch.Types          (Context, CouchError, DocId)
 import           Network.HTTP.Client           (CookieJar)
 
@@ -108,13 +105,10 @@ setValue s k v =
 -- Returns the previous JSON Value.
 --
 -- Status: __Complete__
-delValue :: MonadIO m => DocId -> DocId -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+delValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
 delValue s k =
-  valueRequest request parse
+  standardRequest request
   where
     request = do
       setMethod "DELETE"
       configPath s k
-    parse = do
-      checkStatusCode
-      responseValue
