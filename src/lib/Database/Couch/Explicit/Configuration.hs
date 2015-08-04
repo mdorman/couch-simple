@@ -57,16 +57,13 @@ server =
 -- Returns a (structured) JSON Value.
 --
 -- Status: __Complete__
-section :: MonadIO m => DocId -> Context -> m (Either CouchError (Value, Maybe CookieJar))
+section :: (FromJSON a, MonadIO m) => DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
 section s =
-  structureRequest request parse
+  standardRequest request
   where
     request = do
       addPath "_config"
       selectDoc s
-    parse = do
-      checkStatusCode
-      responseValue
 
 -- | Get the configuration for one item.
 --
