@@ -28,6 +28,7 @@ library
                , exceptions
                , http-client
                , http-types
+               , integer-gmp
                , mtl
                , text
                , transformers
