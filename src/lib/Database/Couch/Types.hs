@@ -29,6 +29,7 @@ import Data.Function ((.), ($))
 import Data.Functor (fmap)
 import qualified Data.HashMap.Strict as HashMap (fromList, toList)
 import Data.Int (Int)
+import Data.List ((++))
 import Data.Maybe (Maybe(Just, Nothing), catMaybes, maybe)
 import Data.Monoid (mempty)
 import Data.String (IsString)
@@ -192,6 +193,9 @@ boolToQP name = toQP name (\bool -> if bool then "true" else "false")
 docIdToQP :: ByteString -> Maybe DocId -> Maybe (ByteString, Maybe ByteString)
 docIdToQP name = toQP name reqDocId
 
+docRevToQP :: ByteString -> Maybe DocRev -> Maybe (ByteString, Maybe ByteString)
+docRevToQP name = toQP name reqDocRev
+
 intToQP :: ByteString -> Maybe Int -> Maybe (ByteString, Maybe ByteString)
 intToQP name = toQP name (toStrict . toLazyByteString . intDec)
 
@@ -303,6 +307,47 @@ instance ToQueryParameters DbUpdates where
 -- | The default (empty) parameters
 dbUpdatesParam :: DbUpdates
 dbUpdatesParam = DbUpdates Nothing Nothing Nothing
+
+-- | Parameters for 'getDoc'.
+data DocGetDoc
+  = DocGetDoc {
+    dgdAttachments      :: Maybe Bool,
+    dgdAttEncodingInfo  :: Maybe Bool,
+    dgdAttsSince        :: [DocRev],
+    dgdConflicts        :: Maybe Bool,
+    dgdDeletedConflicts :: Maybe Bool,
+    dgdLatest           :: Maybe Bool,
+    dgdLocalSeq         :: Maybe Bool,
+    dgdMeta             :: Maybe Bool,
+    dgdOpenRevs         :: [DocRev],
+    dgdRev              :: Maybe DocId,
+    dgdRevs             :: Maybe Bool,
+    dgdRevsInfo         :: Maybe Bool
+    }
+instance ToQueryParameters DocGetDoc where
+  toQueryParameters DocGetDoc {..} = catMaybes $ [
+    boolToQP "attachments" dgdAttachments,
+    boolToQP "att_encoding_info" dgdAttEncodingInfo
+    ] ++
+    fmap (docRevToQP "atts_since" . Just) dgdAttsSince
+--    boolToQP "atts_since" dgdAttsSince,
+    ++ [
+    boolToQP "conflicts" dgdConflicts,
+    boolToQP "deleted_conflicts" dgdDeletedConflicts,
+    boolToQP "latest" dgdLatest,
+    boolToQP "local_seq" dgdLocalSeq,
+    boolToQP "meta" dgdMeta
+    ] ++
+    fmap (docRevToQP "open_revs" . Just) dgdOpenRevs
+    ++ [
+    docIdToQP "rev" dgdRev,
+    boolToQP "revs" dgdRevs,
+    boolToQP "revs_info" dgdRevsInfo
+    ]
+
+-- | The default (empty) parameters
+docGetDoc :: DocGetDoc
+docGetDoc = DocGetDoc Nothing Nothing [] Nothing Nothing Nothing Nothing Nothing [] Nothing Nothing Nothing
 
 -- | Types of feeds available.
 data FeedType
