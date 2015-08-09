@@ -34,8 +34,6 @@ import           Data.Text                     (Text)
 import           Database.Couch.Internal       (standardRequest)
 import           Database.Couch.RequestBuilder (addPath, addQueryParam,
                                                 setMethod, setQueryParam)
-import           Database.Couch.ResponseParser (checkStatusCode, getKey,
-                                                responseValue, toOutputType)
 import           Database.Couch.Types          (Context, CouchError, DbUpdates,
                                                 toQueryParameters)
 import           GHC.Err                       (undefined)
