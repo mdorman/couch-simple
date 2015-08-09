@@ -33,7 +33,6 @@ import           Data.Foldable              (find)
 import           Data.Function              (($), (.))
 import           Data.Functor               (fmap)
 import           Data.HashMap.Strict        (lookup)
-import           Data.Int                   (Int)
 import           Data.Maybe                 (Maybe, maybe)
 import           Data.Monoid                (mempty)
 import           Data.Text                  (Text, pack)
@@ -42,6 +41,7 @@ import           Data.Text.Read             (decimal)
 import           Data.Tuple                 (fst, snd)
 import           Database.Couch.Types       (CouchError (AlreadyExists, Conflict, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
                                              DocRev (DocRev))
+import           GHC.Integer                (Integer)
 import           Network.HTTP.Client        (HttpException (StatusCodeException))
 import           Network.HTTP.Types         (HeaderName, ResponseHeaders,
                                              Status, statusCode)
@@ -102,7 +102,7 @@ getHeader :: HeaderName -> ResponseParser ByteString
 getHeader header =
   maybeGetHeader header >>= maybe (failed NotFound) return
 
-getContentLength :: ResponseParser Int
+getContentLength :: ResponseParser Integer
 getContentLength = do
   h <- getHeader "Content-Length"
   either (failed . ParseFail . pack) (return . fst) $ decimal (decodeUtf8 h)
