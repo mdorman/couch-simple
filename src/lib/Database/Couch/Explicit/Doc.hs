@@ -28,7 +28,8 @@ import           Data.Aeson                    (FromJSON, Value (Number),
 import           Data.Either                   (Either)
 import           Data.Function                 (($))
 import           Data.Maybe                    (Maybe)
-import           Database.Couch.Internal       (structureRequest)
+import           Database.Couch.Internal       (standardRequest,
+                                                structureRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, maybeAddRev,
                                                 selectDb, selectDoc, setMethod,
                                                 setQueryParam)
@@ -76,3 +77,19 @@ size param doc rev =
         200 -> toOutputType $ object [(unwrapDocRev docRev, Number $ fromInteger contentLength)]
         404 -> failed NotFound
         _   -> failed Unknown
+
+-- | Get the specified document.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/document/common.html#get--db-docid API documentation>
+--
+-- Returns a JSON value.
+--
+-- Status: __Broken__
+get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Either CouchError (a, Maybe CookieJar))
+get param doc rev =
+  standardRequest request
+  where
+    request = do
+      setMethod "GET"
+      docAccessBase doc rev
+      setQueryParam $ toQueryParameters param
