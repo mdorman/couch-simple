@@ -9,8 +9,8 @@ import           Data.Aeson                       (Value (Bool), object)
 import           Data.Bool                        (Bool (False, True))
 import           Data.Function                    (($))
 import           Data.Maybe                       (Maybe (Nothing))
-import qualified Database.Couch.Explicit.Doc      as Doc (size)
 import qualified Database.Couch.Explicit.Database as Database (createDoc)
+import qualified Database.Couch.Explicit.Doc      as Doc (get, size)
 import           Database.Couch.Types             (Context, CouchError (..),
                                                    docGetDoc)
 import           Functionality.Util               (makeTests, runTests,
@@ -26,6 +26,7 @@ _main = runTests tests
 tests :: Manager -> TestTree
 tests = makeTests "Tests of the doc interface"
           [ docSize
+          , docGet
           ]
 
 -- Doc-oriented functions
@@ -39,4 +40,16 @@ docSize =
                     void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                     Doc.size docGetDoc "foo" Nothing c)
                  "head--db-docid.json"
+    ]
+
+docGet :: IO Context -> TestTree
+docGet =
+  makeTests "Get document size and revision"
+    [ withDb $ testAgainstFailure "No information for non-existent doc" (Doc.get docGetDoc "foo" Nothing) NotFound
+    , withDb $ testAgainstSchema
+                 "Add a doc and get the docs"
+                 (\c -> do
+                    void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    Doc.get docGetDoc "foo" Nothing c)
+                 "get--db-docid.json"
     ]
