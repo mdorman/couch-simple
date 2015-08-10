@@ -9,11 +9,10 @@ import           Data.Aeson                       (Value (Bool), object)
 import           Data.Bool                        (Bool (False, True))
 import           Data.Function                    (($))
 import           Data.Maybe                       (Maybe (Nothing))
-import qualified Database.Couch.Explicit.Database as Database (allDocs,
-                                                               createDoc)
 import qualified Database.Couch.Explicit.Doc      as Doc (size)
+import qualified Database.Couch.Explicit.Database as Database (createDoc)
 import           Database.Couch.Types             (Context, CouchError (..),
-                                                   dbAllDocs, docGetDoc)
+                                                   docGetDoc)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema, withDb)
@@ -38,6 +37,6 @@ docSize =
                  "Add a record and get all docs"
                  (\c -> do
                     void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
-                    Database.allDocs dbAllDocs c)
+                    Doc.size docGetDoc "foo" Nothing c)
                  "head--db-docid.json"
     ]
