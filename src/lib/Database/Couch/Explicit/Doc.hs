@@ -29,8 +29,8 @@ import           Data.Either                   (Either)
 import           Data.Function                 (($))
 import           Data.Maybe                    (Maybe)
 import           Database.Couch.Internal       (structureRequest)
-import           Database.Couch.RequestBuilder (maybeAddRev, selectDb,
-                                                selectDoc, setMethod,
+import           Database.Couch.RequestBuilder (RequestBuilder, maybeAddRev,
+                                                selectDb, selectDoc, setMethod,
                                                 setQueryParam)
 import           Database.Couch.ResponseParser (failed, getContentLength,
                                                 getDocRev, responseStatus,
@@ -42,6 +42,13 @@ import           Database.Couch.Types          (Context,
 import           GHC.Num                       (fromInteger)
 import           Network.HTTP.Client           (CookieJar)
 import           Network.HTTP.Types            (statusCode)
+
+-- Common setup for the next Few items
+docAccessBase :: DocId -> Maybe DocRev -> RequestBuilder ()
+docAccessBase doc rev = do
+  selectDb
+  selectDoc doc
+  maybeAddRev rev
 
 -- | Get the size and revision of the specified document.
 --
@@ -57,9 +64,7 @@ size param doc rev =
   where
     request = do
       setMethod "HEAD"
-      selectDb
-      selectDoc doc
-      maybeAddRev rev
+      docAccessBase doc rev
       setQueryParam $ toQueryParameters param
     parse = do
       -- Check status codes by hand because we don't want 404 to be an
