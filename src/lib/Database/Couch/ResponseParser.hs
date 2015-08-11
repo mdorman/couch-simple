@@ -83,6 +83,7 @@ checkStatusCode = do
     200 -> return ()
     201 -> return ()
     202 -> return ()
+    304 -> return ()
     400 -> do
       error <- getKey "reason" >>= toOutputType
       failed $ InvalidName error
