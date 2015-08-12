@@ -4,7 +4,6 @@
 
 module Functionality.Explicit.Doc where
 
-import           Control.Monad                    (void)
 import           Data.Aeson                       (Value (Bool), object)
 import           Data.Bool                        (Bool (False, True))
 import           Data.Function                    (($))
@@ -12,7 +11,7 @@ import           Data.Maybe                       (Maybe (Nothing))
 import qualified Database.Couch.Explicit.Database as Database (createDoc)
 import qualified Database.Couch.Explicit.Doc      as Doc (get, size)
 import           Database.Couch.Types             (Context, CouchError (..),
-                                                   docGetDoc)
+                                                   CouchResult, docGetDoc)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema, withDb)
@@ -37,7 +36,7 @@ docSize =
     , withDb $ testAgainstSchema
                  "Add a record and get all docs"
                  (\c -> do
-                    void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                     Doc.size docGetDoc "foo" Nothing c)
                  "head--db-docid.json"
     ]
@@ -49,7 +48,7 @@ docGet =
     , withDb $ testAgainstSchema
                  "Add a doc and get the docs"
                  (\c -> do
-                    void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                     Doc.get docGetDoc "foo" Nothing c)
                  "get--db-docid.json"
     ]

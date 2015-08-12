@@ -6,15 +6,13 @@ module Functionality.Explicit.Configuration where
 
 import           Control.Applicative                   ((<$>))
 import           Data.Aeson                            (Value (String))
-import           Data.Either                           (Either)
 import           Data.Function                         (($))
-import           Data.Maybe                            (Maybe)
 import qualified Database.Couch.Explicit.Configuration as Configuration (delValue, getValue, section,
                                                                          server, setValue)
-import           Database.Couch.Types                  (Context, CouchError)
+import           Database.Couch.Types                  (Context, CouchResult)
 import           Functionality.Util                    (runTests, serverContext,
                                                         testAgainstSchema)
-import           Network.HTTP.Client                   (CookieJar, Manager)
+import           Network.HTTP.Client                   (Manager)
 import           System.IO                             (IO)
 import           Test.Tasty                            (TestTree, testGroup)
 
@@ -42,5 +40,5 @@ setValue = testAgainstSchema "Set config item" (Configuration.setValue "testsect
 
 delValue :: IO Context -> TestTree
 delValue = testAgainstSchema "Delete config item" (\c -> do
-                                                       _ :: Either CouchError (Value, Maybe CookieJar) <- Configuration.setValue "testsection" "testkey" (String "foo") c
+                                                       _ :: CouchResult Value <- Configuration.setValue "testsection" "testkey" (String "foo") c
                                                        Configuration.delValue "testsection" "testkey" c) "delete--_config-section-key.json"
