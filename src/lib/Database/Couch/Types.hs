@@ -1,4 +1,10 @@
-{-# LANGUAGE DeriveGeneric, GeneralizedNewtypeDeriving, NoImplicitPrelude, OverloadedStrings, RecordWildCards, ScopedTypeVariables, TupleSections #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TupleSections              #-}
 
 {- |
 
@@ -16,29 +22,32 @@ Types for working with a CouchDB database.
 
 module Database.Couch.Types where
 
-import Data.Biapplicative ((<<*>>))
-import Control.Applicative ((<$>), (<*>))
-import Control.Monad (mapM, mzero, return)
-import Data.Aeson (FromJSON, ToJSON, Value (Array, Object, String), parseJSON, toJSON)
-import Data.Bool (Bool)
-import Data.ByteString (ByteString)
-import Data.ByteString.Builder (intDec, toLazyByteString)
-import Data.ByteString.Lazy (toStrict)
-import Data.Eq (Eq)
-import Data.Function ((.), ($))
-import Data.Functor (fmap)
-import qualified Data.HashMap.Strict as HashMap (fromList, toList)
-import Data.Int (Int)
-import Data.List ((++))
-import Data.Maybe (Maybe(Just, Nothing), catMaybes, maybe)
-import Data.Monoid (mempty)
-import Data.String (IsString)
-import Data.Text (Text)
-import Data.Text.Encoding (encodeUtf8)
-import qualified Data.Vector as Vector (fromList)
-import GHC.Generics (Generic)
-import Network.HTTP.Client (CookieJar, HttpException, Manager)
-import Text.Show (Show)
+import           Control.Applicative     ((<$>), (<*>))
+import           Control.Monad           (mapM, mzero, return)
+import           Data.Aeson              (FromJSON, ToJSON,
+                                          Value (Array, Object, String),
+                                          parseJSON, toJSON)
+import           Data.Biapplicative      ((<<*>>))
+import           Data.Bool               (Bool)
+import           Data.ByteString         (ByteString)
+import           Data.ByteString.Builder (intDec, toLazyByteString)
+import           Data.ByteString.Lazy    (toStrict)
+import           Data.Eq                 (Eq)
+import           Data.Function           (($), (.))
+import           Data.Functor            (fmap)
+import qualified Data.HashMap.Strict     as HashMap (fromList, toList)
+import           Data.Int                (Int)
+import           Data.List               ((++))
+import           Data.Maybe              (Maybe (Just, Nothing), catMaybes,
+                                          maybe)
+import           Data.Monoid             (mempty)
+import           Data.String             (IsString)
+import           Data.Text               (Text)
+import           Data.Text.Encoding      (encodeUtf8)
+import qualified Data.Vector             as Vector (fromList)
+import           GHC.Generics            (Generic)
+import           Network.HTTP.Client     (CookieJar, HttpException, Manager)
+import           Text.Show               (Show)
 
 {- | Failure modes for making CouchDB requests.
 
@@ -205,19 +214,19 @@ textToQP name = toQP name encodeUtf8
 -- | Parameters for 'allDocs'.
 data DbAllDocs
   = DbAllDocs {
-    adConflicts :: Maybe Bool,
-    adDescending :: Maybe Bool,
-    adEndKey :: Maybe Text,
-    adEndKeyDocId :: Maybe DocId,
-    adIncludeDocs :: Maybe Bool,
-    adInclusiveEnd :: Maybe Bool,
-    adKey :: Maybe Text,
-    adLimit :: Maybe Int,
-    adSkip :: Maybe Int,
-    adStale :: Maybe Bool,
-    adStartKey :: Maybe Text,
+    adConflicts     :: Maybe Bool,
+    adDescending    :: Maybe Bool,
+    adEndKey        :: Maybe Text,
+    adEndKeyDocId   :: Maybe DocId,
+    adIncludeDocs   :: Maybe Bool,
+    adInclusiveEnd  :: Maybe Bool,
+    adKey           :: Maybe Text,
+    adLimit         :: Maybe Int,
+    adSkip          :: Maybe Int,
+    adStale         :: Maybe Bool,
+    adStartKey      :: Maybe Text,
     adStartKeyDocId :: Maybe DocId,
-    adUpdateSeq :: Maybe Bool
+    adUpdateSeq     :: Maybe Bool
     }
 instance ToQueryParameters DbAllDocs where
   toQueryParameters DbAllDocs {..} = catMaybes [
@@ -244,8 +253,8 @@ dbAllDocs = DbAllDocs Nothing Nothing Nothing Nothing Nothing Nothing Nothing No
 data DbBulkDocs
   = DbBulkDocs {
     bdAllOrNothing :: Maybe Bool,
-    bdFullCommit :: Maybe Bool,
-    bdNewEdits :: Maybe Bool
+    bdFullCommit   :: Maybe Bool,
+    bdNewEdits     :: Maybe Bool
     }
 
 -- | The default (empty) parameters
@@ -255,20 +264,20 @@ dbBulkDocsParam = DbBulkDocs Nothing Nothing Nothing
 -- | Parameters for 'changes'.
 data DbChanges
   = DbChanges {
-    cDocIds :: Maybe [DocId],
-    cConflicts :: Maybe Bool,
-    cDescending :: Maybe Bool,
-    cFeed :: Maybe FeedType,
-    cFilter :: Maybe Text,
-    cHeartBeat :: Maybe Int,
-    cIncludeDocs :: Maybe Bool,
-    cAttachments :: Maybe Bool,
+    cDocIds          :: Maybe [DocId],
+    cConflicts       :: Maybe Bool,
+    cDescending      :: Maybe Bool,
+    cFeed            :: Maybe FeedType,
+    cFilter          :: Maybe Text,
+    cHeartBeat       :: Maybe Int,
+    cIncludeDocs     :: Maybe Bool,
+    cAttachments     :: Maybe Bool,
     cAttEncodingInfo :: Maybe Bool,
-    cLastEvent :: Maybe Text,
-    cSince :: Maybe SinceType,
-    cStyle :: Maybe StyleType,
-    cTimeout :: Maybe Int,
-    cView :: Maybe Text
+    cLastEvent       :: Maybe Text,
+    cSince           :: Maybe SinceType,
+    cStyle           :: Maybe StyleType,
+    cTimeout         :: Maybe Int,
+    cView            :: Maybe Text
     }
 instance ToQueryParameters DbChanges where
   toQueryParameters DbChanges {..} = catMaybes [
@@ -293,8 +302,8 @@ dbChangesParam = DbChanges Nothing Nothing Nothing Nothing Nothing Nothing Nothi
 -- | Parameters for 'dbUpdates'.
 data DbUpdates
   = DbUpdates {
-    feed :: Maybe FeedType,
-    timeOut :: Maybe Int,
+    feed      :: Maybe FeedType,
+    timeOut   :: Maybe Int,
     heartBeat :: Maybe Bool
     }
 instance ToQueryParameters DbUpdates where
