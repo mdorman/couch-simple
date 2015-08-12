@@ -5,7 +5,7 @@
 module Functionality.Explicit.Database where
 
 import           Control.Applicative              ((<$>))
-import           Control.Monad                    (void, (>>))
+import           Control.Monad                    ((>>))
 import           Data.Aeson                       (Object, Value (Bool, Number),
                                                    object)
 import           Data.Bool                        (Bool (False, True))
@@ -32,7 +32,7 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
 import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
 import           Database.Couch.Types             (Context (ctxDb),
-                                                   CouchError (..),
+                                                   CouchError (..), CouchResult,
                                                    DocId (DocId),
                                                    DocRev (DocRev),
                                                    DocRevMap (DocRevMap),
@@ -145,7 +145,7 @@ databaseCreateDoc =
     , withDb $ testAgainstFailure
                  "Try to create a document twice"
                  (\c -> do
-                    void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                     Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c)
                  Conflict
     ]
@@ -158,7 +158,7 @@ databaseAllDocs =
     , withDb $ testAgainstSchema
                  "Add a record and get all docs"
                  (\c -> do
-                    void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                     Database.allDocs dbAllDocs c)
                  "get--db-_all_docs.json"
     ]
@@ -171,8 +171,8 @@ databaseSomeDocs =
       lookup "total_rows" val @=? Just (Number 0), withDb $ testAgainstSchemaAndValue
                                                               "Add a record and get all docs"
                                                               (\c -> do
-                                                                 void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
-                                                                 void $ Database.createDoc False (object [("_id", "bar"), ("llamas", Bool True)]) c
+                                                                 _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                                                                 _ :: CouchResult Value <- Database.createDoc False (object [("_id", "bar"), ("llamas", Bool True)]) c
                                                                  Database.someDocs ["foo"] c)
                                                               "get--db-_all_docs.json"
                                                               Response.asAnything $ \step (val :: Object) -> do
@@ -233,7 +233,7 @@ databaseTempView :: IO Context -> TestTree
 databaseTempView =
   makeTests "Database temporary view"
   [ withDb $ testAgainstSchema "Random database" (\c -> do
-                                                      void $ Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                                                      _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                                                       Database.tempView "function (doc) { emit (1); }" (Just "_count") c) "post--db-_temp_view.json"
   ]
 

@@ -32,6 +32,7 @@ import           Data.Bool               (Bool)
 import           Data.ByteString         (ByteString)
 import           Data.ByteString.Builder (intDec, toLazyByteString)
 import           Data.ByteString.Lazy    (toStrict)
+import           Data.Either             (Either)
 import           Data.Eq                 (Eq)
 import           Data.Function           (($), (.))
 import           Data.Functor            (fmap)
@@ -176,6 +177,8 @@ data Credentials
     credUser :: User,
     credPass :: Password
     }
+
+type CouchResult a = Either CouchError (a, Maybe CookieJar)
 
 -- | Result type for creating a new document in a database.
 data CreateResult

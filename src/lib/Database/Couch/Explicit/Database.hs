@@ -133,7 +133,7 @@ delete =
 -- 'DocRev' in that circumstance.
 --
 -- Status: __Complete__
-createDoc :: (FromJSON a, MonadIO m, ToJSON a) => Bool -> a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+createDoc :: (FromJSON a, MonadIO m, ToJSON b) => Bool -> b -> Context -> m (Either CouchError (a, Maybe CookieJar))
 createDoc batch doc =
   standardRequest request
   where
