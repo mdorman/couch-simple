@@ -6,12 +6,15 @@ module Functionality.Explicit.Doc where
 
 import           Data.Aeson                       (Value (Bool), object)
 import           Data.Bool                        (Bool (False, True))
+import           Data.Either                      (Either (Right))
 import           Data.Function                    (($))
 import           Data.Maybe                       (Maybe (Nothing))
 import qualified Database.Couch.Explicit.Database as Database (createDoc)
-import qualified Database.Couch.Explicit.Doc      as Doc (get, size)
+import qualified Database.Couch.Explicit.Doc      as Doc (get, put, size)
+import           Database.Couch.Response          (getKey)
 import           Database.Couch.Types             (Context, CouchError (..),
-                                                   CouchResult, docGetDoc)
+                                                   CouchResult, docGetDoc,
+                                                   docPutParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema, withDb)
@@ -26,6 +29,7 @@ tests :: Manager -> TestTree
 tests = makeTests "Tests of the doc interface"
           [ docSize
           , docGet
+          , docPut
           ]
 
 -- Doc-oriented functions
@@ -52,3 +56,21 @@ docGet =
                     Doc.get docGetDoc "foo" Nothing c)
                  "get--db-docid.json"
     ]
+
+docPut :: IO Context -> TestTree
+docPut =
+  makeTests "Create and update a document"
+    [ withDb $ testAgainstSchema "Simple add of document" (Doc.put docPutParam "foo" Nothing testDoc) "put--db-docid.json"
+    , withDb $ testAgainstFailure "Failure to re-add document" (\c -> do
+                                                                   _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                                                                   Doc.put docPutParam "foo" Nothing testDoc c) Conflict
+    , withDb $ testAgainstSchema
+                 "Add, then update a doc"
+                 (\c -> do
+                    res <- Doc.put docPutParam "foo" Nothing testDoc c
+                    let (Right (rev, _)) = getKey "rev" res
+                    Doc.put docPutParam "foo" rev testDoc c)
+                 "put--db-docid.json"
+    ]
+  where
+    testDoc = object [("_id", "foo"), ("llamas", Bool True)]

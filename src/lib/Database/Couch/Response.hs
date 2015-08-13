@@ -35,7 +35,7 @@ import           Data.Functor         (fmap)
 import           Data.HashMap.Strict  (lookup)
 import           Data.Maybe           (Maybe (Just, Nothing), catMaybes, maybe)
 import           Data.String          (fromString)
-import           Data.Text            (intercalate, splitAt)
+import           Data.Text            (Text, intercalate, splitAt)
 import           Data.Text.Encoding   (encodeUtf8)
 import           Data.UUID            (UUID, fromASCIIBytes)
 import           Database.Couch.Types (CouchError (NotFound, ParseFail),
@@ -59,16 +59,7 @@ This assumes the routine conforms to CouchDB's @{"ok": true}@ return convention.
 
 -}
 asBool :: CouchResult Value -> CouchResult Bool
-asBool v =
-  case v of
-    Left x              -> Left x
-    Right (Object o, b) -> maybe (Left NotFound) (Right . (, b)) $ lookup "ok" o >>= reformat
-    _                   -> Left NotFound
-  where
-    reformat i =
-      case fromJSON i of
-        Error _   -> Nothing
-        Success a -> Just a
+asBool = getKey "ok"
 
 {- | Attempt to construct a list of 'Data.UUID.UUID' values.
 
@@ -94,3 +85,18 @@ asUUID v =
           (third, fourth') = splitAt 4 third'
           (fourth, fifth) = splitAt 4 fourth'
       in intercalate "-" [first, second, third, fourth, fifth]
+
+{- | Attempt to extract the value of a particular key.
+
+-}
+getKey :: FromJSON a => Text -> CouchResult Value -> CouchResult a
+getKey k v  =
+  case v of
+    Left x              -> Left x
+    Right (Object o, b) -> maybe (Left NotFound) (Right . (, b)) $ lookup k o >>= reformat
+    _                   -> Left NotFound
+  where
+    reformat i =
+      case fromJSON i of
+      Error _   -> Nothing
+      Success a -> Just a
