@@ -48,6 +48,7 @@ import           Data.Text.Encoding      (encodeUtf8)
 import qualified Data.Vector             as Vector (fromList)
 import           GHC.Generics            (Generic)
 import           Network.HTTP.Client     (CookieJar, HttpException, Manager)
+import           Network.HTTP.Types      (Header, HeaderName)
 import           Text.Show               (Show)
 
 {- | Failure modes for making CouchDB requests.
@@ -214,6 +215,18 @@ intToQP name = toQP name (toStrict . toLazyByteString . intDec)
 textToQP :: ByteString -> Maybe Text -> Maybe (ByteString, Maybe ByteString)
 textToQP name = toQP name encodeUtf8
 
+-- | A typeclass for types that can be converted to headers.
+class ToHTTPHeaders a where
+  -- | Performs the actual conversion
+  toHTTPHeaders :: a -> [Header]
+
+-- | Helpers for converting values to HTTP Headers
+toHH :: HeaderName -> (a -> ByteString) -> Maybe a -> Maybe Header
+toHH name fun = fmap ((name,) . fun)
+
+boolToHH :: HeaderName -> Maybe Bool -> Maybe Header
+boolToHH name = toHH name (\bool -> if bool then "true" else "false")
+
 -- | Parameters for 'allDocs'.
 data DbAllDocs
   = DbAllDocs {
@@ -319,6 +332,27 @@ instance ToQueryParameters DbUpdates where
 -- | The default (empty) parameters
 dbUpdatesParam :: DbUpdates
 dbUpdatesParam = DbUpdates Nothing Nothing Nothing
+
+-- | Parameters for 'Doc.put'
+data DocPut
+  = DocPut {
+    dpFullCommit :: Maybe Bool,
+    dpBatch      :: Maybe Bool
+    }
+
+instance ToHTTPHeaders DocPut where
+  toHTTPHeaders DocPut {..} = catMaybes [
+    boolToHH "X-Couch-Full-Commit" dpFullCommit
+    ]
+
+instance ToQueryParameters DocPut where
+  toQueryParameters DocPut {..} = catMaybes [
+    boolToQP "batch" dpBatch
+    ]
+
+-- | The default (empty) parameters
+docPutParam :: DocPut
+docPutParam = DocPut Nothing Nothing
 
 -- | Parameters for 'getDoc'.
 data DocGetDoc
