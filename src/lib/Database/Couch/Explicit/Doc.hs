@@ -27,7 +27,6 @@ import           Control.Monad                 (return)
 import           Control.Monad.IO.Class        (MonadIO)
 import           Data.Aeson                    (FromJSON, Value (Null, Number),
                                                 object)
-import           Data.Either                   (Either)
 import           Data.Function                 (($), (.))
 import           Data.Maybe                    (Maybe, maybe)
 import           Database.Couch.Internal       (structureRequest)
@@ -39,11 +38,10 @@ import           Database.Couch.ResponseParser (checkStatusCode, failed,
                                                 responseStatus, responseValue,
                                                 toOutputType)
 import           Database.Couch.Types          (Context, CouchError (Unknown),
-                                                DocGetDoc, DocId, DocRev,
-                                                reqDocRev, toQueryParameters,
-                                                unwrapDocRev)
+                                                CouchResult, DocGetDoc, DocId,
+                                                DocRev, reqDocRev,
+                                                toQueryParameters, unwrapDocRev)
 import           GHC.Num                       (fromInteger)
-import           Network.HTTP.Client           (CookieJar)
 import           Network.HTTP.Types            (statusCode)
 
 -- Common setup for the next Few items
@@ -61,7 +59,7 @@ docAccessBase doc rev = do
 -- JSON hash of [(Int, DocRev)].
 --
 -- Status: __Broken__
-size :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Either CouchError (a, Maybe CookieJar))
+size :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
 size param doc rev =
   structureRequest request parse
   where
@@ -89,7 +87,7 @@ size param doc rev =
 -- JSON value for the document.
 --
 -- Status: __Broken__
-get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Either CouchError (a, Maybe CookieJar))
+get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
 get param doc rev =
   structureRequest request parse
   where

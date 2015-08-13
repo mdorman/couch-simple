@@ -34,7 +34,8 @@ import           Database.Couch.RequestBuilder (RequestBuilder, runBuilder)
 import           Database.Couch.ResponseParser (ResponseParser, runParse,
                                                 standardParse)
 import           Database.Couch.Types          (Context, CouchError (HttpError, ParseFail, ParseIncomplete),
-                                                ctxCookies, ctxManager)
+                                                CouchResult, ctxCookies,
+                                                ctxManager)
 import           Network.HTTP.Client           (CookieJar, Manager, Request,
                                                 brRead, checkStatus, method,
                                                 responseBody, responseCookieJar,
@@ -96,7 +97,7 @@ with an appropriate JSON parser.
 
 -}
 
-jsonRequestWithParser :: MonadIO m => Parser Value -> RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+jsonRequestWithParser :: MonadIO m => Parser Value -> RequestBuilder () -> ResponseParser a -> Context -> m (CouchResult a)
 jsonRequestWithParser jsonParser builder parse context =
   rawJsonRequest jsonParser manager request >>= parser
   where
@@ -125,7 +126,7 @@ jar in their context with it.
 
 -}
 
-structureRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+structureRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (CouchResult a)
 structureRequest =
   jsonRequestWithParser json
 
@@ -137,7 +138,7 @@ structures (so a bare "null" or a string or a number).
 
 -}
 
-valueRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (Either CouchError (a, Maybe CookieJar))
+valueRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (CouchResult a)
 valueRequest =
   jsonRequestWithParser value
 
@@ -148,6 +149,6 @@ response.
 
 -}
 
-standardRequest :: (FromJSON a, MonadIO m) => RequestBuilder () -> Context -> m (Either CouchError (a, Maybe CookieJar))
+standardRequest :: (FromJSON a, MonadIO m) => RequestBuilder () -> Context -> m (CouchResult a)
 standardRequest =
   flip structureRequest standardParse

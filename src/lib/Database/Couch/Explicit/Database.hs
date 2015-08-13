@@ -28,7 +28,6 @@ import           Control.Monad.IO.Class        (MonadIO)
 import           Data.Aeson                    (FromJSON, ToJSON,
                                                 Value (Object), object, toJSON)
 import           Data.Bool                     (Bool (True))
-import           Data.Either                   (Either)
 import           Data.Function                 (($), (.))
 import           Data.Functor                  (fmap)
 import           Data.HashMap.Strict           (fromList)
@@ -47,12 +46,11 @@ import           Database.Couch.ResponseParser (failed, responseStatus,
                                                 toOutputType)
 import           Database.Couch.Types          (Context,
                                                 CouchError (NotFound, Unknown),
-                                                DbAllDocs, DbBulkDocs,
-                                                DbChanges, DocId, DocRevMap,
-                                                bdAllOrNothing, bdFullCommit,
-                                                bdNewEdits, cLastEvent,
-                                                toQueryParameters)
-import           Network.HTTP.Client           (CookieJar)
+                                                CouchResult, DbAllDocs,
+                                                DbBulkDocs, DbChanges, DocId,
+                                                DocRevMap, bdAllOrNothing,
+                                                bdFullCommit, bdNewEdits,
+                                                cLastEvent, toQueryParameters)
 import           Network.HTTP.Types            (statusCode)
 
 -- | Check that the requested database exists.
@@ -62,7 +60,7 @@ import           Network.HTTP.Types            (statusCode)
 -- Returns 'False' or 'True' as appropriate.
 --
 -- Status: __Complete__
-exists :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+exists :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 exists =
   structureRequest request parse
   where
@@ -85,7 +83,7 @@ exists =
 -- returning a 'Value'.
 --
 -- Status: __Complete__
-meta :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+meta :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 meta =
   standardRequest request
   where
@@ -100,7 +98,7 @@ meta =
 -- returning a 'Value'.
 --
 -- Status: __Complete__
-create :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+create :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 create =
   standardRequest request
   where
@@ -116,7 +114,7 @@ create =
 -- returning a 'Value'.
 --
 -- Status: __Complete__
-delete :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+delete :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 delete =
   standardRequest request
   where
@@ -133,7 +131,7 @@ delete =
 -- 'DocRev' in that circumstance.
 --
 -- Status: __Complete__
-createDoc :: (FromJSON a, MonadIO m, ToJSON b) => Bool -> b -> Context -> m (Either CouchError (a, Maybe CookieJar))
+createDoc :: (FromJSON a, MonadIO m, ToJSON b) => Bool -> b -> Context -> m (CouchResult a)
 createDoc batch doc =
   standardRequest request
   where
@@ -151,7 +149,7 @@ createDoc batch doc =
 -- a 'Value' for you to take apart.
 --
 -- Status: __Complete__
-allDocs :: (FromJSON a, MonadIO m) => DbAllDocs -> Context -> m (Either CouchError (a, Maybe CookieJar))
+allDocs :: (FromJSON a, MonadIO m) => DbAllDocs -> Context -> m (CouchResult a)
 allDocs param =
   standardRequest request
   where
@@ -171,7 +169,7 @@ allDocs param =
 -- returning a 'List' of 'Value'.
 --
 -- Status: __Limited?__
-someDocs :: (FromJSON a, MonadIO m) => [DocId] -> Context -> m (Either CouchError (a, Maybe CookieJar))
+someDocs :: (FromJSON a, MonadIO m) => [DocId] -> Context -> m (CouchResult a)
 someDocs ids =
   standardRequest request
   where
@@ -190,7 +188,7 @@ someDocs ids =
 -- returning a 'List' of 'Value'.
 --
 -- Status: __Complete__
-bulkDocs :: (FromJSON a, MonadIO m, ToJSON a) => DbBulkDocs -> [a] -> Context -> m (Either CouchError (a, Maybe CookieJar))
+bulkDocs :: (FromJSON a, MonadIO m, ToJSON a) => DbBulkDocs -> [a] -> Context -> m (CouchResult a)
 bulkDocs param docs =
   standardRequest request
   where
@@ -228,7 +226,7 @@ bulkDocs param docs =
 -- returning a 'Value'.
 --
 -- Status: __Limited__
-changes :: (FromJSON a, MonadIO m) => DbChanges -> Context -> m (Either CouchError (a, Maybe CookieJar))
+changes :: (FromJSON a, MonadIO m) => DbChanges -> Context -> m (CouchResult a)
 changes param =
   standardRequest request
   where
@@ -252,7 +250,7 @@ compactBase = do
 -- Run the compaction process on an entire database
 --
 -- Status: __Complete__
-compact :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+compact :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 compact =
   standardRequest request
   where
@@ -266,7 +264,7 @@ compact =
 -- Run the compaction process on the views associated with the specified design document
 --
 -- Status: __Complete__
-compactDesignDoc :: (FromJSON a, MonadIO m) => DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
+compactDesignDoc :: (FromJSON a, MonadIO m) => DocId -> Context -> m (CouchResult a)
 compactDesignDoc doc =
   standardRequest request
   where
@@ -283,7 +281,7 @@ compactDesignDoc doc =
 -- try and return it.
 --
 -- Status: __Complete__
-sync :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+sync :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 sync =
   standardRequest request
   where
@@ -300,7 +298,7 @@ sync =
 -- view content.
 --
 -- Status: __Complete__
-cleanup :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+cleanup :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 cleanup =
   standardRequest request
   where
@@ -320,7 +318,7 @@ cleanup =
 -- return value general
 --
 -- Status: __Complete__
-getSecurity :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+getSecurity :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 getSecurity =
   standardRequest request
   where
@@ -340,7 +338,7 @@ getSecurity =
 -- input value general
 --
 -- Status: __Complete__
-setSecurity :: (FromJSON b, MonadIO m, ToJSON a) => a -> Context -> m (Either CouchError (b, Maybe CookieJar))
+setSecurity :: (FromJSON b, MonadIO m, ToJSON a) => a -> Context -> m (CouchResult b)
 setSecurity doc =
   standardRequest request
   where
@@ -357,7 +355,7 @@ setSecurity doc =
 -- Create a temporary view and return its results.
 --
 -- Status: __Complete__
-tempView :: (FromJSON a, MonadIO m) => Text -> Maybe Text -> Context -> m (Either CouchError (a, Maybe CookieJar))
+tempView :: (FromJSON a, MonadIO m) => Text -> Maybe Text -> Context -> m (CouchResult a)
 tempView map reduce =
   standardRequest request
   where
@@ -391,7 +389,7 @@ docRevBase docRevs = do
 -- (,) <$> (getKey "purge_seq" >>= toOutputType) <*> (getKey "purged" >>= toOutputType)
 --
 -- Status: __Complete__
-purge :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Either CouchError (a, Maybe CookieJar))
+purge :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (CouchResult a)
 purge docRevs =
   standardRequest request
   where
@@ -408,7 +406,7 @@ purge docRevs =
 -- getKey "missed_revs" >>= toOutputType
 --
 -- Status: __Complete__
-missingRevs :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Either CouchError (a, Maybe CookieJar))
+missingRevs :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (CouchResult a)
 missingRevs docRevs =
   standardRequest request
   where
@@ -421,7 +419,7 @@ missingRevs docRevs =
 -- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_revs_diff API documentation>
 --
 -- Status: __Complete__
-revsDiff :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Either CouchError (a, Maybe CookieJar))
+revsDiff :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (CouchResult a)
 revsDiff docRevs =
   standardRequest request
   where
@@ -434,7 +432,7 @@ revsDiff docRevs =
 -- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#get--db-_revs_limit API documentation>
 --
 -- Status: __Complete__
-getRevsLimit :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+getRevsLimit :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 getRevsLimit =
   standardRequest request
   where
@@ -447,7 +445,7 @@ getRevsLimit =
 -- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#put--db-_revs_limit API documentation>
 --
 -- Status: __Complete__
-setRevsLimit :: (FromJSON a, MonadIO m) => Int -> Context -> m (Either CouchError (a, Maybe CookieJar))
+setRevsLimit :: (FromJSON a, MonadIO m) => Int -> Context -> m (CouchResult a)
 setRevsLimit limit =
   standardRequest request
   where

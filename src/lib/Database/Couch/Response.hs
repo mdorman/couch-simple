@@ -38,14 +38,14 @@ import           Data.String          (fromString)
 import           Data.Text            (intercalate, splitAt)
 import           Data.Text.Encoding   (encodeUtf8)
 import           Data.UUID            (UUID, fromASCIIBytes)
-import           Database.Couch.Types (CouchError (NotFound, ParseFail))
-import           Network.HTTP.Client  (CookieJar)
+import           Database.Couch.Types (CouchError (NotFound, ParseFail),
+                                       CouchResult)
 
 {- | Attempt to decode the value into anything with a FromJSON constraint.
 
 -}
 
-asAnything :: FromJSON a => Either CouchError (Value, Maybe CookieJar) -> Either CouchError (a, Maybe CookieJar)
+asAnything :: FromJSON a => CouchResult Value -> CouchResult a
 asAnything v =
   case v of
     Left x             -> Left x
@@ -58,7 +58,7 @@ asAnything v =
 This assumes the routine conforms to CouchDB's @{"ok": true}@ return convention.
 
 -}
-asBool :: Either CouchError (Value, Maybe CookieJar) -> Either CouchError (Bool, Maybe CookieJar)
+asBool :: CouchResult Value -> CouchResult Bool
 asBool v =
   case v of
     Left x              -> Left x
@@ -76,7 +76,7 @@ CouchDB returns uuids as string values in a form that "Data.UUID"
 cannot consume directly, so we provide this standard conversion.
 
 -}
-asUUID :: Either CouchError (Value, Maybe CookieJar) -> Either CouchError ([UUID], Maybe CookieJar)
+asUUID :: CouchResult Value -> CouchResult [UUID]
 asUUID v =
   case v of
     Left x              -> Left x
