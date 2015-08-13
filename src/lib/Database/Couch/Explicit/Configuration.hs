@@ -24,14 +24,11 @@ module Database.Couch.Explicit.Configuration where
 
 import           Control.Monad.IO.Class        (MonadIO)
 import           Data.Aeson                    (FromJSON, ToJSON)
-import           Data.Either                   (Either)
-import           Data.Maybe                    (Maybe)
 import           Database.Couch.Internal       (standardRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDoc, setJsonBody,
                                                 setMethod)
-import           Database.Couch.Types          (Context, CouchError, DocId)
-import           Network.HTTP.Client           (CookieJar)
+import           Database.Couch.Types          (Context, CouchResult, DocId)
 
 -- | Get the configuration for the overall server.
 --
@@ -40,7 +37,7 @@ import           Network.HTTP.Client           (CookieJar)
 -- Returns a (structured) JSON Value.
 --
 -- Status: __Complete__
-server :: (FromJSON a, MonadIO m) => Context -> m (Either CouchError (a, Maybe CookieJar))
+server :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
 server =
   standardRequest request
   where
@@ -54,7 +51,7 @@ server =
 -- Returns a (structured) JSON Value.
 --
 -- Status: __Complete__
-section :: (FromJSON a, MonadIO m) => DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
+section :: (FromJSON a, MonadIO m) => DocId -> Context -> m (CouchResult a)
 section s =
   standardRequest request
   where
@@ -75,7 +72,7 @@ configPath s k = do
 -- Returns the JSON Value.
 --
 -- Status: __Complete__
-getValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
+getValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (CouchResult a)
 getValue s k =
   standardRequest request
   where
@@ -89,7 +86,7 @@ getValue s k =
 -- Returns the previous JSON Value.
 --
 -- Status: __Complete__
-setValue :: (ToJSON a, FromJSON b, MonadIO m) => DocId -> DocId -> a -> Context -> m (Either CouchError (b, Maybe CookieJar))
+setValue :: (ToJSON a, FromJSON b, MonadIO m) => DocId -> DocId -> a -> Context -> m (CouchResult b)
 setValue s k v =
   standardRequest request
   where
@@ -105,7 +102,7 @@ setValue s k v =
 -- Returns the previous JSON Value.
 --
 -- Status: __Complete__
-delValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (Either CouchError (a, Maybe CookieJar))
+delValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (CouchResult a)
 delValue s k =
   standardRequest request
   where
