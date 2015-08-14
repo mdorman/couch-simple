@@ -109,6 +109,14 @@ get param doc rev =
         304 -> toOutputType Null
         _   -> failed Unknown
 
+modBase :: DocPut -> DocId -> Maybe DocRev -> RequestBuilder ()
+modBase param docid rev = do
+  selectDb
+  selectDoc docid
+  maybe (return ()) (setHeaders . return . ("If-Match" ,) . reqDocRev) rev
+  setHeaders $ toHTTPHeaders param
+  setQueryParam $ toQueryParameters param
+
 -- | Create or replace the specified document.
 --
 -- <http://docs.couchdb.org/en/1.6.1/api/document/common.html#put--db-docid API documentation>
@@ -122,9 +130,20 @@ put param docid rev doc =
   where
     request = do
       setMethod "PUT"
-      selectDb
-      selectDoc docid
-      maybe (return ()) (setHeaders . return . ("If-Match" ,) . reqDocRev) rev
-      setHeaders $ toHTTPHeaders param
-      setQueryParam $ toQueryParameters param
+      modBase param docid rev
       setJsonBody doc
+
+-- | Delete the specified document.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/document/common.html#delete--db-docid API documentation>
+--
+-- Returns a JSON value.
+--
+-- Status: __Complete__
+delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+delete param docid rev =
+  standardRequest request
+  where
+    request = do
+      setMethod "DELETE"
+      modBase param docid rev
