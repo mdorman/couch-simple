@@ -8,14 +8,14 @@ import           Data.Aeson                       (Value (Bool), object)
 import           Data.Bool                        (Bool (False, True))
 import           Data.Either                      (Either (Right))
 import           Data.Function                    (($))
-import           Data.Maybe                       (Maybe (Nothing))
+import           Data.Maybe                       (Maybe (Just, Nothing))
 import qualified Database.Couch.Explicit.Database as Database (createDoc)
-import qualified Database.Couch.Explicit.Doc      as Doc (delete, get, put,
-                                                          size)
+import qualified Database.Couch.Explicit.Doc      as Doc (copy, delete, get,
+                                                          put, size)
 import           Database.Couch.Response          (getKey)
 import           Database.Couch.Types             (Context, CouchError (..),
-                                                   CouchResult, docGetDoc,
-                                                   docPutParam)
+                                                   CouchResult, DocRev (DocRev),
+                                                   docGetDoc, docPutParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema, withDb)
@@ -32,6 +32,7 @@ tests = makeTests "Tests of the doc interface"
           , docGet
           , docPut
           , docDelete
+          , docCopy
           ]
 
 -- Doc-oriented functions
@@ -91,6 +92,30 @@ docDelete =
                     let (Right (rev, _)) = getKey "rev" res
                     Doc.delete docPutParam "foo" rev c)
                  "delete--db-docid.json"
+    ]
+  where
+    testDoc = object [("_id", "foo"), ("llamas", Bool True)]
+
+docCopy :: IO Context -> TestTree
+docCopy =
+  makeTests "Copy a document"
+    [ withDb $ testAgainstFailure "Copy a non-existent document" (Doc.copy docPutParam "foo" Nothing "bar") NotFound
+    , withDb $ testAgainstFailure "Copy a document with conflict" (\c -> do
+                                                                   _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                                                                   _ :: CouchResult Value <- Doc.put docPutParam "bar" Nothing testDoc c
+                                                                   Doc.copy docPutParam "foo" Nothing "bar" c) Conflict
+    , withDb $ testAgainstFailure
+                 "Copy a document with a non-existent revision"
+                 (\c -> do
+                    _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                    Doc.copy docPutParam "foo" (Just $ DocRev "1-000000000") "bar" c)
+                 NotFound
+    , withDb $ testAgainstSchema
+                 "Copy a document"
+                 (\c -> do
+                    _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                    Doc.copy docPutParam "foo" Nothing "bar" c)
+                 "copy--db-docid.json"
     ]
   where
     testDoc = object [("_id", "foo"), ("llamas", Bool True)]
