@@ -10,7 +10,8 @@ import           Data.Either                      (Either (Right))
 import           Data.Function                    (($))
 import           Data.Maybe                       (Maybe (Nothing))
 import qualified Database.Couch.Explicit.Database as Database (createDoc)
-import qualified Database.Couch.Explicit.Doc      as Doc (get, put, size)
+import qualified Database.Couch.Explicit.Doc      as Doc (delete, get, put,
+                                                          size)
 import           Database.Couch.Response          (getKey)
 import           Database.Couch.Types             (Context, CouchError (..),
                                                    CouchResult, docGetDoc,
@@ -30,6 +31,7 @@ tests = makeTests "Tests of the doc interface"
           [ docSize
           , docGet
           , docPut
+          , docDelete
           ]
 
 -- Doc-oriented functions
@@ -71,6 +73,24 @@ docPut =
                     let (Right (rev, _)) = getKey "rev" res
                     Doc.put docPutParam "foo" rev testDoc c)
                  "put--db-docid.json"
+    ]
+  where
+    testDoc = object [("_id", "foo"), ("llamas", Bool True)]
+
+docDelete :: IO Context -> TestTree
+docDelete =
+  makeTests "Create and update a document"
+    [ withDb $ testAgainstFailure "Delete non-existent document" (Doc.delete docPutParam "foo" Nothing) NotFound
+    , withDb $ testAgainstFailure "Delete document with conflict" (\c -> do
+                                                                   _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                                                                   Doc.delete docPutParam "foo" Nothing c) Conflict
+    , withDb $ testAgainstSchema
+                 "Add, then delete doc"
+                 (\c -> do
+                    res <- Doc.put docPutParam "foo" Nothing testDoc c
+                    let (Right (rev, _)) = getKey "rev" res
+                    Doc.delete docPutParam "foo" rev c)
+                 "delete--db-docid.json"
     ]
   where
     testDoc = object [("_id", "foo"), ("llamas", Bool True)]
