@@ -1,0 +1,80 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
+
+{- |
+
+Module      : Database.Couch.Explicit.Design
+Description : Design Document-oriented requests to CouchDB
+Copyright   : Copyright (c) 2015, Michael Alan Dorman
+License     : MIT
+Maintainer  : mdorman@jaunder.io
+Stability   : experimental
+Portability : POSIX
+
+This module is intended to be @import qualified@.  /No attempt/ has
+been made to keep names of types or functions from clashing with
+obvious or otherwise commonly-used names.
+
+The functions here are derived from (and presented in the same order
+as) http://docs.couchdb.org/en/1.6.1/api/doc/index.html.
+
+-}
+
+module Database.Couch.Explicit.Design where
+
+import           Control.Monad                 (return)
+import           Control.Monad.IO.Class        (MonadIO)
+import           Data.Aeson                    (FromJSON, Value (Null, Number),
+                                                object)
+import           Data.Function                 (($), (.))
+import           Data.Maybe                    (Maybe, maybe)
+import           Database.Couch.Internal       (structureRequest)
+import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
+                                                selectDb, selectDoc, setHeaders,
+                                                setMethod, setQueryParam)
+import           Database.Couch.ResponseParser (checkStatusCode, failed,
+                                                getContentLength, getDocRev,
+                                                responseStatus, toOutputType)
+import           Database.Couch.Types          (Context, CouchError (Unknown),
+                                                CouchResult, DocGetDoc, DocId,
+                                                DocRev, reqDocRev,
+                                                toQueryParameters, unwrapDocRev)
+import           GHC.Num                       (fromInteger)
+import           Network.HTTP.Types            (statusCode)
+
+-- Common setup for the next Few items
+docAccessBase :: DocId -> Maybe DocRev -> RequestBuilder ()
+docAccessBase doc rev = do
+  selectDb
+  addPath "_design"
+  selectDoc doc
+  maybe (return ()) (setHeaders . return . ("If-None-Match" ,) . reqDocRev) rev
+
+-- | Get the size and revision of the specified design document.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/document/common.html#head--db-_design-ddoc API documentation>
+--
+-- If the specified DocRev matches, returns a JSON Null, otherwise a
+-- JSON hash of [(Int, DocRev)].
+--
+-- Status: __Broken__
+size :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+size param doc rev =
+  structureRequest request parse
+  where
+    request = do
+      setMethod "HEAD"
+      docAccessBase doc rev
+      setQueryParam $ toQueryParameters param
+    parse = do
+      -- Do our standard status code checks
+      checkStatusCode
+      -- And then handle 304 appropriately
+      s <- responseStatus
+      docRev <- getDocRev
+      contentLength <- getContentLength
+      case statusCode s of
+        200 -> toOutputType $ object [(unwrapDocRev docRev, Number $ fromInteger contentLength)]
+        304 -> toOutputType Null
+        _   -> failed Unknown
