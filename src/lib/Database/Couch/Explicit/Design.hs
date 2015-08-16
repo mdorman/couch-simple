@@ -35,7 +35,8 @@ import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 setMethod, setQueryParam)
 import           Database.Couch.ResponseParser (checkStatusCode, failed,
                                                 getContentLength, getDocRev,
-                                                responseStatus, toOutputType)
+                                                responseStatus, responseValue,
+                                                toOutputType)
 import           Database.Couch.Types          (Context, CouchError (Unknown),
                                                 CouchResult, DocGetDoc, DocId,
                                                 DocRev, reqDocRev,
@@ -76,5 +77,32 @@ size param doc rev =
       contentLength <- getContentLength
       case statusCode s of
         200 -> toOutputType $ object [(unwrapDocRev docRev, Number $ fromInteger contentLength)]
+        304 -> toOutputType Null
+        _   -> failed Unknown
+
+-- | Get the specified design document.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/document/common.html#get--db-_design-ddoc API documentation>
+--
+-- If the specified DocRev matches, returns a JSON Null, otherwise a
+-- JSON value for the document.
+--
+-- Status: __Broken__
+get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+get param doc rev =
+  structureRequest request parse
+  where
+    request = do
+      setMethod "GET"
+      docAccessBase doc rev
+      setQueryParam $ toQueryParameters param
+    parse = do
+      -- Do our standard status code checks
+      checkStatusCode
+      -- And then handle 304 appropriately
+      s <- responseStatus
+      v <- responseValue
+      case statusCode s of
+        200 -> toOutputType v
         304 -> toOutputType Null
         _   -> failed Unknown
