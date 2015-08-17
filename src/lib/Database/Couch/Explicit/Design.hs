@@ -25,21 +25,24 @@ module Database.Couch.Explicit.Design where
 
 import           Control.Monad                 (return)
 import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (FromJSON, Value (Null, Number),
-                                                object)
+import           Data.Aeson                    (FromJSON, ToJSON,
+                                                Value (Null, Number), object)
 import           Data.Function                 (($), (.))
 import           Data.Maybe                    (Maybe, maybe)
-import           Database.Couch.Internal       (structureRequest)
+import           Database.Couch.Internal       (standardRequest,
+                                                structureRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDb, selectDoc, setHeaders,
-                                                setMethod, setQueryParam)
+                                                setJsonBody, setMethod,
+                                                setQueryParam)
 import           Database.Couch.ResponseParser (checkStatusCode, failed,
                                                 getContentLength, getDocRev,
                                                 responseStatus, responseValue,
                                                 toOutputType)
 import           Database.Couch.Types          (Context, CouchError (Unknown),
                                                 CouchResult, DocGetDoc, DocId,
-                                                DocRev, reqDocRev,
+                                                DocPut, DocRev, reqDocRev,
+                                                toHTTPHeaders,
                                                 toQueryParameters, unwrapDocRev)
 import           GHC.Num                       (fromInteger)
 import           Network.HTTP.Types            (statusCode)
@@ -106,3 +109,28 @@ get param doc rev =
         200 -> toOutputType v
         304 -> toOutputType Null
         _   -> failed Unknown
+
+modBase :: DocPut -> DocId -> Maybe DocRev -> RequestBuilder ()
+modBase param docid rev = do
+  selectDb
+  addPath "_design"
+  selectDoc docid
+  maybe (return ()) (setHeaders . return . ("If-Match" ,) . reqDocRev) rev
+  setHeaders $ toHTTPHeaders param
+  setQueryParam $ toQueryParameters param
+
+-- | Create or replace the specified design document.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/document/common.html#put--db-_design-ddoc API documentation>
+--
+-- Returns a JSON value.
+--
+-- Status: __Broken__
+put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (CouchResult a)
+put param docid rev doc =
+  standardRequest request
+  where
+    request = do
+      setMethod "PUT"
+      modBase param docid rev
+      setJsonBody doc
