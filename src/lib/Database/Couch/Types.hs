@@ -25,8 +25,9 @@ module Database.Couch.Types where
 import           Control.Applicative     ((<$>), (<*>))
 import           Control.Monad           (mapM, mzero, return)
 import           Data.Aeson              (FromJSON, ToJSON,
-                                          Value (Array, Object, String),
-                                          parseJSON, toJSON)
+                                          Value (Array, Object, String), object,
+                                          parseJSON, toJSON, (.:), (.:?), (.=))
+import           Data.Aeson.Types        (typeMismatch)
 import           Data.Biapplicative      ((<<*>>))
 import           Data.Bool               (Bool)
 import           Data.ByteString         (ByteString)
@@ -36,6 +37,7 @@ import           Data.Either             (Either)
 import           Data.Eq                 (Eq)
 import           Data.Function           (($), (.))
 import           Data.Functor            (fmap)
+import           Data.HashMap.Strict     (HashMap)
 import qualified Data.HashMap.Strict     as HashMap (fromList, toList)
 import           Data.Int                (Int)
 import           Data.List               ((++))
@@ -43,7 +45,7 @@ import           Data.Maybe              (Maybe (Just, Nothing), catMaybes,
                                           maybe)
 import           Data.Monoid             (mempty)
 import           Data.String             (IsString)
-import           Data.Text               (Text)
+import           Data.Text               (Text, null)
 import           Data.Text.Encoding      (encodeUtf8)
 import qualified Data.Vector             as Vector (fromList)
 import           GHC.Generics            (Generic)
@@ -440,3 +442,62 @@ instance FromJSON DocRevMap where
 instance ToJSON DocRevMap where
   -- The lack of symmetry in the outer and inner conversions annoys me, but I don't see how to make the outer point-free
   toJSON (DocRevMap d) = Object . HashMap.fromList $ fmap ((unwrapDocId, Array . Vector.fromList . fmap (String . unwrapDocRev)) <<*>>) d
+
+data ViewSpec
+  = ViewSpec {
+    vsMap    :: Text,
+    vsReduce :: Maybe Text
+    } deriving (Generic, Eq, Show)
+
+instance FromJSON ViewSpec where
+  parseJSON (Object o) = ViewSpec <$> o .: "map" <*> o .:? "reduce"
+  parseJSON v = typeMismatch "Couldn't extract ViewSpec: " v
+
+instance ToJSON ViewSpec where
+  toJSON ViewSpec {..} = object $ "map" .= vsMap : maybe [] (\v -> ["reduce" .= v]) vsReduce
+
+data DesignDoc
+  = DesignDoc {
+    ddocId         :: DocId,
+    ddocRev        :: DocRev,
+    ddocLanguage   :: Maybe Text,
+    ddocOptions    :: Maybe (HashMap Text Text),
+    ddocFilters    :: Maybe (HashMap Text Text),
+    ddocLists      :: Maybe (HashMap Text Text),
+    ddocShows      :: Maybe (HashMap Text Text),
+    ddocUpdates    :: Maybe (HashMap Text Text),
+    ddocValidation :: Maybe Text,
+    ddocViews      :: Maybe (HashMap Text ViewSpec)
+    } deriving (Generic, Eq, Show)
+
+instance FromJSON DesignDoc where
+  parseJSON (Object o) = DesignDoc
+                         <$> o .: "_id"
+                         <*> o .: "_rev"
+                         <*> o .:? "language"
+                         <*> o .:? "options"
+                         <*> o .:? "filters"
+                         <*> o .:? "lists"
+                         <*> o .:? "shows"
+                         <*> o .:? "updates"
+                         <*> o .:? "validate_doc_update"
+                         <*> o .:? "views"
+  parseJSON v = typeMismatch "Couldn't extract DesignDoc: " v
+
+instance ToJSON DesignDoc where
+  toJSON DesignDoc {..} = object $ catMaybes [
+    if (null . unwrapDocId) ddocId
+    then Nothing
+    else Just ("_id" .= ddocId),
+    if (null . unwrapDocRev) ddocRev
+    then Nothing
+    else Just ("_rev" .= ddocRev),
+    fmap ("language" .=) ddocLanguage,
+    fmap ("options" .=) ddocOptions,
+    fmap ("filters" .=) ddocFilters,
+    fmap ("lists" .=) ddocLists,
+    fmap ("shows" .=) ddocShows,
+    fmap ("updates" .=) ddocUpdates,
+    fmap ("validate_doc_update" .=) ddocValidation,
+    fmap ("views" .=) ddocViews
+    ]
