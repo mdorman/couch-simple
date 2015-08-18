@@ -4,12 +4,10 @@
 
 module Functionality.Explicit.Design where
 
-import           Control.Monad                  (return)
-import           Data.Aeson                     (Value, object)
+import           Data.Aeson                     (Value)
 import           Data.Either                    (Either (Right))
 import           Data.Function                  (($))
 import           Data.Maybe                     (Maybe (Just, Nothing))
-import           Data.Text.IO                   (putStrLn)
 import qualified Database.Couch.Explicit.Design as Design (copy, delete, get,
                                                            put, size)
 import           Database.Couch.Response        (getKey)
