@@ -27,6 +27,7 @@ import           Control.Monad                 (return)
 import           Control.Monad.IO.Class        (MonadIO)
 import           Data.Aeson                    (FromJSON, ToJSON,
                                                 Value (Null, Number), object)
+import           Data.ByteString               (append)
 import           Data.Function                 (($), (.))
 import           Data.Maybe                    (Maybe, maybe)
 import           Database.Couch.Internal       (standardRequest,
@@ -41,8 +42,8 @@ import           Database.Couch.ResponseParser (checkStatusCode, failed,
                                                 toOutputType)
 import           Database.Couch.Types          (Context, CouchError (Unknown),
                                                 CouchResult, DocGetDoc, DocId,
-                                                DocPut, DocRev, reqDocRev,
-                                                toHTTPHeaders,
+                                                DocPut, DocRev, reqDocId,
+                                                reqDocRev, toHTTPHeaders,
                                                 toQueryParameters, unwrapDocRev)
 import           GHC.Num                       (fromInteger)
 import           Network.HTTP.Types            (statusCode)
@@ -149,3 +150,19 @@ delete param docid rev =
     request = do
       setMethod "DELETE"
       modBase param docid rev
+
+-- | Copy the specified design document.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/document/common.html#copy--db-_design-ddoc API documentation>
+--
+-- Returns a JSON value.
+--
+-- Status: __Complete__
+copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (CouchResult a)
+copy param source rev dest =
+  standardRequest request
+  where
+    request = do
+      setMethod "COPY"
+      modBase param source rev
+      (setHeaders . return . ("Destination" ,) . append "_design/" . reqDocId) dest
