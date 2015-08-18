@@ -63,7 +63,7 @@ ddocPut =
                     let (Right (id, _)) = getKey "id" res
                     let (Right (rev, _)) = getKey "rev" res
                     Design.put docPutParam "foo" (Just rev) initialDdoc {ddocId = id, ddocRev = rev} c)
-                 "put--db-docid.json"
+                 "put--db-_design-ddoc.json"
     ]
   where
     initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
