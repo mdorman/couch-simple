@@ -134,3 +134,18 @@ put param docid rev doc =
       setMethod "PUT"
       modBase param docid rev
       setJsonBody doc
+
+-- | Delete the specified design document.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/document/common.html#delete--db-_design-ddoc API documentation>
+--
+-- Returns a JSON value.
+--
+-- Status: __Complete__
+delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+delete param docid rev =
+  standardRequest request
+  where
+    request = do
+      setMethod "DELETE"
+      modBase param docid rev

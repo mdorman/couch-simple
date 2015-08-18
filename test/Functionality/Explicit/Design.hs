@@ -10,7 +10,8 @@ import           Data.Either                    (Either (Right))
 import           Data.Function                  (($))
 import           Data.Maybe                     (Maybe (Just, Nothing))
 import           Data.Text.IO                   (putStrLn)
-import qualified Database.Couch.Explicit.Design as Design (get, put, size)
+import qualified Database.Couch.Explicit.Design as Design (delete, get, put,
+                                                           size)
 import           Database.Couch.Response        (getKey)
 import           Database.Couch.Types           (Context, CouchError (..),
                                                  CouchResult, DesignDoc (..),
@@ -30,6 +31,7 @@ tests = makeTests "Tests of the design doc interface"
           [ ddocSize
           , ddocGet
           , ddocPut
+          , ddocDelete
           ]
 
 -- Doc-oriented functions
@@ -64,6 +66,24 @@ ddocPut =
                     let (Right (rev, _)) = getKey "rev" res
                     Design.put docPutParam "foo" (Just rev) initialDdoc {ddocId = id, ddocRev = rev} c)
                  "put--db-_design-ddoc.json"
+    ]
+  where
+    initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+ddocDelete :: IO Context -> TestTree
+ddocDelete =
+  makeTests "Create and update a design document"
+    [ withDb $ testAgainstFailure "Delete non-existent design document" (Design.delete docPutParam "foo" Nothing) NotFound
+    , withDb $ testAgainstFailure "Delete design document with conflict" (\c -> do
+                                                                   _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+                                                                   Design.delete docPutParam "foo" Nothing c) Conflict
+    , withDb $ testAgainstSchema
+                 "Add, then delete design doc"
+                 (\c -> do
+                    res <- Design.put docPutParam "foo" Nothing initialDdoc c
+                    let (Right (rev, _)) = getKey "rev" res
+                    Design.delete docPutParam "foo" rev c)
+                 "delete--db-_design-ddoc.json"
     ]
   where
     initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
