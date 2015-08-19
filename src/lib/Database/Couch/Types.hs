@@ -501,3 +501,45 @@ instance ToJSON DesignDoc where
     fmap ("validate_doc_update" .=) ddocValidation,
     fmap ("views" .=) ddocViews
     ]
+
+data ViewIndexInfo
+  = ViewIndexInfo {
+    viCompactRunning :: Bool,
+    viDataSize       :: Int,
+    viDiskSize       :: Int,
+    viLanguage       :: Text,
+    viPurgeSeq       :: Int,
+    viSignature      :: Text,
+    viUpdateSeq      :: Int,
+    viUpdaterRunning :: Bool,
+    viWaitingClients :: Int,
+    viWaitingCommit  :: Bool
+} deriving (Generic, Eq, Show)
+
+instance FromJSON ViewIndexInfo where
+  parseJSON (Object o) = ViewIndexInfo
+                         <$> o .: "compact_running"
+                         <*> o .: "data_size"
+                         <*> o .: "disk_size"
+                         <*> o .: "language"
+                         <*> o .: "purge_seq"
+                         <*> o .: "signature"
+                         <*> o .: "update_seq"
+                         <*> o .: "updater_running"
+                         <*> o .: "waiting_clients"
+                         <*> o .: "waiting_commit"
+  parseJSON v = typeMismatch "Couldn't extract ViewIndexInfo: " v
+
+instance ToJSON ViewIndexInfo where
+  toJSON ViewIndexInfo {..} = object [
+    "compact_running" .= viCompactRunning,
+    "data_size" .= viDataSize,
+    "disk_size" .= viDiskSize,
+    "language" .= viLanguage,
+    "purge_seq" .= viPurgeSeq,
+    "signature" .= viSignature,
+    "update_seq" .= viUpdateSeq,
+    "updater_running" .= viUpdaterRunning,
+    "waiting_clients" .= viWaitingClients,
+    "waiting_commit" .= viWaitingCommit
+    ]
