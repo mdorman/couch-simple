@@ -48,12 +48,16 @@ import           Database.Couch.Types          (Context, CouchError (Unknown),
 import           GHC.Num                       (fromInteger)
 import           Network.HTTP.Types            (statusCode)
 
+ddocPath :: DocId -> RequestBuilder ()
+ddocPath docid = do
+  selectDb
+  addPath "_design"
+  selectDoc docid
+
 -- Common setup for the next Few items
 docAccessBase :: DocId -> Maybe DocRev -> RequestBuilder ()
 docAccessBase doc rev = do
-  selectDb
-  addPath "_design"
-  selectDoc doc
+  ddocPath doc
   maybe (return ()) (setHeaders . return . ("If-None-Match" ,) . reqDocRev) rev
 
 -- | Get the size and revision of the specified design document.
@@ -113,9 +117,7 @@ get param doc rev =
 
 modBase :: DocPut -> DocId -> Maybe DocRev -> RequestBuilder ()
 modBase param docid rev = do
-  selectDb
-  addPath "_design"
-  selectDoc docid
+  ddocPath docid
   maybe (return ()) (setHeaders . return . ("If-Match" ,) . reqDocRev) rev
   setHeaders $ toHTTPHeaders param
   setQueryParam $ toQueryParameters param
