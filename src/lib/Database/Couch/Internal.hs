@@ -66,7 +66,11 @@ say, streaming interfaces.
 
 -}
 
-rawJsonRequest :: MonadIO m => Parser Value -> Manager -> Request -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
+rawJsonRequest :: MonadIO m
+               => Parser Value -- ^ The parser to apply to the request as it streams in
+               -> Manager -- ^ The "Network.HTTP.Client.Manager" to use for the request
+               -> Request -- ^ The actual request itself
+               -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
 rawJsonRequest parser manager request =
   liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager responseHandler)
   where
