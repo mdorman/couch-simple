@@ -79,6 +79,13 @@ test-suite functionality
   ghc-options: -Wall
   hs-source-dirs: test
   main-is: Functionality.hs
+  other-modules: Functionality.Explicit.Configuration
+                 Functionality.Explicit.Database
+                 Functionality.Explicit.Design
+                 Functionality.Explicit.Doc
+                 Functionality.Explicit.Server
+                 Functionality.Internal
+                 Functionality.Util
   type: exitcode-stdio-1.0
 
 test-suite style
