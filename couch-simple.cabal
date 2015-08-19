@@ -10,7 +10,7 @@ license-file:        LICENSE
 license:             MIT
 maintainer:          mdorman@jaunder.io
 name:                couch-simple
-synopsis:            A lightweight modern client for CouchDB
+synopsis:            A modern, lightweight, complete client for CouchDB
 version:             0.0.0.0
 
 source-repository head
