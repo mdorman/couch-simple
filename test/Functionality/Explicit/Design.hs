@@ -9,7 +9,7 @@ import           Data.Either                    (Either (Right))
 import           Data.Function                  (($))
 import           Data.Maybe                     (Maybe (Just, Nothing))
 import qualified Database.Couch.Explicit.Design as Design (copy, delete, get,
-                                                           put, size)
+                                                           info, put, size)
 import           Database.Couch.Response        (getKey)
 import           Database.Couch.Types           (Context, CouchError (..),
                                                  CouchResult, DesignDoc (..),
@@ -32,6 +32,7 @@ tests = makeTests "Tests of the design doc interface"
           , ddocPut
           , ddocDelete
           , ddocCopy
+          , ddocInfo
           ]
 
 -- Doc-oriented functions
@@ -111,3 +112,10 @@ ddocCopy =
     ]
   where
     initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+ddocInfo :: IO Context -> TestTree
+ddocInfo =
+  makeTests "Get design document info"
+    [ testAgainstSchema "Get standard _auth ddoc in _users"  (\c -> Design.info "_auth" c { ctxDb = Just "_users" })
+                 "get--db-_design-ddoc-_info.json"
+    ]
