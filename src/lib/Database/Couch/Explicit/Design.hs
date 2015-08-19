@@ -168,3 +168,19 @@ copy param source rev dest =
       setMethod "COPY"
       modBase param source rev
       (setHeaders . return . ("Destination" ,) . append "_design/" . reqDocId) dest
+
+-- | Get information on a design document.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/ddoc/common.html#get--db-_design-ddoc-_info documentation>
+--
+-- The returned data is variable enough we content ourselves with just
+-- a 'Value' for you to take apart.
+--
+-- Status: __Complete__
+info :: (FromJSON a, MonadIO m) => DocId -> Context -> m (CouchResult a)
+info docid =
+  standardRequest request
+  where
+    request = do
+      ddocPath docid
+      addPath "_info"
