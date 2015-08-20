@@ -3,7 +3,6 @@
 
 module Functionality.Internal where
 
-import           Data.Aeson.Parser       (json)
 import           Data.Default            (def)
 import           Data.Either             (Either (Left, Right))
 import           Data.Eq                 ((==))
@@ -34,7 +33,7 @@ tests manager = testGroup "Raw JSON interface" [requestRoot manager]
 requestRoot :: Manager -> TestTree
 requestRoot manager = testCaseSteps "Check rawJsonRequest" $ \step -> do
   step "Request root"
-  res <- rawJsonRequest json manager def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
+  res <- rawJsonRequest manager def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
   step "No exception"
   case res of
     Left error -> assertFailure (show error)
