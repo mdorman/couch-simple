@@ -23,7 +23,7 @@ import           Control.Monad.IO.Class        (MonadIO, liftIO)
 import           Data.Aeson                    (FromJSON, Value (Null))
 import           Data.Aeson.Parser             (json)
 import           Data.Attoparsec.ByteString    (IResult (Done, Fail, Partial),
-                                                Parser, parseWith)
+                                                parseWith)
 import           Data.Either                   (Either (Right, Left), either)
 import           Data.Eq                       ((==))
 import           Data.Function                 (const, flip, ($), (.))
@@ -67,11 +67,10 @@ say, streaming interfaces.
 -}
 
 rawJsonRequest :: MonadIO m
-               => Parser Value -- ^ The parser to apply to the request as it streams in
-               -> Manager -- ^ The "Network.HTTP.Client.Manager" to use for the request
+               => Manager -- ^ The "Network.HTTP.Client.Manager" to use for the request
                -> Request -- ^ The actual request itself
                -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
-rawJsonRequest parser manager request =
+rawJsonRequest manager request =
   liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager responseHandler)
   where
     -- Simply convert any exception into an HttpError
@@ -89,21 +88,29 @@ rawJsonRequest parser manager request =
     parseParts res = do
       let input = brRead (responseBody res)
       initial <- input
-      parseWith input parser initial
+      parseWith input json initial
 
 {- | Higher-level wrapper around 'rawJsonRequest'
 
-Building on top of 'rawJsonRequest', this routine does a lot of the
-repetitious work of setting things up for the lower-level routine.
+Building on top of 'rawJsonRequest, this routine is designed to take a
+builder for the request and a parser for the result, and use them to
+request our transaction.  This makes for a very declarative style when
+defining individual endpoints for CouchDB.
 
-It's still just a higher-level building-block, intended to be fitted
-with an appropriate JSON parser.
+In order to support more sophisticated forms of authentication than
+'Basic', we do have to examine the cookie jar returned from the
+server, and perhaps tell the user that they should replace the cookie
+jar in their context with it.
 
 -}
 
-jsonRequestWithParser :: MonadIO m => Parser Value -> RequestBuilder () -> ResponseParser a -> Context -> m (CouchResult a)
-jsonRequestWithParser jsonParser builder parse context =
-  rawJsonRequest jsonParser manager request >>= parser
+structureRequest :: MonadIO m
+                 => RequestBuilder () -- ^ The builder for the HTTP request
+                 -> ResponseParser a -- ^ A parser for the data type the requester seeks
+                 -> Context -- ^ A context for holding the HTTP manager and the cookie jar
+                 -> m (CouchResult a)
+structureRequest builder parse context =
+  rawJsonRequest manager request >>= parser
   where
     manager =
       ctxManager context
@@ -115,24 +122,6 @@ jsonRequestWithParser jsonParser builder parse context =
       runParse parse (Right (h, s, v)) >>= checkContextUpdate c
     checkContextUpdate c a =
       Right (a, if c == ctxCookies context then Nothing else Just c)
-
-{- | Define and make an HTTP request returning a JSON structure
-
-Building on top of 'jsonRequestWithParser', this routine is designed to take
-a builder for the request and a parser for the result, and use them to
-make our transaction.  This makes for a very declarative style when
-defining individual endpoints for CouchDB.
-
-In order to support more sophisticated forms of authentication than
-'Basic', we do have to examine the cookie jar returned from the
-server, and perhaps tell the user that they should replace the cookie
-jar in their context with it.
-
--}
-
-structureRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (CouchResult a)
-structureRequest =
-  jsonRequestWithParser json
 
 {- | Make a HTTP request with standard CouchDB semantics
 
