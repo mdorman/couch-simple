@@ -21,7 +21,7 @@ import           Control.Monad                 (return, (>>=))
 import           Control.Monad.Catch           (handle)
 import           Control.Monad.IO.Class        (MonadIO, liftIO)
 import           Data.Aeson                    (FromJSON, Value (Null))
-import           Data.Aeson.Parser             (json, value)
+import           Data.Aeson.Parser             (json)
 import           Data.Attoparsec.ByteString    (IResult (Done, Fail, Partial),
                                                 Parser, parseWith)
 import           Data.Either                   (Either (Right, Left), either)
@@ -66,7 +66,11 @@ say, streaming interfaces.
 
 -}
 
-rawJsonRequest :: MonadIO m => Parser Value -> Manager -> Request -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
+rawJsonRequest :: MonadIO m
+               => Parser Value -- ^ The parser to apply to the request as it streams in
+               -> Manager -- ^ The "Network.HTTP.Client.Manager" to use for the request
+               -> Request -- ^ The actual request itself
+               -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
 rawJsonRequest parser manager request =
   liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager responseHandler)
   where
@@ -129,18 +133,6 @@ jar in their context with it.
 structureRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (CouchResult a)
 structureRequest =
   jsonRequestWithParser json
-
-{- | Define and make an HTTP request returning a JSON value
-
-This works identically to 'structureRequest', except it is more liberal
-in the values that it will parse---it can parse values that aren't
-structures (so a bare "null" or a string or a number).
-
--}
-
-valueRequest :: MonadIO m => RequestBuilder () -> ResponseParser a -> Context -> m (CouchResult a)
-valueRequest =
-  jsonRequestWithParser value
 
 {- | Make a HTTP request with standard CouchDB semantics
 

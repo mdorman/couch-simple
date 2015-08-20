@@ -10,7 +10,7 @@ license-file:        LICENSE
 license:             MIT
 maintainer:          mdorman@jaunder.io
 name:                couch-simple
-synopsis:            A lightweight modern client for CouchDB
+synopsis:            A modern, lightweight, complete client for CouchDB
 version:             0.0.0.0
 
 source-repository head
@@ -36,8 +36,7 @@ library
                , uuid
                , vector
   default-language: Haskell2010
-  exposed-modules: Database.Couch
-                   Database.Couch.Explicit.Configuration
+  exposed-modules: Database.Couch.Explicit.Configuration
                    Database.Couch.Explicit.Database
                    Database.Couch.Explicit.Design
                    Database.Couch.Explicit.Doc
@@ -80,6 +79,13 @@ test-suite functionality
   ghc-options: -Wall
   hs-source-dirs: test
   main-is: Functionality.hs
+  other-modules: Functionality.Explicit.Configuration
+                 Functionality.Explicit.Database
+                 Functionality.Explicit.Design
+                 Functionality.Explicit.Doc
+                 Functionality.Explicit.Server
+                 Functionality.Internal
+                 Functionality.Util
   type: exitcode-stdio-1.0
 
 test-suite style
