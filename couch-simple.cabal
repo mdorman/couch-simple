@@ -39,6 +39,7 @@ library
   exposed-modules: Database.Couch.Explicit.Configuration
                    Database.Couch.Explicit.Database
                    Database.Couch.Explicit.Design
+                   Database.Couch.Explicit.DocBase
                    Database.Couch.Explicit.Doc
                    Database.Couch.Explicit.Local
                    Database.Couch.Explicit.Server
