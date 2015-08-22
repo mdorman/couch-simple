@@ -23,42 +23,27 @@ as) http://docs.couchdb.org/en/1.6.1/api/doc/index.html.
 
 module Database.Couch.Explicit.Design where
 
-import           Control.Monad                 (return)
-import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (FromJSON, ToJSON,
-                                                Value (Null, Number), object)
-import           Data.ByteString               (append)
-import           Data.Function                 (($), (.))
-import           Data.Maybe                    (Maybe, maybe)
-import           Database.Couch.Internal       (standardRequest,
-                                                structureRequest)
-import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
-                                                selectDb, selectDoc, setHeaders,
-                                                setJsonBody, setMethod,
-                                                setQueryParam)
-import           Database.Couch.ResponseParser (checkStatusCode, failed,
-                                                getContentLength, getDocRev,
-                                                responseStatus, responseValue,
-                                                toOutputType)
-import           Database.Couch.Types          (Context, CouchError (Unknown),
-                                                CouchResult, DocGetDoc, DocId,
-                                                DocPut, DocRev, reqDocId,
-                                                reqDocRev, toHTTPHeaders,
-                                                toQueryParameters, unwrapDocRev)
-import           GHC.Num                       (fromInteger)
-import           Network.HTTP.Types            (statusCode)
-
-ddocPath :: DocId -> RequestBuilder ()
-ddocPath docid = do
-  selectDb
-  addPath "_design"
-  selectDoc docid
-
--- Common setup for the next Few items
-docAccessBase :: DocId -> Maybe DocRev -> RequestBuilder ()
-docAccessBase doc rev = do
-  ddocPath doc
-  maybe (return ()) (setHeaders . return . ("If-None-Match" ,) . reqDocRev) rev
+import           Control.Monad.IO.Class          (MonadIO)
+import           Data.Aeson                      (FromJSON, ToJSON,
+                                                  Value (Null, Number), object)
+import           Data.Function                   (($))
+import           Data.Maybe                      (Maybe (Nothing))
+import qualified Database.Couch.Explicit.DocBase as Base (accessBase, copy,
+                                                          delete, get, put)
+import           Database.Couch.Internal         (standardRequest,
+                                                  structureRequest)
+import           Database.Couch.RequestBuilder   (addPath, setMethod,
+                                                  setQueryParam)
+import           Database.Couch.ResponseParser   (checkStatusCode, failed,
+                                                  getContentLength, getDocRev,
+                                                  responseStatus, toOutputType)
+import           Database.Couch.Types            (Context, CouchError (Unknown),
+                                                  CouchResult, DocGetDoc, DocId,
+                                                  DocPut, DocRev,
+                                                  toQueryParameters,
+                                                  unwrapDocRev)
+import           GHC.Num                         (fromInteger)
+import           Network.HTTP.Types              (statusCode)
 
 -- | Get the size and revision of the specified design document.
 --
@@ -74,7 +59,7 @@ size param doc rev =
   where
     request = do
       setMethod "HEAD"
-      docAccessBase doc rev
+      Base.accessBase "_design" doc rev
       setQueryParam $ toQueryParameters param
     parse = do
       -- Do our standard status code checks
@@ -97,30 +82,7 @@ size param doc rev =
 --
 -- Status: __Broken__
 get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
-get param doc rev =
-  structureRequest request parse
-  where
-    request = do
-      setMethod "GET"
-      docAccessBase doc rev
-      setQueryParam $ toQueryParameters param
-    parse = do
-      -- Do our standard status code checks
-      checkStatusCode
-      -- And then handle 304 appropriately
-      s <- responseStatus
-      v <- responseValue
-      case statusCode s of
-        200 -> toOutputType v
-        304 -> toOutputType Null
-        _   -> failed Unknown
-
-modBase :: DocPut -> DocId -> Maybe DocRev -> RequestBuilder ()
-modBase param docid rev = do
-  ddocPath docid
-  maybe (return ()) (setHeaders . return . ("If-Match" ,) . reqDocRev) rev
-  setHeaders $ toHTTPHeaders param
-  setQueryParam $ toQueryParameters param
+get = Base.get "_design"
 
 -- | Create or replace the specified design document.
 --
@@ -130,13 +92,7 @@ modBase param docid rev = do
 --
 -- Status: __Broken__
 put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (CouchResult a)
-put param docid rev doc =
-  standardRequest request
-  where
-    request = do
-      setMethod "PUT"
-      modBase param docid rev
-      setJsonBody doc
+put = Base.put "_design"
 
 -- | Delete the specified design document.
 --
@@ -146,12 +102,7 @@ put param docid rev doc =
 --
 -- Status: __Complete__
 delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
-delete param docid rev =
-  standardRequest request
-  where
-    request = do
-      setMethod "DELETE"
-      modBase param docid rev
+delete = Base.delete "_design"
 
 -- | Copy the specified design document.
 --
@@ -161,13 +112,7 @@ delete param docid rev =
 --
 -- Status: __Complete__
 copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (CouchResult a)
-copy param source rev dest =
-  standardRequest request
-  where
-    request = do
-      setMethod "COPY"
-      modBase param source rev
-      (setHeaders . return . ("Destination" ,) . append "_design/" . reqDocId) dest
+copy = Base.copy "_design"
 
 -- | Get information on a design document.
 --
@@ -178,9 +123,9 @@ copy param source rev dest =
 --
 -- Status: __Complete__
 info :: (FromJSON a, MonadIO m) => DocId -> Context -> m (CouchResult a)
-info docid =
+info doc =
   standardRequest request
   where
     request = do
-      ddocPath docid
+      Base.accessBase "_design" doc Nothing
       addPath "_info"

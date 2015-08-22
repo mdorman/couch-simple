@@ -23,36 +23,26 @@ as) http://docs.couchdb.org/en/1.6.1/api/doc/index.html.
 
 module Database.Couch.Explicit.Doc where
 
-import           Control.Monad                 (return)
-import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (FromJSON, ToJSON,
-                                                Value (Null, Number), object)
-import           Data.Function                 (($), (.))
-import           Data.Maybe                    (Maybe, maybe)
-import           Database.Couch.Internal       (standardRequest,
-                                                structureRequest)
-import           Database.Couch.RequestBuilder (RequestBuilder, selectDb,
-                                                selectDoc, setHeaders,
-                                                setJsonBody, setMethod,
-                                                setQueryParam)
-import           Database.Couch.ResponseParser (checkStatusCode, failed,
-                                                getContentLength, getDocRev,
-                                                responseStatus, responseValue,
-                                                toOutputType)
-import           Database.Couch.Types          (Context, CouchError (Unknown),
-                                                CouchResult, DocGetDoc, DocId,
-                                                DocPut, DocRev, reqDocId,
-                                                reqDocRev, toHTTPHeaders,
-                                                toQueryParameters, unwrapDocRev)
-import           GHC.Num                       (fromInteger)
-import           Network.HTTP.Types            (statusCode)
-
--- Common setup for the next Few items
-docAccessBase :: DocId -> Maybe DocRev -> RequestBuilder ()
-docAccessBase doc rev = do
-  selectDb
-  selectDoc doc
-  maybe (return ()) (setHeaders . return . ("If-None-Match" ,) . reqDocRev) rev
+import           Control.Monad.IO.Class          (MonadIO)
+import           Data.Aeson                      (FromJSON, ToJSON,
+                                                  Value (Null, Number), object)
+import           Data.Function                   (($))
+import           Data.Maybe                      (Maybe)
+import           Data.Monoid                     (mempty)
+import qualified Database.Couch.Explicit.DocBase as Base (accessBase, copy,
+                                                          delete, get, put)
+import           Database.Couch.Internal         (structureRequest)
+import           Database.Couch.RequestBuilder   (setMethod, setQueryParam)
+import           Database.Couch.ResponseParser   (checkStatusCode, failed,
+                                                  getContentLength, getDocRev,
+                                                  responseStatus, toOutputType)
+import           Database.Couch.Types            (Context, CouchError (Unknown),
+                                                  CouchResult, DocGetDoc, DocId,
+                                                  DocPut, DocRev,
+                                                  toQueryParameters,
+                                                  unwrapDocRev)
+import           GHC.Num                         (fromInteger)
+import           Network.HTTP.Types              (statusCode)
 
 -- | Get the size and revision of the specified document.
 --
@@ -68,7 +58,7 @@ size param doc rev =
   where
     request = do
       setMethod "HEAD"
-      docAccessBase doc rev
+      Base.accessBase mempty doc rev
       setQueryParam $ toQueryParameters param
     parse = do
       -- Do our standard status code checks
@@ -91,31 +81,7 @@ size param doc rev =
 --
 -- Status: __Broken__
 get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
-get param doc rev =
-  structureRequest request parse
-  where
-    request = do
-      setMethod "GET"
-      docAccessBase doc rev
-      setQueryParam $ toQueryParameters param
-    parse = do
-      -- Do our standard status code checks
-      checkStatusCode
-      -- And then handle 304 appropriately
-      s <- responseStatus
-      v <- responseValue
-      case statusCode s of
-        200 -> toOutputType v
-        304 -> toOutputType Null
-        _   -> failed Unknown
-
-modBase :: DocPut -> DocId -> Maybe DocRev -> RequestBuilder ()
-modBase param docid rev = do
-  selectDb
-  selectDoc docid
-  maybe (return ()) (setHeaders . return . ("If-Match" ,) . reqDocRev) rev
-  setHeaders $ toHTTPHeaders param
-  setQueryParam $ toQueryParameters param
+get = Base.get mempty
 
 -- | Create or replace the specified document.
 --
@@ -125,13 +91,7 @@ modBase param docid rev = do
 --
 -- Status: __Broken__
 put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (CouchResult a)
-put param docid rev doc =
-  standardRequest request
-  where
-    request = do
-      setMethod "PUT"
-      modBase param docid rev
-      setJsonBody doc
+put = Base.put mempty
 
 -- | Delete the specified document.
 --
@@ -141,12 +101,7 @@ put param docid rev doc =
 --
 -- Status: __Complete__
 delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
-delete param docid rev =
-  standardRequest request
-  where
-    request = do
-      setMethod "DELETE"
-      modBase param docid rev
+delete = Base.delete mempty
 
 -- | Copy the specified document.
 --
@@ -156,10 +111,4 @@ delete param docid rev =
 --
 -- Status: __Complete__
 copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (CouchResult a)
-copy param source rev dest =
-  standardRequest request
-  where
-    request = do
-      setMethod "COPY"
-      modBase param source rev
-      (setHeaders . return . ("Destination" ,) . reqDocId) dest
+copy = Base.copy mempty
