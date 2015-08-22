@@ -40,6 +40,7 @@ library
                    Database.Couch.Explicit.Database
                    Database.Couch.Explicit.Design
                    Database.Couch.Explicit.Doc
+                   Database.Couch.Explicit.Local
                    Database.Couch.Explicit.Server
                    Database.Couch.Internal
                    Database.Couch.RequestBuilder
@@ -83,6 +84,7 @@ test-suite functionality
                  Functionality.Explicit.Database
                  Functionality.Explicit.Design
                  Functionality.Explicit.Doc
+                 Functionality.Explicit.Local
                  Functionality.Explicit.Server
                  Functionality.Internal
                  Functionality.Util
