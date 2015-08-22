@@ -35,6 +35,9 @@ tests = makeTests "Tests of the doc interface"
           , docCopy
           ]
 
+testDoc :: Value
+testDoc = object [("_id", "foo"), ("llamas", Bool True)]
+
 -- Doc-oriented functions
 docSize :: IO Context -> TestTree
 docSize =
@@ -43,7 +46,7 @@ docSize =
     , withDb $ testAgainstSchema
                  "Add a record and get all docs"
                  (\c -> do
-                    _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    _ :: CouchResult Value <- Database.createDoc False testDoc c
                     Doc.size docGetDoc "foo" Nothing c)
                  "head--db-docid.json"
     ]
@@ -55,7 +58,7 @@ docGet =
     , withDb $ testAgainstSchema
                  "Add a doc and get the docs"
                  (\c -> do
-                    _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    _ :: CouchResult Value <- Database.createDoc False testDoc c
                     Doc.get docGetDoc "foo" Nothing c)
                  "get--db-docid.json"
     ]
@@ -75,8 +78,6 @@ docPut =
                     Doc.put docPutParam "foo" rev testDoc c)
                  "put--db-docid.json"
     ]
-  where
-    testDoc = object [("_id", "foo"), ("llamas", Bool True)]
 
 docDelete :: IO Context -> TestTree
 docDelete =
@@ -93,8 +94,6 @@ docDelete =
                     Doc.delete docPutParam "foo" rev c)
                  "delete--db-docid.json"
     ]
-  where
-    testDoc = object [("_id", "foo"), ("llamas", Bool True)]
 
 docCopy :: IO Context -> TestTree
 docCopy =
@@ -117,5 +116,3 @@ docCopy =
                     Doc.copy docPutParam "foo" Nothing "bar" c)
                  "copy--db-docid.json"
     ]
-  where
-    testDoc = object [("_id", "foo"), ("llamas", Bool True)]
