@@ -5,7 +5,7 @@
 module Functionality.Explicit.Database where
 
 import           Control.Applicative              ((<$>))
-import           Control.Monad                    ((>>))
+import           Control.Monad                    (return, (>>))
 import           Data.Aeson                       (Object, Value (Bool, Number),
                                                    object)
 import           Data.Bool                        (Bool (False, True))
@@ -101,7 +101,10 @@ databaseCreate =
         (InvalidName
            "Name: '1111'. Only lowercase characters (a-z), digits (0-9), and any of the characters _, $, (, ), +, -, and / are allowed. Must begin with a letter.")
     , withDb $ testAgainstFailure "Invalid name is not accepted" Database.create AlreadyExists
-    , testAgainstSchema "Result of creating a new database" Database.create "put--db.json"
+    , testAgainstSchema "Result of creating a new database" (\c -> do
+                                                                 createResp <- Database.create c
+                                                                 _ :: CouchResult Value <- Database.delete c
+                                                                 return createResp) "put--db.json"
     ]
 
 databaseDelete :: IO Context -> TestTree
