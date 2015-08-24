@@ -4,17 +4,22 @@
 
 module Functionality.Explicit.Design where
 
-import           Data.Aeson                     (Value)
+import           Data.Aeson                     (Value, object)
 import           Data.Either                    (Either (Right))
 import           Data.Function                  (($))
+import           Data.HashMap.Strict            (fromList)
 import           Data.Maybe                     (Maybe (Just, Nothing))
-import qualified Database.Couch.Explicit.Design as Design (copy, delete, get,
-                                                           info, put, size)
+import qualified Database.Couch.Explicit.Design as Design (allDocs, copy,
+                                                           delete, get, info,
+                                                           put, size)
+import qualified Database.Couch.Explicit.Doc    as Doc (put)
 import           Database.Couch.Response        (getKey)
 import           Database.Couch.Types           (Context, CouchError (..),
                                                  CouchResult, DesignDoc (..),
-                                                 DocRev (..), ctxDb, docGetDoc,
-                                                 docPutParam)
+                                                 DocRev (..),
+                                                 ViewSpec (ViewSpec), ctxDb,
+                                                 docGetDoc, docPutParam,
+                                                 viewParams)
 import           Functionality.Util             (makeTests, runTests,
                                                  testAgainstFailure,
                                                  testAgainstSchema, withDb)
@@ -33,6 +38,7 @@ tests = makeTests "Tests of the design doc interface"
           , ddocDelete
           , ddocCopy
           , ddocInfo
+          , viewAllDocs
           ]
 
 -- Doc-oriented functions
@@ -119,3 +125,17 @@ ddocInfo =
     [ testAgainstSchema "Get standard _auth ddoc in _users"  (\c -> Design.info "_auth" c { ctxDb = Just "_users" })
                  "get--db-_design-ddoc-_info.json"
     ]
+
+viewAllDocs :: IO Context -> TestTree
+viewAllDocs =
+  makeTests "Get results from a view" [
+    withDb $ testAgainstSchema "Simple view" checkView "get--db-_design-ddoc-_view-view.json"
+    ]
+  where
+    checkView c = do
+      _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+      _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+      Design.allDocs viewParams "foo" "test" c
+    initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just $ fromList [("test", simpleView)])
+    simpleView = ViewSpec "function(doc) {\n  if(doc.date && doc.title) {\n    emit(doc.date, doc.title);\n  }\n}\n" Nothing
+    testDoc = object [("_id", "the-silence-of-the-lambs"), ("title", "The Silence of the Lambs"), ("date", "1991-02-14")]

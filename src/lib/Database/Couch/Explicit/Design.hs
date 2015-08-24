@@ -32,14 +32,15 @@ import qualified Database.Couch.Explicit.DocBase as Base (accessBase, copy,
                                                           delete, get, put)
 import           Database.Couch.Internal         (standardRequest,
                                                   structureRequest)
-import           Database.Couch.RequestBuilder   (addPath, setMethod,
+import           Database.Couch.RequestBuilder   (RequestBuilder, addPath,
+                                                  selectDoc, setMethod,
                                                   setQueryParam)
 import           Database.Couch.ResponseParser   (checkStatusCode, failed,
                                                   getContentLength, getDocRev,
                                                   responseStatus, toOutputType)
 import           Database.Couch.Types            (Context, CouchError (Unknown),
                                                   CouchResult, DocGetDoc, DocId,
-                                                  DocPut, DocRev,
+                                                  DocPut, DocRev, ViewParams,
                                                   toQueryParameters,
                                                   unwrapDocRev)
 import           GHC.Num                         (fromInteger)
@@ -129,3 +130,22 @@ info doc =
     request = do
       Base.accessBase "_design" doc Nothing
       addPath "_info"
+
+viewBase :: ViewParams -> DocId -> DocId -> RequestBuilder ()
+viewBase params doc view = do
+      Base.accessBase "_design" doc Nothing
+      addPath "_view"
+      selectDoc view
+      setQueryParam $ toQueryParameters params
+
+-- | Get a list of all database documents.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#get--db-_all_docs API documentation>
+--
+-- The returned data is variable enough we content ourselves with just
+-- a 'Value' for you to take apart.
+--
+-- Status: __Complete__
+allDocs :: (FromJSON a, MonadIO m) => ViewParams -> DocId -> DocId -> Context -> m (CouchResult a)
+allDocs params doc view =
+  standardRequest $ viewBase params doc view
