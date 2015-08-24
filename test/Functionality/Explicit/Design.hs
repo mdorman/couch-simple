@@ -4,6 +4,7 @@
 
 module Functionality.Explicit.Design where
 
+import           Control.Monad                  (mapM_, return)
 import           Data.Aeson                     (Value, object)
 import           Data.Either                    (Either (Right))
 import           Data.Function                  (($))
@@ -11,8 +12,8 @@ import           Data.HashMap.Strict            (fromList)
 import           Data.Maybe                     (Maybe (Just, Nothing))
 import qualified Database.Couch.Explicit.Design as Design (allDocs, copy,
                                                            delete, get, info,
-                                                           put, size)
-import qualified Database.Couch.Explicit.Doc    as Doc (put)
+                                                           put, size, someDocs)
+import           Database.Couch.Explicit.Doc    as Doc (put)
 import           Database.Couch.Response        (getKey)
 import           Database.Couch.Types           (Context, CouchError (..),
                                                  CouchResult, DesignDoc (..),
@@ -39,6 +40,7 @@ tests = makeTests "Tests of the design doc interface"
           , ddocCopy
           , ddocInfo
           , viewAllDocs
+          , viewSomeDocs
           ]
 
 -- Doc-oriented functions
@@ -139,3 +141,20 @@ viewAllDocs =
     initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just $ fromList [("test", simpleView)])
     simpleView = ViewSpec "function(doc) {\n  if(doc.date && doc.title) {\n    emit(doc.date, doc.title);\n  }\n}\n" Nothing
     testDoc = object [("_id", "the-silence-of-the-lambs"), ("title", "The Silence of the Lambs"), ("date", "1991-02-14")]
+
+viewSomeDocs :: IO Context -> TestTree
+viewSomeDocs =
+  makeTests "Get results from a view" [
+    withDb $ testAgainstSchema "Simple view" checkView "post--db-_design-ddoc-_view-view.json"
+    ]
+  where
+    checkView c = do
+      _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+      mapM_ (\testDoc -> do
+                 _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                 return ()) testDocs
+      Design.someDocs viewParams "foo" "test" ["red-dragon"] c
+    initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just $ fromList [("test", simpleView)])
+    simpleView = ViewSpec "function(doc) {\n  if(doc.date && doc.title) {\n    emit(doc.date, doc.title);\n  }\n}\n" Nothing
+    testDocs = [object [("_id", "the-silence-of-the-lambs"), ("title", "The Silence of the Lambs"), ("date", "1991-02-14")]
+               ,object [("_id", "red-dragon"), ("title", "Red Dragon"), ("date", "2002-10-04")]]

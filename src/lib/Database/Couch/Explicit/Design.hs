@@ -25,7 +25,8 @@ module Database.Couch.Explicit.Design where
 
 import           Control.Monad.IO.Class          (MonadIO)
 import           Data.Aeson                      (FromJSON, ToJSON,
-                                                  Value (Null, Number), object)
+                                                  Value (Null, Number), object,
+                                                  toJSON)
 import           Data.Function                   (($))
 import           Data.Maybe                      (Maybe (Nothing))
 import qualified Database.Couch.Explicit.DocBase as Base (accessBase, copy,
@@ -33,8 +34,8 @@ import qualified Database.Couch.Explicit.DocBase as Base (accessBase, copy,
 import           Database.Couch.Internal         (standardRequest,
                                                   structureRequest)
 import           Database.Couch.RequestBuilder   (RequestBuilder, addPath,
-                                                  selectDoc, setMethod,
-                                                  setQueryParam)
+                                                  selectDoc, setJsonBody,
+                                                  setMethod, setQueryParam)
 import           Database.Couch.ResponseParser   (checkStatusCode, failed,
                                                   getContentLength, getDocRev,
                                                   responseStatus, toOutputType)
@@ -149,3 +150,24 @@ viewBase params doc view = do
 allDocs :: (FromJSON a, MonadIO m) => ViewParams -> DocId -> DocId -> Context -> m (CouchResult a)
 allDocs params doc view =
   standardRequest $ viewBase params doc view
+
+-- | Get a list of some database documents.
+--
+-- <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#post--db-_all_docs API documentation>
+--
+-- There's some ambiguity in the documentation as to whether this
+-- accepts any query parameters.
+--
+-- The returned data is variable enough we content ourselves with just
+-- returning a 'List' of 'Value'.
+--
+-- Status: __Limited?__
+someDocs :: (FromJSON a, MonadIO m) => ViewParams -> DocId -> DocId -> [DocId] -> Context -> m (CouchResult a)
+someDocs params doc view ids =
+  standardRequest request
+  where
+    request = do
+      setMethod "POST"
+      viewBase params doc view
+      let docs = object [("keys", toJSON ids)]
+      setJsonBody docs
