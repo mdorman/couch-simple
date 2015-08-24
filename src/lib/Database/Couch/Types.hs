@@ -543,3 +543,51 @@ instance ToJSON ViewIndexInfo where
     "waiting_clients" .= viWaitingClients,
     "waiting_commit" .= viWaitingCommit
     ]
+
+-- | Parameters for view retrieval.
+data ViewParams
+  = ViewParams {
+    vpAttachments     :: Maybe Bool,
+    vpAttEncodingInfo :: Maybe Bool,
+    vpConflicts       :: Maybe Bool,
+    vpDescending      :: Maybe Bool,
+    vpEndKey          :: Maybe Text,
+    vpEndKeyDocId     :: Maybe DocId,
+    vpGroup           :: Maybe Bool,
+    vpGroupLevel      :: Maybe Int,
+    vpIncludeDocs     :: Maybe Bool,
+    vpInclusiveEnd    :: Maybe Bool,
+    vpKey             :: Maybe Text,
+    vpLimit           :: Maybe Int,
+    vpReduce          :: Maybe Bool,
+    vpSkip            :: Maybe Int,
+    vpStale           :: Maybe Bool,
+    vpStartKey        :: Maybe Text,
+    vpStartKeyDocId   :: Maybe DocId,
+    vpUpdateSeq       :: Maybe Bool
+    }
+instance ToQueryParameters ViewParams where
+  toQueryParameters ViewParams {..} = catMaybes [
+    boolToQP "attachments" vpAttachments,
+    boolToQP "att_encoding_info" vpAttEncodingInfo,
+    boolToQP "conflicts" vpConflicts,
+    boolToQP "descending" vpDescending,
+    textToQP "end_key" vpEndKey,
+    docIdToQP "end_key_doc_id" vpEndKeyDocId,
+    boolToQP "group" vpGroup,
+    intToQP "group_level" vpGroupLevel,
+    boolToQP "include_docs" vpIncludeDocs,
+    boolToQP "inclusive_end" vpInclusiveEnd,
+    textToQP "key" vpKey,
+    intToQP "limit" vpLimit,
+    boolToQP "reduce" vpReduce,
+    intToQP "skip" vpSkip,
+    boolToQP "stale" vpStale,
+    textToQP "start_key" vpStartKey,
+    docIdToQP "start_key_doc_id" vpStartKeyDocId,
+    boolToQP "update_seq" vpUpdateSeq
+    ]
+
+-- | The default (empty) parameters
+viewParams :: ViewParams
+viewParams = ViewParams Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
