@@ -32,3 +32,5 @@ script:
 
 services:
   - couchdb
+
+sudo: false
