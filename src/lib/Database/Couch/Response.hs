@@ -26,8 +26,8 @@ conversions when that is the case.
 module Database.Couch.Response where
 
 import           Control.Monad        ((>>=))
-import           Data.Aeson           (FromJSON, Result (Error, Success),
-                                       Value (Object), fromJSON)
+import           Data.Aeson           (FromJSON, Value (Object), fromJSON)
+import qualified Data.Aeson           as Aeson (Result (Error, Success))
 import           Data.Bool            (Bool)
 import           Data.Either          (Either (Left, Right))
 import           Data.Function        (($), (.))
@@ -38,26 +38,26 @@ import           Data.String          (fromString)
 import           Data.Text            (Text, intercalate, splitAt)
 import           Data.Text.Encoding   (encodeUtf8)
 import           Data.UUID            (UUID, fromASCIIBytes)
-import           Database.Couch.Types (CouchResult, Error (NotFound, ParseFail))
+import           Database.Couch.Types (Error (NotFound, ParseFail), Result)
 
 {- | Attempt to decode the value into anything with a FromJSON constraint.
 
 -}
 
-asAnything :: FromJSON a => CouchResult Value -> CouchResult a
+asAnything :: FromJSON a => Result Value -> Result a
 asAnything v =
   case v of
     Left x             -> Left x
     Right (a, b) -> case fromJSON a of
-      Error e   -> (Left . ParseFail . fromString) e
-      Success s -> Right (s, b)
+      Aeson.Error e   -> (Left . ParseFail . fromString) e
+      Aeson.Success s -> Right (s, b)
 
 {- | Attempt to construct a 'Data.Bool.Bool' value.
 
 This assumes the routine conforms to CouchDB's @{"ok": true}@ return convention.
 
 -}
-asBool :: CouchResult Value -> CouchResult Bool
+asBool :: Result Value -> Result Bool
 asBool = getKey "ok"
 
 {- | Attempt to construct a list of 'Data.UUID.UUID' values.
@@ -66,7 +66,7 @@ CouchDB returns uuids as string values in a form that "Data.UUID"
 cannot consume directly, so we provide this standard conversion.
 
 -}
-asUUID :: CouchResult Value -> CouchResult [UUID]
+asUUID :: Result Value -> Result [UUID]
 asUUID v =
   case v of
     Left x              -> Left x
@@ -76,8 +76,8 @@ asUUID v =
   where
     reformat i =
       case fromJSON i of
-        Error _   -> []
-        Success a -> fmap (fromASCIIBytes . encodeUtf8 . reformatUuid) a
+        Aeson.Error _   -> []
+        Aeson.Success a -> fmap (fromASCIIBytes . encodeUtf8 . reformatUuid) a
     reformatUuid s =
       let (first, second') = splitAt 8 s
           (second, third') = splitAt 4 second'
@@ -88,7 +88,7 @@ asUUID v =
 {- | Attempt to extract the value of a particular key.
 
 -}
-getKey :: FromJSON a => Text -> CouchResult Value -> CouchResult a
+getKey :: FromJSON a => Text -> Result Value -> Result a
 getKey k v  =
   case v of
     Left x              -> Left x
@@ -97,5 +97,5 @@ getKey k v  =
   where
     reformat i =
       case fromJSON i of
-      Error _   -> Nothing
-      Success a -> Just a
+      Aeson.Error _   -> Nothing
+      Aeson.Success a -> Just a

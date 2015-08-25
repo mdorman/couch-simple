@@ -31,11 +31,12 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                tempView)
 import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
-import           Database.Couch.Types             (Context (ctxDb), CouchResult,
+import           Database.Couch.Types             (Context (ctxDb),
                                                    DocId (DocId),
                                                    DocRev (DocRev),
                                                    DocRevMap (DocRevMap), Error (Conflict, NotFound, InvalidName, AlreadyExists),
-                                                   dbAllDocs, dbBulkDocsParam,
+                                                   Result, dbAllDocs,
+                                                   dbBulkDocsParam,
                                                    dbChangesParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
@@ -102,7 +103,7 @@ databaseCreate =
     , withDb $ testAgainstFailure "Invalid name is not accepted" Database.create AlreadyExists
     , testAgainstSchema "Result of creating a new database" (\c -> do
                                                                  createResp <- Database.create c
-                                                                 _ :: CouchResult Value <- Database.delete c
+                                                                 _ :: Result Value <- Database.delete c
                                                                  return createResp) "put--db.json"
     ]
 
@@ -147,7 +148,7 @@ databaseCreateDoc =
     , withDb $ testAgainstFailure
                  "Try to create a document twice"
                  (\c -> do
-                    _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    _ :: Result Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                     Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c)
                  Conflict
     ]
@@ -160,7 +161,7 @@ databaseAllDocs =
     , withDb $ testAgainstSchema
                  "Add a record and get all docs"
                  (\c -> do
-                    _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                    _ :: Result Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                     Database.allDocs dbAllDocs c)
                  "get--db-_all_docs.json"
     ]
@@ -173,8 +174,8 @@ databaseSomeDocs =
       lookup "total_rows" val @=? Just (Number 0), withDb $ testAgainstSchemaAndValue
                                                               "Add a record and get all docs"
                                                               (\c -> do
-                                                                 _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
-                                                                 _ :: CouchResult Value <- Database.createDoc False (object [("_id", "bar"), ("llamas", Bool True)]) c
+                                                                 _ :: Result Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                                                                 _ :: Result Value <- Database.createDoc False (object [("_id", "bar"), ("llamas", Bool True)]) c
                                                                  Database.someDocs ["foo"] c)
                                                               "get--db-_all_docs.json"
                                                               Response.asAnything $ \step (val :: Object) -> do
@@ -235,7 +236,7 @@ databaseTempView :: IO Context -> TestTree
 databaseTempView =
   makeTests "Database temporary view"
   [ withDb $ testAgainstSchema "Random database" (\c -> do
-                                                      _ :: CouchResult Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
+                                                      _ :: Result Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                                                       Database.tempView "function (doc) { emit (1); }" (Just "_count") c) "post--db-_temp_view.json"
   ]
 

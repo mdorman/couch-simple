@@ -36,9 +36,9 @@ import           Database.Couch.RequestBuilder   (setMethod, setQueryParam)
 import           Database.Couch.ResponseParser   (checkStatusCode, failed,
                                                   getContentLength, getDocRev,
                                                   responseStatus, toOutputType)
-import           Database.Couch.Types            (Context, CouchResult,
-                                                  DocGetDoc, DocId, DocPut,
-                                                  DocRev, Error (Unknown),
+import           Database.Couch.Types            (Context, DocGetDoc, DocId,
+                                                  DocPut, DocRev,
+                                                  Error (Unknown), Result,
                                                   toQueryParameters,
                                                   unwrapDocRev)
 import           GHC.Num                         (fromInteger)
@@ -52,7 +52,7 @@ import           Network.HTTP.Types              (statusCode)
 -- JSON hash of [(Int, DocRev)].
 --
 -- Status: __Broken__
-size :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+size :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
 size param doc rev =
   structureRequest request parse
   where
@@ -80,7 +80,7 @@ size param doc rev =
 -- JSON value for the document.
 --
 -- Status: __Broken__
-get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
 get = Base.get mempty
 
 -- | Create or replace the specified document.
@@ -90,7 +90,7 @@ get = Base.get mempty
 -- Returns a JSON value.
 --
 -- Status: __Broken__
-put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (CouchResult a)
+put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (Result a)
 put = Base.put mempty
 
 -- | Delete the specified document.
@@ -100,7 +100,7 @@ put = Base.put mempty
 -- Returns a JSON value.
 --
 -- Status: __Complete__
-delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (Result a)
 delete = Base.delete mempty
 
 -- | Copy the specified document.
@@ -110,5 +110,5 @@ delete = Base.delete mempty
 -- Returns a JSON value.
 --
 -- Status: __Complete__
-copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (CouchResult a)
+copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (Result a)
 copy = Base.copy mempty

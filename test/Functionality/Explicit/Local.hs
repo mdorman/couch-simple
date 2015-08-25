@@ -11,10 +11,9 @@ import           Data.Function                 (($))
 import           Data.Maybe                    (Maybe (Just, Nothing))
 import qualified Database.Couch.Explicit.Local as Local (copy, delete, get, put)
 import           Database.Couch.Response       (getKey)
-import           Database.Couch.Types          (Context, CouchResult,
-                                                DocRev (DocRev),
+import           Database.Couch.Types          (Context, DocRev (DocRev),
                                                 Error (Conflict, NotFound),
-                                                docGetDoc, docPutParam)
+                                                Result, docGetDoc, docPutParam)
 import           Functionality.Util            (makeTests, runTests,
                                                 testAgainstFailure,
                                                 testAgainstSchema, withDb)
@@ -43,7 +42,7 @@ docGet =
     , withDb $ testAgainstSchema
                  "Add a doc and get the docs"
                  (\c -> do
-                    _ :: CouchResult Value <- Local.put docPutParam "foo" Nothing testDoc c
+                    _ :: Result Value <- Local.put docPutParam "foo" Nothing testDoc c
                     Local.get docGetDoc "foo" Nothing c)
                  "get--db-docid.json"
     ]
@@ -53,7 +52,7 @@ docPut =
   makeTests "Create and update a local document"
     [ withDb $ testAgainstSchema "Simple add of local document" (Local.put docPutParam "foo" Nothing testDoc) "put--db-docid.json"
     , withDb $ testAgainstFailure "Failure to re-add local document" (\c -> do
-                                                                   _ :: CouchResult Value <- Local.put docPutParam "foo" Nothing testDoc c
+                                                                   _ :: Result Value <- Local.put docPutParam "foo" Nothing testDoc c
                                                                    Local.put docPutParam "foo" Nothing testDoc c) Conflict
     , withDb $ testAgainstSchema
                  "Add, then update a doc"
@@ -69,7 +68,7 @@ docDelete =
   makeTests "Delete a local document"
     [ withDb $ testAgainstFailure "Delete non-existent local document" (Local.delete docPutParam "foo" Nothing) NotFound
     , withDb $ testAgainstFailure "Delete local document with conflict" (\c -> do
-                                                                   _ :: CouchResult Value <- Local.put docPutParam "foo" Nothing testDoc c
+                                                                   _ :: Result Value <- Local.put docPutParam "foo" Nothing testDoc c
                                                                    Local.delete docPutParam "foo" Nothing c) Conflict
     , withDb $ testAgainstSchema
                  "Add, then delete doc"
@@ -85,19 +84,19 @@ docCopy =
   makeTests "Copy a document"
     [ withDb $ testAgainstFailure "Copy a non-existent document" (Local.copy docPutParam "foo" Nothing "bar") NotFound
     , withDb $ testAgainstFailure "Copy a document with conflict" (\c -> do
-                                                                   _ :: CouchResult Value <- Local.put docPutParam "foo" Nothing testDoc c
-                                                                   _ :: CouchResult Value <- Local.put docPutParam "bar" Nothing testDoc c
+                                                                   _ :: Result Value <- Local.put docPutParam "foo" Nothing testDoc c
+                                                                   _ :: Result Value <- Local.put docPutParam "bar" Nothing testDoc c
                                                                    Local.copy docPutParam "foo" Nothing "bar" c) Conflict
     , withDb $ testAgainstFailure
                  "Copy a document with a non-existent revision"
                  (\c -> do
-                    _ :: CouchResult Value <- Local.put docPutParam "foo" Nothing testDoc c
+                    _ :: Result Value <- Local.put docPutParam "foo" Nothing testDoc c
                     Local.copy docPutParam "foo" (Just $ DocRev "1-000000000") "bar" c)
                  NotFound
     , withDb $ testAgainstSchema
                  "Copy a document"
                  (\c -> do
-                    _ :: CouchResult Value <- Local.put docPutParam "foo" Nothing testDoc c
+                    _ :: Result Value <- Local.put docPutParam "foo" Nothing testDoc c
                     Local.copy docPutParam "foo" Nothing "bar" c)
                  "copy--db-docid.json"
     ]

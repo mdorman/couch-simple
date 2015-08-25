@@ -39,9 +39,9 @@ import           Database.Couch.RequestBuilder   (RequestBuilder, addPath,
 import           Database.Couch.ResponseParser   (checkStatusCode, failed,
                                                   getContentLength, getDocRev,
                                                   responseStatus, toOutputType)
-import           Database.Couch.Types            (Context, CouchResult,
-                                                  DocGetDoc, DocId, DocPut,
-                                                  DocRev, Error (Unknown),
+import           Database.Couch.Types            (Context, DocGetDoc, DocId,
+                                                  DocPut, DocRev,
+                                                  Error (Unknown), Result,
                                                   ViewParams, toQueryParameters,
                                                   unwrapDocRev)
 import           GHC.Num                         (fromInteger)
@@ -55,7 +55,7 @@ import           Network.HTTP.Types              (statusCode)
 -- JSON hash of [(Int, DocRev)].
 --
 -- Status: __Broken__
-size :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+size :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
 size param doc rev =
   structureRequest request parse
   where
@@ -83,7 +83,7 @@ size param doc rev =
 -- JSON value for the document.
 --
 -- Status: __Broken__
-get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
 get = Base.get "_design"
 
 -- | Create or replace the specified design document.
@@ -93,7 +93,7 @@ get = Base.get "_design"
 -- Returns a JSON value.
 --
 -- Status: __Broken__
-put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (CouchResult a)
+put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (Result a)
 put = Base.put "_design"
 
 -- | Delete the specified design document.
@@ -103,7 +103,7 @@ put = Base.put "_design"
 -- Returns a JSON value.
 --
 -- Status: __Complete__
-delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (Result a)
 delete = Base.delete "_design"
 
 -- | Copy the specified design document.
@@ -113,7 +113,7 @@ delete = Base.delete "_design"
 -- Returns a JSON value.
 --
 -- Status: __Complete__
-copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (CouchResult a)
+copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (Result a)
 copy = Base.copy "_design"
 
 -- | Get information on a design document.
@@ -124,7 +124,7 @@ copy = Base.copy "_design"
 -- a 'Value' for you to take apart.
 --
 -- Status: __Complete__
-info :: (FromJSON a, MonadIO m) => DocId -> Context -> m (CouchResult a)
+info :: (FromJSON a, MonadIO m) => DocId -> Context -> m (Result a)
 info doc =
   standardRequest request
   where
@@ -147,7 +147,7 @@ viewBase params doc view = do
 -- a 'Value' for you to take apart.
 --
 -- Status: __Complete__
-allDocs :: (FromJSON a, MonadIO m) => ViewParams -> DocId -> DocId -> Context -> m (CouchResult a)
+allDocs :: (FromJSON a, MonadIO m) => ViewParams -> DocId -> DocId -> Context -> m (Result a)
 allDocs params doc view =
   standardRequest $ viewBase params doc view
 
@@ -162,7 +162,7 @@ allDocs params doc view =
 -- returning a 'List' of 'Value'.
 --
 -- Status: __Limited?__
-someDocs :: (FromJSON a, MonadIO m) => ViewParams -> DocId -> DocId -> [DocId] -> Context -> m (CouchResult a)
+someDocs :: (FromJSON a, MonadIO m) => ViewParams -> DocId -> DocId -> [DocId] -> Context -> m (Result a)
 someDocs params doc view ids =
   standardRequest request
   where
