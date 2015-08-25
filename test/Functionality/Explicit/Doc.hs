@@ -13,8 +13,9 @@ import qualified Database.Couch.Explicit.Database as Database (createDoc)
 import qualified Database.Couch.Explicit.Doc      as Doc (copy, delete, get,
                                                           put, size)
 import           Database.Couch.Response          (getKey)
-import           Database.Couch.Types             (Context, CouchError (..),
-                                                   CouchResult, DocRev (DocRev),
+import           Database.Couch.Types             (Context, CouchResult,
+                                                   DocRev (DocRev),
+                                                   Error (Conflict, NotFound),
                                                    docGetDoc, docPutParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,

@@ -31,11 +31,10 @@ import qualified Database.Couch.Explicit.Database as Database (allDocs,
                                                                tempView)
 import qualified Database.Couch.Response          as Response (asAnything,
                                                                asBool)
-import           Database.Couch.Types             (Context (ctxDb),
-                                                   CouchError (..), CouchResult,
+import           Database.Couch.Types             (Context (ctxDb), CouchResult,
                                                    DocId (DocId),
                                                    DocRev (DocRev),
-                                                   DocRevMap (DocRevMap),
+                                                   DocRevMap (DocRevMap), Error (Conflict, NotFound, InvalidName, AlreadyExists),
                                                    dbAllDocs, dbBulkDocsParam,
                                                    dbChangesParam)
 import           Functionality.Util               (makeTests, runTests,

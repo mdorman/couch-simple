@@ -38,8 +38,7 @@ import           Data.String          (fromString)
 import           Data.Text            (Text, intercalate, splitAt)
 import           Data.Text.Encoding   (encodeUtf8)
 import           Data.UUID            (UUID, fromASCIIBytes)
-import           Database.Couch.Types (CouchError (NotFound, ParseFail),
-                                       CouchResult)
+import           Database.Couch.Types (CouchResult, Error (NotFound, ParseFail))
 
 {- | Attempt to decode the value into anything with a FromJSON constraint.
 
