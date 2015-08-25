@@ -175,8 +175,8 @@ data Credentials
     credPass :: Password
     }
 
--- | Calls in the /Explicit/ interface will always return a 'CouchResult'.
-type CouchResult a = Either Error (a, Maybe CookieJar)
+-- | Calls in the /Explicit/ interface will always return a 'Result'.
+type Result a = Either Error (a, Maybe CookieJar)
 
 -- | Result type for creating a new document in a database.
 data CreateResult

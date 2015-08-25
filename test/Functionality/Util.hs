@@ -23,9 +23,8 @@ import           Data.String                      (IsString, String, fromString,
 import           Data.UUID                        (toString)
 import qualified Database.Couch.Explicit.Database as Database (create, delete)
 import qualified Database.Couch.Response          as Response (asBool)
-import           Database.Couch.Types             (Context (Context),
-                                                   CouchResult, Error,
-                                                   Port (Port))
+import           Database.Couch.Types             (Context (Context), Error,
+                                                   Port (Port), Result)
 import           GHC.Err                          (error)
 import           Network.HTTP.Client              (Manager,
                                                    defaultManagerSettings,
@@ -59,7 +58,7 @@ runTests testTree = do
   defaultMain $ testTree manager
 
 testAgainstFailure :: String
-                   -> (Context -> IO (CouchResult Value))
+                   -> (Context -> IO (Result Value))
                    -> Error
                    -> IO Context
                    -> TestTree
@@ -69,7 +68,7 @@ testAgainstFailure desc function exception getContext = testCaseSteps desc $ \st
 
 checkException :: (String -> IO ())
                -> Error
-               -> CouchResult Value
+               -> Result Value
                -> IO ()
 checkException step exception res = do
   step "Got an exception"
@@ -83,7 +82,7 @@ checkException step exception res = do
                                    , show val
                                    ]
 
-throwOnError :: FromJSON a => CouchResult a -> IO ()
+throwOnError :: FromJSON a => Result a -> IO ()
 throwOnError res =
   case res of
     Left err -> error $ show err
@@ -101,7 +100,7 @@ withDb test getContext =
       return ctx
 
 testAgainstSchema :: String
-                  -> (Context -> IO (CouchResult Value))
+                  -> (Context -> IO (Result Value))
                   -> FilePath
                   -> IO Context
                   -> TestTree
@@ -109,9 +108,9 @@ testAgainstSchema desc function schema =
   testAgainstSchemaAndValue desc function schema id (const . const (return ()))
 
 testAgainstSchemaAndValue :: String
-                          -> (Context -> IO (CouchResult Value))
+                          -> (Context -> IO (Result Value))
                           -> FilePath
-                          -> (CouchResult Value -> CouchResult a)
+                          -> (Result Value -> Result a)
                           -> ((String -> IO ()) -> a -> IO ())
                           -> IO Context
                           -> TestTree
@@ -121,9 +120,9 @@ testAgainstSchemaAndValue desc function schema decoder checker getContext = test
 
 checkCookiesAndSchema :: (String -> IO ())
                       -> FilePath
-                      -> (CouchResult Value -> CouchResult a)
+                      -> (Result Value -> Result a)
                       -> ((String -> IO ()) -> a -> IO ())
-                      -> CouchResult Value
+                      -> Result Value
                       -> IO ()
 checkCookiesAndSchema step schemaFile decoder checker res = do
   step "No exception"

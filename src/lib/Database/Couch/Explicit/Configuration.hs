@@ -28,7 +28,7 @@ import           Database.Couch.Internal       (standardRequest)
 import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDoc, setJsonBody,
                                                 setMethod)
-import           Database.Couch.Types          (Context, CouchResult, DocId)
+import           Database.Couch.Types          (Context, DocId, Result)
 
 -- | Get the configuration for the overall server.
 --
@@ -37,7 +37,7 @@ import           Database.Couch.Types          (Context, CouchResult, DocId)
 -- Returns a (structured) JSON Value.
 --
 -- Status: __Complete__
-server :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
+server :: (FromJSON a, MonadIO m) => Context -> m (Result a)
 server =
   standardRequest request
   where
@@ -51,7 +51,7 @@ server =
 -- Returns a (structured) JSON Value.
 --
 -- Status: __Complete__
-section :: (FromJSON a, MonadIO m) => DocId -> Context -> m (CouchResult a)
+section :: (FromJSON a, MonadIO m) => DocId -> Context -> m (Result a)
 section s =
   standardRequest request
   where
@@ -72,7 +72,7 @@ configPath s k = do
 -- Returns the JSON Value.
 --
 -- Status: __Complete__
-getValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (CouchResult a)
+getValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (Result a)
 getValue s k =
   standardRequest request
   where
@@ -86,7 +86,7 @@ getValue s k =
 -- Returns the previous JSON Value.
 --
 -- Status: __Complete__
-setValue :: (ToJSON a, FromJSON b, MonadIO m) => DocId -> DocId -> a -> Context -> m (CouchResult b)
+setValue :: (ToJSON a, FromJSON b, MonadIO m) => DocId -> DocId -> a -> Context -> m (Result b)
 setValue s k v =
   standardRequest request
   where
@@ -102,7 +102,7 @@ setValue s k v =
 -- Returns the previous JSON Value.
 --
 -- Status: __Complete__
-delValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (CouchResult a)
+delValue :: (FromJSON a, MonadIO m) => DocId -> DocId -> Context -> m (Result a)
 delValue s k =
   standardRequest request
   where

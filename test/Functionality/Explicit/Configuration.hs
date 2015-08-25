@@ -9,7 +9,7 @@ import           Data.Aeson                            (Value (String))
 import           Data.Function                         (($))
 import qualified Database.Couch.Explicit.Configuration as Configuration (delValue, getValue, section,
                                                                          server, setValue)
-import           Database.Couch.Types                  (Context, CouchResult)
+import           Database.Couch.Types                  (Context, Result)
 import           Functionality.Util                    (runTests, serverContext,
                                                         testAgainstSchema)
 import           Network.HTTP.Client                   (Manager)
@@ -40,5 +40,5 @@ setValue = testAgainstSchema "Set config item" (Configuration.setValue "testsect
 
 delValue :: IO Context -> TestTree
 delValue = testAgainstSchema "Delete config item" (\c -> do
-                                                       _ :: CouchResult Value <- Configuration.setValue "testsection" "testkey" (String "foo") c
+                                                       _ :: Result Value <- Configuration.setValue "testsection" "testkey" (String "foo") c
                                                        Configuration.delValue "testsection" "testkey" c) "delete--_config-section-key.json"

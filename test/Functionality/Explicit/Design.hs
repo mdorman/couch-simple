@@ -15,11 +15,11 @@ import qualified Database.Couch.Explicit.Design as Design (allDocs, copy,
                                                            put, size, someDocs)
 import           Database.Couch.Explicit.Doc    as Doc (put)
 import           Database.Couch.Response        (getKey)
-import           Database.Couch.Types           (Context, CouchResult,
-                                                 DesignDoc (..), DocRev (..),
+import           Database.Couch.Types           (Context, DesignDoc (..),
+                                                 DocRev (..),
                                                  Error (NotFound, Conflict),
-                                                 ViewSpec (ViewSpec), ctxDb,
-                                                 docGetDoc, docPutParam,
+                                                 Result, ViewSpec (ViewSpec),
+                                                 ctxDb, docGetDoc, docPutParam,
                                                  viewParams)
 import           Functionality.Util             (makeTests, runTests,
                                                  testAgainstFailure,
@@ -65,7 +65,7 @@ ddocPut =
   makeTests "Create and update a design document"
     [ withDb $ testAgainstSchema "Simple add of document" (Design.put docPutParam "foo" Nothing initialDdoc) "put--db-_design-ddoc.json"
     , withDb $ testAgainstFailure "Failure to update document" (\c -> do
-                                                                    _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+                                                                    _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
                                                                     Design.put docPutParam "foo" Nothing initialDdoc c) Conflict
     , withDb $ testAgainstSchema
                  "Add, then update a doc"
@@ -84,7 +84,7 @@ ddocDelete =
   makeTests "Create and update a design document"
     [ withDb $ testAgainstFailure "Delete non-existent design document" (Design.delete docPutParam "foo" Nothing) NotFound
     , withDb $ testAgainstFailure "Delete design document with conflict" (\c -> do
-                                                                   _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+                                                                   _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
                                                                    Design.delete docPutParam "foo" Nothing c) Conflict
     , withDb $ testAgainstSchema
                  "Add, then delete design doc"
@@ -102,19 +102,19 @@ ddocCopy =
   makeTests "Copy a document"
     [ withDb $ testAgainstFailure "Copy a non-existent document" (Design.copy docPutParam "foo" Nothing "bar") NotFound
     , withDb $ testAgainstFailure "Copy a document with conflict" (\c -> do
-                                                                   _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
-                                                                   _ :: CouchResult Value <- Design.put docPutParam "bar" Nothing initialDdoc c
+                                                                   _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+                                                                   _ :: Result Value <- Design.put docPutParam "bar" Nothing initialDdoc c
                                                                    Design.copy docPutParam "foo" Nothing "bar" c) Conflict
     , withDb $ testAgainstFailure
                  "Copy a document with a non-existent revision"
                  (\c -> do
-                    _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+                    _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
                     Design.copy docPutParam "foo" (Just $ DocRev "1-000000000") "bar" c)
                  NotFound
     , withDb $ testAgainstSchema
                  "Copy a document"
                  (\c -> do
-                    _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+                    _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
                     Design.copy docPutParam "foo" Nothing "bar" c)
                  "copy--db-_design-ddoc.json"
     ]
@@ -135,8 +135,8 @@ viewAllDocs =
     ]
   where
     checkView c = do
-      _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
-      _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+      _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+      _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
       Design.allDocs viewParams "foo" "test" c
     initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just $ fromList [("test", simpleView)])
     simpleView = ViewSpec "function(doc) {\n  if(doc.date && doc.title) {\n    emit(doc.date, doc.title);\n  }\n}\n" Nothing
@@ -149,9 +149,9 @@ viewSomeDocs =
     ]
   where
     checkView c = do
-      _ :: CouchResult Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+      _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
       mapM_ (\testDoc -> do
-                 _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                 _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
                  return ()) testDocs
       Design.someDocs viewParams "foo" "test" ["red-dragon"] c
     initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just $ fromList [("test", simpleView)])

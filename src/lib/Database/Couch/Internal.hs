@@ -33,8 +33,8 @@ import           Data.Text                     (pack)
 import           Database.Couch.RequestBuilder (RequestBuilder, runBuilder)
 import           Database.Couch.ResponseParser (ResponseParser, runParse,
                                                 standardParse)
-import           Database.Couch.Types          (Context, CouchResult, Error (HttpError, ParseFail, ParseIncomplete),
-                                                ctxCookies, ctxManager)
+import           Database.Couch.Types          (Context, Error (HttpError, ParseFail, ParseIncomplete),
+                                                Result, ctxCookies, ctxManager)
 import           Network.HTTP.Client           (CookieJar, Manager, Request,
                                                 brRead, checkStatus, method,
                                                 responseBody, responseCookieJar,
@@ -107,7 +107,7 @@ structureRequest :: MonadIO m
                  => RequestBuilder () -- ^ The builder for the HTTP request
                  -> ResponseParser a -- ^ A parser for the data type the requester seeks
                  -> Context -- ^ A context for holding the HTTP manager and the cookie jar
-                 -> m (CouchResult a)
+                 -> m (Result a)
 structureRequest builder parse context =
   rawJsonRequest manager request >>= parser
   where
@@ -129,6 +129,6 @@ response.
 
 -}
 
-standardRequest :: (FromJSON a, MonadIO m) => RequestBuilder () -> Context -> m (CouchResult a)
+standardRequest :: (FromJSON a, MonadIO m) => RequestBuilder () -> Context -> m (Result a)
 standardRequest =
   flip structureRequest standardParse

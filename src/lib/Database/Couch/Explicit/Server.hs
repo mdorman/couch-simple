@@ -33,7 +33,7 @@ import           Data.Text                     (Text)
 import           Database.Couch.Internal       (standardRequest)
 import           Database.Couch.RequestBuilder (addPath, addQueryParam,
                                                 setMethod, setQueryParam)
-import           Database.Couch.Types          (Context, CouchResult, DbUpdates,
+import           Database.Couch.Types          (Context, DbUpdates, Result,
                                                 toQueryParameters)
 import           GHC.Err                       (undefined)
 import           Text.Show                     (show)
@@ -45,7 +45,7 @@ import           Text.Show                     (show)
 -- The return value is easily decoded as a 'Value'.
 --
 -- Status: __Complete__
-meta :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
+meta :: (FromJSON a, MonadIO m) => Context -> m (Result a)
 meta =
   standardRequest request
   where
@@ -60,7 +60,7 @@ meta =
 -- The return value is easily decoded into a 'List' of 'Value'.
 --
 -- Status: __Complete__
-activeTasks :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
+activeTasks :: (FromJSON a, MonadIO m) => Context -> m (Result a)
 activeTasks =
   standardRequest request
   where
@@ -74,7 +74,7 @@ activeTasks =
 -- The return value is easily decoded into a 'List' of 'Text'.
 --
 -- Status: __Complete__
-allDbs :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
+allDbs :: (FromJSON a, MonadIO m) => Context -> m (Result a)
 allDbs =
   standardRequest request
   where
@@ -91,7 +91,7 @@ allDbs =
 -- The return value is easily decoded into a 'List' of 'Value'.
 --
 -- Status: __Limited__
-dbUpdates :: (FromJSON a, MonadIO m) => DbUpdates -> Context -> m (CouchResult a)
+dbUpdates :: (FromJSON a, MonadIO m) => DbUpdates -> Context -> m (Result a)
 dbUpdates param =
   standardRequest request
   where
@@ -107,7 +107,7 @@ dbUpdates param =
 -- for the moment.
 --
 -- Status: __Unimplemented__
-log :: MonadIO m => Context -> m (CouchResult Text)
+log :: MonadIO m => Context -> m (Result Text)
 log = undefined
 
 -- | Administer replication for databases on the server
@@ -121,7 +121,7 @@ log = undefined
 -- The return value is easily decoded into a 'Value'.
 --
 -- Status: __Broken__
-replicate :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
+replicate :: (FromJSON a, MonadIO m) => Context -> m (Result a)
 replicate =
   standardRequest request
   where
@@ -136,7 +136,7 @@ replicate =
 -- The return value is easily decoded into a 'Boolean' using 'asBool'.
 --
 -- Status: __Complete__
-restart :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
+restart :: (FromJSON a, MonadIO m) => Context -> m (Result a)
 restart =
   standardRequest request
   where
@@ -151,7 +151,7 @@ restart =
 -- The return value is easily decoded into a 'Value'.
 --
 -- Status: __Complete__
-stats :: (FromJSON a, MonadIO m) => Context -> m (CouchResult a)
+stats :: (FromJSON a, MonadIO m) => Context -> m (Result a)
 stats =
   standardRequest request
   where
@@ -165,7 +165,7 @@ stats =
 -- The return 'Value' is easily decoded into a list of 'UUID's using 'asUUID'.
 --
 -- Status: __Complete__
-uuids :: (FromJSON a, MonadIO m) => Int -> Context -> m (CouchResult a)
+uuids :: (FromJSON a, MonadIO m) => Int -> Context -> m (Result a)
 uuids count =
   standardRequest request
   where

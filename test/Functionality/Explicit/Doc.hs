@@ -13,10 +13,10 @@ import qualified Database.Couch.Explicit.Database as Database (createDoc)
 import qualified Database.Couch.Explicit.Doc      as Doc (copy, delete, get,
                                                           put, size)
 import           Database.Couch.Response          (getKey)
-import           Database.Couch.Types             (Context, CouchResult,
-                                                   DocRev (DocRev),
+import           Database.Couch.Types             (Context, DocRev (DocRev),
                                                    Error (Conflict, NotFound),
-                                                   docGetDoc, docPutParam)
+                                                   Result, docGetDoc,
+                                                   docPutParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema, withDb)
@@ -47,7 +47,7 @@ docSize =
     , withDb $ testAgainstSchema
                  "Add a record and get all docs"
                  (\c -> do
-                    _ :: CouchResult Value <- Database.createDoc False testDoc c
+                    _ :: Result Value <- Database.createDoc False testDoc c
                     Doc.size docGetDoc "foo" Nothing c)
                  "head--db-docid.json"
     ]
@@ -59,7 +59,7 @@ docGet =
     , withDb $ testAgainstSchema
                  "Add a doc and get the docs"
                  (\c -> do
-                    _ :: CouchResult Value <- Database.createDoc False testDoc c
+                    _ :: Result Value <- Database.createDoc False testDoc c
                     Doc.get docGetDoc "foo" Nothing c)
                  "get--db-docid.json"
     ]
@@ -69,7 +69,7 @@ docPut =
   makeTests "Create and update a document"
     [ withDb $ testAgainstSchema "Simple add of document" (Doc.put docPutParam "foo" Nothing testDoc) "put--db-docid.json"
     , withDb $ testAgainstFailure "Failure to re-add document" (\c -> do
-                                                                   _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                                                                   _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
                                                                    Doc.put docPutParam "foo" Nothing testDoc c) Conflict
     , withDb $ testAgainstSchema
                  "Add, then update a doc"
@@ -85,7 +85,7 @@ docDelete =
   makeTests "Create and update a document"
     [ withDb $ testAgainstFailure "Delete non-existent document" (Doc.delete docPutParam "foo" Nothing) NotFound
     , withDb $ testAgainstFailure "Delete document with conflict" (\c -> do
-                                                                   _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                                                                   _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
                                                                    Doc.delete docPutParam "foo" Nothing c) Conflict
     , withDb $ testAgainstSchema
                  "Add, then delete doc"
@@ -101,19 +101,19 @@ docCopy =
   makeTests "Copy a document"
     [ withDb $ testAgainstFailure "Copy a non-existent document" (Doc.copy docPutParam "foo" Nothing "bar") NotFound
     , withDb $ testAgainstFailure "Copy a document with conflict" (\c -> do
-                                                                   _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
-                                                                   _ :: CouchResult Value <- Doc.put docPutParam "bar" Nothing testDoc c
+                                                                   _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                                                                   _ :: Result Value <- Doc.put docPutParam "bar" Nothing testDoc c
                                                                    Doc.copy docPutParam "foo" Nothing "bar" c) Conflict
     , withDb $ testAgainstFailure
                  "Copy a document with a non-existent revision"
                  (\c -> do
-                    _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                    _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
                     Doc.copy docPutParam "foo" (Just $ DocRev "1-000000000") "bar" c)
                  NotFound
     , withDb $ testAgainstSchema
                  "Copy a document"
                  (\c -> do
-                    _ :: CouchResult Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                    _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
                     Doc.copy docPutParam "foo" Nothing "bar" c)
                  "copy--db-docid.json"
     ]

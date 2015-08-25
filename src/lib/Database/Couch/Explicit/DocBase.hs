@@ -38,10 +38,10 @@ import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
 import           Database.Couch.ResponseParser (checkStatusCode, failed,
                                                 responseStatus, responseValue,
                                                 toOutputType)
-import           Database.Couch.Types          (Context, CouchResult, DocGetDoc,
-                                                DocId, DocPut, DocRev,
-                                                Error (Unknown), reqDocId,
-                                                reqDocRev, toHTTPHeaders,
+import           Database.Couch.Types          (Context, DocGetDoc, DocId,
+                                                DocPut, DocRev, Error (Unknown),
+                                                Result, reqDocId, reqDocRev,
+                                                toHTTPHeaders,
                                                 toQueryParameters)
 import           Network.HTTP.Types            (statusCode)
 
@@ -67,7 +67,7 @@ accessBase prefix docid rev = do
 -- JSON value for the document.
 --
 -- Status: __Broken__
-get :: (FromJSON a, MonadIO m) => ByteString -> DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+get :: (FromJSON a, MonadIO m) => ByteString -> DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
 get prefix param doc rev =
   structureRequest request parse
   where
@@ -100,7 +100,7 @@ modBase prefix param docid rev = do
 -- Returns a JSON value.
 --
 -- Status: __Broken__
-put :: (FromJSON a, MonadIO m, ToJSON b) => ByteString -> DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (CouchResult a)
+put :: (FromJSON a, MonadIO m, ToJSON b) => ByteString -> DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (Result a)
 put prefix param docid rev doc =
   standardRequest request
   where
@@ -116,7 +116,7 @@ put prefix param docid rev doc =
 -- Returns a JSON value.
 --
 -- Status: __Complete__
-delete :: (FromJSON a, MonadIO m) => ByteString -> DocPut -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+delete :: (FromJSON a, MonadIO m) => ByteString -> DocPut -> DocId -> Maybe DocRev -> Context -> m (Result a)
 delete prefix param docid rev =
   standardRequest request
   where
@@ -131,7 +131,7 @@ delete prefix param docid rev =
 -- Returns a JSON value.
 --
 -- Status: __Complete__
-copy :: (FromJSON a, MonadIO m) => ByteString -> DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (CouchResult a)
+copy :: (FromJSON a, MonadIO m) => ByteString -> DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (Result a)
 copy prefix param source rev dest =
   standardRequest request
   where

@@ -28,9 +28,8 @@ import           Data.Aeson                      (FromJSON, ToJSON)
 import           Data.Maybe                      (Maybe)
 import qualified Database.Couch.Explicit.DocBase as Base (copy, delete, get,
                                                           put)
-import           Database.Couch.Types            (Context, CouchResult,
-                                                  DocGetDoc, DocId, DocPut,
-                                                  DocRev)
+import           Database.Couch.Types            (Context, DocGetDoc, DocId,
+                                                  DocPut, DocRev, Result)
 
 -- | Get the specified local document.
 --
@@ -40,7 +39,7 @@ import           Database.Couch.Types            (Context, CouchResult,
 -- JSON value for the document.
 --
 -- Status: __Broken__
-get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
 get = Base.get "_local"
 
 -- | Create or replace the specified local document.
@@ -50,7 +49,7 @@ get = Base.get "_local"
 -- Returns a JSON value.
 --
 -- Status: __Broken__
-put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (CouchResult a)
+put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (Result a)
 put = Base.put "_local"
 
 -- | Delete the specified local document.
@@ -60,7 +59,7 @@ put = Base.put "_local"
 -- Returns a JSON value.
 --
 -- Status: __Complete__
-delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (CouchResult a)
+delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (Result a)
 delete = Base.delete "_local"
 
 -- | Copy the specified local document.
@@ -70,5 +69,5 @@ delete = Base.delete "_local"
 -- Returns a JSON value.
 --
 -- Status: __Complete__
-copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (CouchResult a)
+copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (Result a)
 copy = Base.copy "_local"
