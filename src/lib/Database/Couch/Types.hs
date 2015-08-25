@@ -9,14 +9,14 @@
 {- |
 
 Module      : Database.Couch.Types
-Description : Types for managing access to CouchDB
+Description : Types for interacting with CouchDB
 Copyright   : Copyright (c) 2015, Michael Alan Dorman
 License     : MIT
 Maintainer  : mdorman@jaunder.io
 Stability   : experimental
 Portability : POSIX
 
-Types for working with a CouchDB database.
+These types are intended for interacting with a CouchDB database.  We generally favor giving things distinct types for different uses, though this is not a hard and fast rule.
 
 -}
 
@@ -55,9 +55,7 @@ import           Text.Show               (Show)
 
 {- | Failure modes for making CouchDB requests.
 
-These will come to cover the gamut from failure to parse a particular
-JSON value to document conflicts.  The return values of our routines
-will consistently be ('Either' 'CouchError', a).
+These will come to cover the gamut from failure to parse a particular JSON value to document conflicts.  We try to differentiate in useful ways without being slavish about it.
 
 -}
 
@@ -66,21 +64,17 @@ data CouchError
   = AlreadyExists
   -- | The document already exists, and without the appropriate rev
   | Conflict
-  -- | The server complained about the content of our request.  Sounds
-  -- like the library is broken. :(
+  -- | The server complained about the content of our request.  Sounds like the library is broken. :(
   | HttpError HttpException
-  -- | The server complained about the content of our request.  Sounds
-  -- like the library is broken. :(
+  -- | The server complained about the content of our request.  Sounds like the library is broken. :(
   | ImplementationError Text
   -- | The name you tried to give for the DB is invalid
   | InvalidName Text
   -- | The thing you were looking for was not found
   | NotFound
-  -- | We ran out of input before we succeeded in parsing a JSON
-  -- 'Data.Aeson.Value'.
+  -- | We ran out of input before we succeeded in parsing a JSON 'Data.Aeson.Value'.
   | ParseIncomplete
-  -- | There was some sort of syntactic issue with the text we were
-  -- attempting to parse.
+  -- | There was some sort of syntactic issue with the text we were attempting to parse.
   | ParseFail Text
   -- | The credentials you used do not have access to this resource
   | Unauthorized
@@ -181,6 +175,7 @@ data Credentials
     credPass :: Password
     }
 
+-- | Calls in the /Explicit/ interface will always return a 'CouchResult'.
 type CouchResult a = Either CouchError (a, Maybe CookieJar)
 
 -- | Result type for creating a new document in a database.
