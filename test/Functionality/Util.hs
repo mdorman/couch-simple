@@ -24,7 +24,7 @@ import           Data.UUID                        (toString)
 import qualified Database.Couch.Explicit.Database as Database (create, delete)
 import qualified Database.Couch.Response          as Response (asBool)
 import           Database.Couch.Types             (Context (Context),
-                                                   CouchError (..), CouchResult,
+                                                   CouchResult, Error,
                                                    Port (Port))
 import           GHC.Err                          (error)
 import           Network.HTTP.Client              (Manager,
@@ -60,7 +60,7 @@ runTests testTree = do
 
 testAgainstFailure :: String
                    -> (Context -> IO (CouchResult Value))
-                   -> CouchError
+                   -> Error
                    -> IO Context
                    -> TestTree
 testAgainstFailure desc function exception getContext = testCaseSteps desc $ \step -> do
@@ -68,7 +68,7 @@ testAgainstFailure desc function exception getContext = testCaseSteps desc $ \st
   getContext >>= function >>= checkException step exception
 
 checkException :: (String -> IO ())
-               -> CouchError
+               -> Error
                -> CouchResult Value
                -> IO ()
 checkException step exception res = do

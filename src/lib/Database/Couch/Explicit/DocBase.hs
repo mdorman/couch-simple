@@ -38,9 +38,9 @@ import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
 import           Database.Couch.ResponseParser (checkStatusCode, failed,
                                                 responseStatus, responseValue,
                                                 toOutputType)
-import           Database.Couch.Types          (Context, CouchError (Unknown),
-                                                CouchResult, DocGetDoc, DocId,
-                                                DocPut, DocRev, reqDocId,
+import           Database.Couch.Types          (Context, CouchResult, DocGetDoc,
+                                                DocId, DocPut, DocRev,
+                                                Error (Unknown), reqDocId,
                                                 reqDocRev, toHTTPHeaders,
                                                 toQueryParameters)
 import           Network.HTTP.Types            (statusCode)

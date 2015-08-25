@@ -39,22 +39,21 @@ import           Data.Text                  (Text, pack)
 import           Data.Text.Encoding         (decodeUtf8)
 import           Data.Text.Read             (decimal)
 import           Data.Tuple                 (fst, snd)
-import           Database.Couch.Types       (CouchError (AlreadyExists, Conflict, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized),
-                                             DocRev (DocRev))
+import           Database.Couch.Types       (DocRev (DocRev), Error (AlreadyExists, Conflict, HttpError, ImplementationError, InvalidName, NotFound, ParseFail, Unauthorized))
 import           GHC.Integer                (Integer)
 import           Network.HTTP.Client        (HttpException (StatusCodeException))
 import           Network.HTTP.Types         (HeaderName, ResponseHeaders,
                                              Status, statusCode)
 
 -- Just so we don't have to type this out Every. Damned. Time.
-type ResponseParser = EitherT CouchError (Reader (ResponseHeaders, Status, Value))
+type ResponseParser = EitherT Error (Reader (ResponseHeaders, Status, Value))
 
 -- Run a given parser over an initial value
-runParse :: ResponseParser a -> Either CouchError (ResponseHeaders, Status, Value) -> Either CouchError a
+runParse :: ResponseParser a -> Either Error (ResponseHeaders, Status, Value) -> Either Error a
 runParse p (Right v) = (runReader . runEitherT) p v
 runParse _ (Left v) = Left v
 
-failed :: CouchError -> ResponseParser a
+failed :: Error -> ResponseParser a
 failed = hoistEither . Left
 
 responseStatus :: ResponseParser Status

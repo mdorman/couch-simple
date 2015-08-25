@@ -59,7 +59,7 @@ These will come to cover the gamut from failure to parse a particular JSON value
 
 -}
 
-data CouchError
+data Error
   -- | The database already exists
   = AlreadyExists
   -- | The document already exists, and without the appropriate rev
@@ -176,7 +176,7 @@ data Credentials
     }
 
 -- | Calls in the /Explicit/ interface will always return a 'CouchResult'.
-type CouchResult a = Either CouchError (a, Maybe CookieJar)
+type CouchResult a = Either Error (a, Maybe CookieJar)
 
 -- | Result type for creating a new document in a database.
 data CreateResult

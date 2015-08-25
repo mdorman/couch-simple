@@ -15,9 +15,9 @@ import qualified Database.Couch.Explicit.Design as Design (allDocs, copy,
                                                            put, size, someDocs)
 import           Database.Couch.Explicit.Doc    as Doc (put)
 import           Database.Couch.Response        (getKey)
-import           Database.Couch.Types           (Context, CouchError (..),
-                                                 CouchResult, DesignDoc (..),
-                                                 DocRev (..),
+import           Database.Couch.Types           (Context, CouchResult,
+                                                 DesignDoc (..), DocRev (..),
+                                                 Error (NotFound, Conflict),
                                                  ViewSpec (ViewSpec), ctxDb,
                                                  docGetDoc, docPutParam,
                                                  viewParams)

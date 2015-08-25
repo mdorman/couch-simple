@@ -33,9 +33,8 @@ import           Data.Text                     (pack)
 import           Database.Couch.RequestBuilder (RequestBuilder, runBuilder)
 import           Database.Couch.ResponseParser (ResponseParser, runParse,
                                                 standardParse)
-import           Database.Couch.Types          (Context, CouchError (HttpError, ParseFail, ParseIncomplete),
-                                                CouchResult, ctxCookies,
-                                                ctxManager)
+import           Database.Couch.Types          (Context, CouchResult, Error (HttpError, ParseFail, ParseIncomplete),
+                                                ctxCookies, ctxManager)
 import           Network.HTTP.Client           (CookieJar, Manager, Request,
                                                 brRead, checkStatus, method,
                                                 responseBody, responseCookieJar,
@@ -69,7 +68,7 @@ say, streaming interfaces.
 rawJsonRequest :: MonadIO m
                => Manager -- ^ The "Network.HTTP.Client.Manager" to use for the request
                -> Request -- ^ The actual request itself
-               -> m (Either CouchError (ResponseHeaders, Status, CookieJar, Value))
+               -> m (Either Error (ResponseHeaders, Status, CookieJar, Value))
 rawJsonRequest manager request =
   liftIO (handle errorHandler $ withResponse request { checkStatus = const . const . const Nothing } manager responseHandler)
   where

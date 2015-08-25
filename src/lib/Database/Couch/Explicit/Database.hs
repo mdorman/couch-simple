@@ -44,13 +44,13 @@ import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 setQueryParam)
 import           Database.Couch.ResponseParser (failed, responseStatus,
                                                 toOutputType)
-import           Database.Couch.Types          (Context,
-                                                CouchError (NotFound, Unknown),
-                                                CouchResult, DbAllDocs,
+import           Database.Couch.Types          (Context, CouchResult, DbAllDocs,
                                                 DbBulkDocs, DbChanges, DocId,
-                                                DocRevMap, bdAllOrNothing,
-                                                bdFullCommit, bdNewEdits,
-                                                cLastEvent, toQueryParameters)
+                                                DocRevMap,
+                                                Error (NotFound, Unknown),
+                                                bdAllOrNothing, bdFullCommit,
+                                                bdNewEdits, cLastEvent,
+                                                toQueryParameters)
 import           Network.HTTP.Types            (statusCode)
 
 -- | Check that the requested database exists.

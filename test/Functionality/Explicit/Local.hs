@@ -11,8 +11,9 @@ import           Data.Function                 (($))
 import           Data.Maybe                    (Maybe (Just, Nothing))
 import qualified Database.Couch.Explicit.Local as Local (copy, delete, get, put)
 import           Database.Couch.Response       (getKey)
-import           Database.Couch.Types          (Context, CouchError (..),
-                                                CouchResult, DocRev (DocRev),
+import           Database.Couch.Types          (Context, CouchResult,
+                                                DocRev (DocRev),
+                                                Error (Conflict, NotFound),
                                                 docGetDoc, docPutParam)
 import           Functionality.Util            (makeTests, runTests,
                                                 testAgainstFailure,
