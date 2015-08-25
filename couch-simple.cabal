@@ -36,7 +36,8 @@ library
                , uuid
                , vector
   default-language: Haskell2010
-  exposed-modules: Database.Couch.Explicit.Configuration
+  exposed-modules: Database.Couch
+                   Database.Couch.Explicit.Configuration
                    Database.Couch.Explicit.Database
                    Database.Couch.Explicit.Design
                    Database.Couch.Explicit.DocBase
