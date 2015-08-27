@@ -169,14 +169,14 @@ databaseAllDocs =
 databaseSomeDocs :: IO Context -> TestTree
 databaseSomeDocs =
   makeTests "Database retrieve some documents"
-    [withDb $ testAgainstSchemaAndValue "Result of completely fresh database" (Database.someDocs ["llama", "tron"]) "get--db-_all_docs.json" Response.asAnything $ \step (val :: Object) -> do
+    [withDb $ testAgainstSchemaAndValue "Result of completely fresh database" (Database.someDocs dbAllDocs ["llama", "tron"]) "get--db-_all_docs.json" Response.asAnything $ \step (val :: Object) -> do
       step "Check number of items in database"
       lookup "total_rows" val @=? Just (Number 0), withDb $ testAgainstSchemaAndValue
                                                               "Add a record and get all docs"
                                                               (\c -> do
                                                                  _ :: Result Value <- Database.createDoc False (object [("_id", "foo"), ("llamas", Bool True)]) c
                                                                  _ :: Result Value <- Database.createDoc False (object [("_id", "bar"), ("llamas", Bool True)]) c
-                                                                 Database.someDocs ["foo"] c)
+                                                                 Database.someDocs dbAllDocs ["foo"] c)
                                                               "get--db-_all_docs.json"
                                                               Response.asAnything $ \step (val :: Object) -> do
                                                      step "Check number of items in database"
