@@ -5,19 +5,18 @@
 {- |
 
 Module      : Database.Couch.Explicit.Database
-Description : Database-oriented requests to CouchDB
+Description : Database-oriented requests to CouchDB, with explicit parameters
 Copyright   : Copyright (c) 2015, Michael Alan Dorman
 License     : MIT
 Maintainer  : mdorman@jaunder.io
 Stability   : experimental
 Portability : POSIX
 
-This module is intended to be @import qualified@.  /No attempt/ has
-been made to keep names of types or functions from clashing with
-obvious or otherwise commonly-used names.
+This module is intended to be @import qualified@.  /No attempt/ has been made to keep names of types or functions from clashing with obvious or otherwise commonly-used names, or even other modules within this package.
 
-The functions here are derived from (and presented in the same order
-as) http://docs.couchdb.org/en/1.6.1/api/database/index.html.
+The functions here are derived from (and presented in the same order as) the <http://docs.couchdb.org/en/1.6.1/api/database/index.html Database API documentation>.  For each function, we attempt to link back to the original documentation, as well as make a notation as to how complete and correct we feel our implementation is.
+
+Each function takes a 'Database.Couch.Types.Context'---which, among other things, holds the name of the database---as its final parameter, and returns a 'Database.Couch.Types.Result'.
 
 -}
 
@@ -47,19 +46,22 @@ import           Database.Couch.ResponseParser (failed, responseStatus,
 import           Database.Couch.Types          (Context, DbAllDocs, DbBulkDocs,
                                                 DbChanges, DocId, DocRevMap,
                                                 Error (NotFound, Unknown),
-                                                Result, bdAllOrNothing,
-                                                bdFullCommit, bdNewEdits,
-                                                cLastEvent, toQueryParameters)
+                                                Result, ToQueryParameters,
+                                                bdAllOrNothing, bdFullCommit,
+                                                bdNewEdits, cLastEvent,
+                                                toQueryParameters)
 import           Network.HTTP.Types            (statusCode)
 
--- | Check that the requested database exists.
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/common.html#head--db API documentation>
---
--- Returns 'False' or 'True' as appropriate.
---
--- Status: __Complete__
-exists :: (FromJSON a, MonadIO m) => Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/common.html#head--db Check that the requested database exists>
+
+The return value is an object that should only contain a single key "ok", so it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- Database.exists ctx >>= asBool
+
+Status: __Complete__ -}
+exists :: (FromJSON a, MonadIO m)
+       => Context
+       -> m (Result a)
 exists =
   structureRequest request parse
   where
@@ -74,30 +76,32 @@ exists =
         404 -> failed NotFound
         _   -> failed Unknown
 
--- | Get most basic meta-information.
---
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#get--db API documentation>
---
--- The returned data is variable enough we content ourselves with just
--- returning a 'Value'.
---
--- Status: __Complete__
-meta :: (FromJSON a, MonadIO m) => Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/common.html#get--db Get most basic meta-information>
+
+The return value is an object whose fields often vary, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Database.meta ctx
+
+Status: __Complete__ -}
+meta :: (FromJSON a, MonadIO m)
+     => Context
+     -> m (Result a)
 meta =
   standardRequest request
   where
     request =
       selectDb
 
--- | Create a database
---
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#put--db API documentation>
---
--- The returned data is variable enough we content ourselves with just
--- returning a 'Value'.
---
--- Status: __Complete__
-create :: (FromJSON a, MonadIO m) => Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/common.html#put--db Create a database>
+
+The return value is an object whose fields often vary, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Database.meta ctx
+
+Status: __Complete__ -}
+create :: (FromJSON a, MonadIO m)
+       => Context
+       -> m (Result a)
 create =
   standardRequest request
   where
@@ -105,15 +109,16 @@ create =
       selectDb
       setMethod "PUT"
 
--- | delete a database
---
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#delete--db API documentation>
---
--- The returned data is variable enough we content ourselves with just
--- returning a 'Value'.
---
--- Status: __Complete__
-delete :: (FromJSON a, MonadIO m) => Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/common.html#delete--db Delete a database>
+
+The return value is an object that should only contain a single key "ok", so it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- Database.delete ctx >>= asBool
+
+Status: __Complete__ -}
+delete :: (FromJSON a, MonadIO m)
+       => Context
+       -> m (Result a)
 delete =
   standardRequest request
   where
@@ -121,16 +126,18 @@ delete =
       selectDb
       setMethod "DELETE"
 
--- | create a new document in a database
---
--- <http://docs.couchdb.org/en/1.6.1/api/server/common.html#post--db API documentation>
---
--- The constructor for the return type depends on whether the create
--- was done in batch mode, as there is no avenue for returning a
--- 'DocRev' in that circumstance.
---
--- Status: __Complete__
-createDoc :: (FromJSON a, MonadIO m, ToJSON b) => Bool -> b -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/common.html#post--db Create a new document in a database>
+
+The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- Database.createDoc True someObject ctx >>= asBool
+
+Status: __Complete__ -}
+createDoc :: (FromJSON a, MonadIO m, ToJSON b)
+          => Bool -- ^ Whether to create the document in batch mode
+          -> b -- ^ The document to create
+          -> Context
+          -> m (Result a)
 createDoc batch doc =
   standardRequest request
   where
@@ -140,59 +147,59 @@ createDoc batch doc =
       when batch (setQueryParam [("batch", Just "ok")])
       setJsonBody doc
 
--- | Get a list of all database documents.
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#get--db-_all_docs API documentation>
---
--- The returned data is variable enough we content ourselves with just
--- a 'Value' for you to take apart.
---
--- Status: __Complete__
-allDocs :: (FromJSON a, MonadIO m) => DbAllDocs -> Context -> m (Result a)
-allDocs param =
-  standardRequest request
-  where
-    request = do
-      selectDb
-      addPath "_all_docs"
-      setQueryParam $ toQueryParameters param
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#get--db-_all_docs Get a list of all database documents>
 
--- | Get a list of some database documents.
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#post--db-_all_docs API documentation>
---
--- There's some ambiguity in the documentation as to whether this
--- accepts any query parameters.
---
--- The returned data is variable enough we content ourselves with just
--- returning a 'List' of 'Value'.
---
--- Status: __Limited?__
-someDocs :: (FromJSON a, MonadIO m) => [DocId] -> Context -> m (Result a)
-someDocs ids =
+The return value is a list of objects whose fields often vary, so it is easily decoded as a 'Data.List.List' of 'Data.Aeson.Value':
+
+>>> value :: Result [Value] <- Database.allDocs dbAllDocs ctx
+
+Status: __Complete__ -}
+allDocs :: (FromJSON a, MonadIO m)
+        => DbAllDocs -- ^ Parameters governing retrieval ('Couch.Types.dbAllDocs' is an empty default)
+        -> Context
+        -> m (Result a)
+allDocs =
+  standardRequest . allDocsBase
+
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#post--db-_all_docs Get a list of some database documents>
+
+The return value is a list of objects whose fields often vary, so it is easily decoded as a 'Data.List.List' of 'Data.Aeson.Value':
+
+>>> value :: Result [Value] <- Database.someDocs ["a", "b", "c"] ctx
+
+Status: __Complete__ -}
+someDocs :: (FromJSON a, MonadIO m)
+         => DbAllDocs -- ^ Parameters governing retrieval ('Couch.Types.dbAllDocs' is an empty default)
+         -> [DocId] -- ^ List of ids documents to retrieve
+         -> Context
+         -> m (Result a)
+someDocs param ids =
   standardRequest request
   where
     request = do
       setMethod "POST"
-      selectDb
-      addPath "_all_docs"
+      allDocsBase param
       let parameters = Object (fromList [("keys", toJSON ids)])
       setJsonBody parameters
 
--- | Create or update a list of documents.
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#post--db-_bulk_docs API documentation>
---
--- The returned data is variable enough we content ourselves with just
--- returning a 'List' of 'Value'.
---
--- Status: __Complete__
-bulkDocs :: (FromJSON a, MonadIO m, ToJSON a) => DbBulkDocs -> [a] -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/bulk-api.html#post--db-_bulk_docs Create or update a list of documents>
+
+The return value is a list of objects whose fields often vary, so it is easily decoded as a 'Data.List.List' of 'Data.Aeson.Value':
+
+>>> value :: Result [Value] <- Database.bulkDocs dbBulkDocsParam ["a", "b", "c"] ctx
+
+Status: __Complete__ -}
+bulkDocs :: (FromJSON a, MonadIO m, ToJSON a)
+         => DbBulkDocs -- ^ Parameters coverning retrieval ('Couch.Types.dbBulkDocs' is an empty default)
+         -> [a] -- ^ List of documents to add or update
+         -> Context
+         -> m (Result a)
 bulkDocs param docs =
   standardRequest request
   where
     request = do
       setMethod "POST"
+      -- TODO: We need a way to set a header when we have a value for it [refactor]
       when (isJust $ bdFullCommit param)
         (setHeaders
            [("X-Couch-Full-Commit", if fromJust $ bdFullCommit param
@@ -200,6 +207,7 @@ bulkDocs param docs =
                                       else "false")])
       selectDb
       addPath "_bulk_docs"
+      -- TODO: We need a way to construct a json body from parameters [refactor]
       let parameters = Object
                          ((fromList . catMaybes)
                             [ Just ("docs", toJSON docs)
@@ -214,56 +222,53 @@ bulkDocs param docs =
               then "true"
               else "false")
 
--- | Get a list of all document modifications .
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/changes.html#get--db-_changes API documentation>
---
--- This call does not stream out results; therefore, it also doesn't
--- allow any specification of parameters for streaming.
---
--- The returned data is variable enough we content ourselves with just
--- returning a 'Value'.
---
--- Status: __Limited__
-changes :: (FromJSON a, MonadIO m) => DbChanges -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/changes.html#get--db-_changes Get a list of all document modifications>
+
+This call does not stream out results; so while it allows you to specify parameters for streaming, it's a dirty, dirty lie.
+
+The return value is an object whose fields often vary, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Database.changes ctx
+
+Status: __Limited__ -}
+changes :: (FromJSON a, MonadIO m)
+        => DbChanges -- ^ Arguments governing changes contents ('Couch.Types.dbChanges' is an empty default)
+        -> Context
+        -> m (Result a)
 changes param =
   standardRequest request
   where
     request = do
+      -- TODO: We need a way to set a header when we have a value for it [refactor]
       when (isJust $ cLastEvent param)
         (setHeaders [("Last-Event-Id", encodeUtf8 . fromJust $ cLastEvent param)])
       selectDb
       addPath "_changes"
 
--- | Encode the common bits for our two compact calls
-compactBase :: RequestBuilder ()
-compactBase = do
-  setMethod "POST"
-  selectDb
-  addPath "_compact"
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_compact Compact a database>
 
--- | Compact a database
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_compact API documentation>
---
--- Run the compaction process on an entire database
---
--- Status: __Complete__
-compact :: (FromJSON a, MonadIO m) => Context -> m (Result a)
+The return value is an object that should only contain a single key "ok", so it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- Database.compact ctx >>= asBool
+
+Status: __Complete__ -}
+compact :: (FromJSON a, MonadIO m)
+        => Context
+        -> m (Result a)
 compact =
-  standardRequest request
-  where
-    request =
-      compactBase
+  standardRequest compactBase
 
--- | Compact the views attached to a particular design document
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_compact-ddoc API documentation>
---
--- Run the compaction process on the views associated with the specified design document
---
--- Status: __Complete__
-compactDesignDoc :: (FromJSON a, MonadIO m) => DocId -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_compact-ddoc Compact the views attached to a particular design document>
+
+The return value is an object that should only contain a single key "ok", so it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- Database.compactDesignDoc "ddoc" ctx >>= asBool
+
+Status: __Complete__ -}
+compactDesignDoc :: (FromJSON a, MonadIO m)
+                 => DocId -- ^ The 'DocId' of the design document to compact
+                 -> Context
+                 -> m (Result a)
 compactDesignDoc doc =
   standardRequest request
   where
@@ -271,16 +276,16 @@ compactDesignDoc doc =
       compactBase
       selectDoc doc
 
--- | Ensure that all changes to the database have made it to disk
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_ensure_full_commit API documentation>
---
--- The start time for the instance doesn't seem very interesting,
--- especially for this particular operation, so I haven't bothered to
--- try and return it.
---
--- Status: __Complete__
-sync :: (FromJSON a, MonadIO m) => Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_ensure_full_commit Ensure that all changes to the database have made it to disk>
+
+The return value is an object that can hold an "instance_start_time" key, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- Database.sync ctx >>= asBool
+
+Status: __Complete__ -}
+sync :: (FromJSON a, MonadIO m)
+     => Context
+     -> m (Result a)
 sync =
   standardRequest request
   where
@@ -289,15 +294,16 @@ sync =
       selectDb
       addPath "_ensure_full_commit"
 
--- | Cleanup any stray view definitions
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_view_cleanup API documentation>
---
--- Clean up out of data view indices, which follow from changes to the
--- view content.
---
--- Status: __Complete__
-cleanup :: (FromJSON a, MonadIO m) => Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/compact.html#post--db-_view_cleanup Cleanup any stray view definitions>
+
+The return value is an object that should only contain a single key "ok", so it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- Database.cleanup ctx >>= asBool
+
+Status: __Complete__ -}
+cleanup :: (FromJSON a, MonadIO m)
+        => Context
+        -> m (Result a)
 cleanup =
   standardRequest request
   where
@@ -306,61 +312,59 @@ cleanup =
       selectDb
       addPath "_view_cleanup"
 
--- | Get security information for database
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/security.html#get--db-_security API documentation>
---
--- Although there are base requirements for the content this returns
--- ("admin" and "members" keys, which each contain "users" and
--- "roles"), the system does not prevent you from adding (and even
--- using in validation functions) additional fields, so we keep the
--- return value general
---
--- Status: __Complete__
-getSecurity :: (FromJSON a, MonadIO m) => Context -> m (Result a)
-getSecurity =
-  standardRequest request
-  where
-    request = do
-      setMethod "GET"
-      selectDb
-      addPath "_security"
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/security.html#get--db-_security Get security information for database>
 
--- | Set security information for database
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/security.html#post--db-_security API documentation>
---
--- Although there are base requirements for the content this accepts
--- ("admin" and "members" keys, which each contain "users" and
--- "roles"), the system does not prevent you from adding (and even
--- using in validation functions) additional fields, so we keep the
--- input value general
---
--- Status: __Complete__
-setSecurity :: (FromJSON b, MonadIO m, ToJSON a) => a -> Context -> m (Result b)
+The return value is an object that has with a standard set of fields ("admin" and "members" keys, which each contain "users" and "roles"), the system does not prevent you from adding (and even using in validation functions) additional fields, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Database.getSecurity ctx
+
+Status: __Complete__ -}
+getSecurity :: (FromJSON a, MonadIO m)
+            => Context
+            -> m (Result a)
+getSecurity =
+  standardRequest securityBase
+
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/security.html#post--db-_security Set security information for database>
+
+The input value is an object that has with a standard set of fields ("admin" and "members" keys, which each contain "users" and "roles"), but the system does not prevent you from adding (and even using in validation functions) additional fields, so we don't specify a specific type, and you can roll your own:
+
+The return value is an object that should only contain a single key "ok", so it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Value <- Database.setSecurity (object [("users", object [("harry")])]) ctx >>= asBool
+
+Status: __Complete__ -}
+setSecurity :: (FromJSON b, MonadIO m, ToJSON a)
+            => a -- ^ The security document content
+            -> Context
+            -> m (Result b)
 setSecurity doc =
   standardRequest request
   where
     request = do
       setMethod "PUT"
-      selectDb
-      addPath "_security"
+      securityBase
       setJsonBody doc
 
--- | Create a temporary view
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/temp-views.html#post--db-_temp_view API documentation>
---
--- Create a temporary view and return its results.
---
--- Status: __Complete__
-tempView :: (FromJSON a, MonadIO m) => Text -> Maybe Text -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/temp-views.html#post--db-_temp_view Create a temporary view>
+
+The return value is an object whose fields often vary, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Database.tempView "function (doc) { emit (1); }" (Just "_count") Nothing ctx
+
+Status: __Complete__ -}
+tempView :: (FromJSON a, MonadIO m)
+         => Text -- ^ The text of your map function
+         -> Maybe Text -- ^ The text of your optional reduce function
+         -> Context
+         -> m (Result a)
 tempView map reduce =
   standardRequest request
   where
     request = do
       setMethod "POST"
       selectDb
+      -- TODO: We need a way to construct a json body from parameters [refactor]
       let parameters = Object
                          (fromList $ catMaybes
                                        [ Just ("map", toJSON map)
@@ -369,26 +373,21 @@ tempView map reduce =
       addPath "_temp_view"
       setJsonBody parameters
 
--- Common setup for the next three items
-docRevBase :: ToJSON a => a -> RequestBuilder ()
-docRevBase docRevs = do
-  setMethod "POST"
-  selectDb
-  let parameters = toJSON docRevs
-  setJsonBody parameters
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_purge Purge document revisions from the database>
 
--- | Purge document revisions from the database
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_purge API documentation>
---
--- Purge particular document revisions from the database
---
--- Easily parsed into an (Int, DocRevMap) pair using:
---
--- (,) <$> (getKey "purge_seq" >>= toOutputType) <*> (getKey "purged" >>= toOutputType)
---
--- Status: __Complete__
-purge :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Result a)
+The return value is an object with two fields "purge_seq" and "purged", which contains an object with no fixed keys, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Database.purge $ DocRevMap [(DocId "junebug", [DocRev "1-1"])] Nothing ctx
+
+However, the content of "purged" is effectively a 'Database.Couch.Types.DocRevMap', so the output can be parsed into an (Int, DocRevMap) pair using:
+
+>>> (,) <$> (getKey "purge_seq" >>= toOutputType) <*> (getKey "purged" >>= toOutputType)
+
+Status: __Complete__ -}
+purge :: (FromJSON a, MonadIO m)
+      => DocRevMap -- ^ A 'Database.Couch.Types.DocRevMap' of documents and versions to purge
+      -> Context
+      -> m (Result a)
 purge docRevs =
   standardRequest request
   where
@@ -396,16 +395,21 @@ purge docRevs =
       docRevBase docRevs
       addPath "_purge"
 
--- | Find document revisions not present in the database
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_missing_revs API documentation>
---
--- Easily parsed into an DocRevMap using:
---
--- getKey "missed_revs" >>= toOutputType
---
--- Status: __Complete__
-missingRevs :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_missing_revs Find document revisions not present in the database>
+
+The return value is an object with one field "missed_revs", which contains an object with no fixed keys, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Database.missingRevs $ DocRevMap [(DocId "junebug", [DocRev "1-1"])] ctx
+
+However, the content of "missed_revs" is effectively a 'Database.Couch.Types.DocRevMap', so it can be parsed into a 'Database.Couch.Types.DocRevMap' using:
+
+>>> getKey "missed_revs" >>= toOutputType
+
+Status: __Complete__ -}
+missingRevs :: (FromJSON a, MonadIO m)
+            => DocRevMap -- ^ A 'Database.Couch.Types.DocRevMap' of documents and versions available
+            -> Context
+            -> m (Result a)
 missingRevs docRevs =
   standardRequest request
   where
@@ -413,12 +417,17 @@ missingRevs docRevs =
       docRevBase docRevs
       addPath "_missing_revs"
 
--- | Find document revisions not present in the database
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_revs_diff API documentation>
---
--- Status: __Complete__
-revsDiff :: (FromJSON a, MonadIO m) => DocRevMap -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#post--db-_revs_diff Find document revisions not present in the database>
+
+The return value is an object whose fields often vary, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Database.revsDiff $ DocRevMap [(DocId "junebug", [DocRev "1-1"])] ctx
+
+Status: __Complete__ -}
+revsDiff :: (FromJSON a, MonadIO m)
+         => DocRevMap -- ^ A 'Database.Couch.Types.DocRevMap' of documents and versions available
+         -> Context
+         -> m (Result a)
 revsDiff docRevs =
   standardRequest request
   where
@@ -426,30 +435,64 @@ revsDiff docRevs =
       docRevBase docRevs
       addPath "_revs_diff"
 
--- | Get the revision limit setting
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#get--db-_revs_limit API documentation>
---
--- Status: __Complete__
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#get--db-_revs_limit Get the revision limit setting>
+
+The return value is a JSON numeric value that can easily be decoded to an 'Int':
+
+>>> value :: Result Integer <- Database.getRevsLimit ctx
+
+Status: __Complete__ -}
 getRevsLimit :: (FromJSON a, MonadIO m) => Context -> m (Result a)
 getRevsLimit =
-  standardRequest request
-  where
-    request = do
-      selectDb
-      addPath "_revs_limit"
+  standardRequest revsLimitBase
 
--- | Set the revision limit
---
--- <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#put--db-_revs_limit API documentation>
---
--- Status: __Complete__
-setRevsLimit :: (FromJSON a, MonadIO m) => Int -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/database/misc.html#put--db-_revs_limit Set the revision limit>
+
+Status: __Complete__ -}
+setRevsLimit :: (FromJSON a, MonadIO m)
+             => Int -- ^ The value at which to set the limit
+             -> Context
+             -> m (Result a)
 setRevsLimit limit =
   standardRequest request
   where
     request = do
       setMethod "PUT"
-      selectDb
-      addPath "_revs_limit"
+      revsLimitBase
       setJsonBody limit
+
+-- | = Internal combinators
+
+-- | Base bits for all _all_docs requests
+allDocsBase :: ToQueryParameters a => a -> RequestBuilder ()
+allDocsBase param = do
+  selectDb
+  addPath "_all_docs"
+  setQueryParam $ toQueryParameters param
+
+-- | Base bits for all our _compact requests
+compactBase :: RequestBuilder ()
+compactBase = do
+  setMethod "POST"
+  selectDb
+  addPath "_compact"
+
+-- | Base bits for our revision examination functions
+docRevBase :: ToJSON a => a -> RequestBuilder ()
+docRevBase docRevs = do
+  setMethod "POST"
+  selectDb
+  let parameters = toJSON docRevs
+  setJsonBody parameters
+
+-- | Base bits for our revisions limit functions
+revsLimitBase :: RequestBuilder ()
+revsLimitBase = do
+  selectDb
+  addPath "_revs_limit"
+
+-- | Base bits for our security functions
+securityBase :: RequestBuilder ()
+securityBase = do
+  selectDb
+  addPath "_security"
