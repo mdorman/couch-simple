@@ -58,7 +58,7 @@ meta =
 
 The return value is a list of objects whose fields often vary, so it is easily decoded as a 'Data.List.List' of 'Data.Aeson.Value':
 
->>> value : Result [Value] <- Server.activeTasks ctx
+>>> value :: Result [Value] <- Server.activeTasks ctx
 
 Status: __Complete__ -}
 activeTasks :: (FromJSON a, MonadIO m)
@@ -74,7 +74,7 @@ activeTasks =
 
 The return value is a list of database names, so it is easily decoded into a 'Data.List.List' of 'Text':
 
->>> value : Result [Text] <- Server.allDbs ctx
+>>> value :: Result [Text] <- Server.allDbs ctx
 
 Status: __Complete__ -}
 allDbs :: (FromJSON a, MonadIO m)
@@ -92,7 +92,7 @@ This call does not yet stream out results, so it's functionality is limited.
 
 The return value is a list of database update events, so it is easily decoded into a 'Data.List.List' of 'Data.Aeson.Value':
 
->>> value : Result [Value] <- Server.dbUpdates ctx
+>>> value :: Result [Value] <- Server.dbUpdates ctx
 
 Status: __Limited__ -}
 dbUpdates :: (FromJSON a, MonadIO m) => DbUpdates -> Context -> m (Result a)
@@ -130,7 +130,7 @@ replicate =
 
 The return value is an object that should only contain a single key "ok", so it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
 
->>> value : Result Bool <- Server.restart ctx >>= asBool
+>>> value :: Result Bool <- Server.restart ctx >>= asBool
 
 Status: __Complete__ -}
 restart :: (FromJSON a, MonadIO m)
