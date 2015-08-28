@@ -12,7 +12,7 @@ import           Data.HashMap.Strict            (fromList)
 import           Data.Maybe                     (Maybe (Just, Nothing))
 import qualified Database.Couch.Explicit.Design as Design (allDocs, copy,
                                                            delete, get, info,
-                                                           put, size, someDocs)
+                                                           meta, put, someDocs)
 import           Database.Couch.Explicit.Doc    as Doc (put)
 import           Database.Couch.Response        (getKey)
 import           Database.Couch.Types           (Context, DesignDoc (..),
@@ -33,7 +33,7 @@ _main = runTests tests
 
 tests :: Manager -> TestTree
 tests = makeTests "Tests of the design doc interface"
-          [ ddocSize
+          [ ddocMeta
           , ddocGet
           , ddocPut
           , ddocDelete
@@ -44,11 +44,11 @@ tests = makeTests "Tests of the design doc interface"
           ]
 
 -- Doc-oriented functions
-ddocSize :: IO Context -> TestTree
-ddocSize =
+ddocMeta :: IO Context -> TestTree
+ddocMeta =
   makeTests "Get design document size and revision"
-    [ testAgainstFailure "No size information for non-existent doc" (Design.size docGetDoc "llamas" Nothing) NotFound
-    , testAgainstSchema "Get standard _auth ddoc in _users"  (\c -> Design.size docGetDoc "_auth" Nothing c { ctxDb = Just "_users" })
+    [ testAgainstFailure "No size information for non-existent doc" (Design.meta docGetDoc "llamas" Nothing) NotFound
+    , testAgainstSchema "Get standard _auth ddoc in _users"  (\c -> Design.meta docGetDoc "_auth" Nothing c { ctxDb = Just "_users" })
 
                  "head--db-_design-ddoc.json"
     ]
