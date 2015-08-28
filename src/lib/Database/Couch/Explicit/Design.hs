@@ -25,8 +25,8 @@ module Database.Couch.Explicit.Design where
 
 import           Control.Monad.IO.Class          (MonadIO)
 import           Data.Aeson                      (FromJSON, ToJSON,
-                                                  Value (Null, Number), object,
-                                                  toJSON)
+                                                  Value (Null, Number, String),
+                                                  object, toJSON)
 import           Data.Function                   (($))
 import           Data.Maybe                      (Maybe (Nothing))
 import qualified Database.Couch.Explicit.DocBase as Base (accessBase, copy,
@@ -55,8 +55,8 @@ import           Network.HTTP.Types              (statusCode)
 -- JSON hash of [(Int, DocRev)].
 --
 -- Status: __Broken__
-size :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
-size param doc rev =
+meta :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
+meta param doc rev =
   structureRequest request parse
   where
     request = do
@@ -71,7 +71,7 @@ size param doc rev =
       docRev <- getDocRev
       contentLength <- getContentLength
       case statusCode s of
-        200 -> toOutputType $ object [(unwrapDocRev docRev, Number $ fromInteger contentLength)]
+        200 -> toOutputType $ object [("rev", String $ unwrapDocRev docRev), ("size", Number $ fromInteger contentLength)]
         304 -> toOutputType Null
         _   -> failed Unknown
 
