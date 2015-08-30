@@ -44,6 +44,8 @@ The return value is an object that should only contain the keys "rev" and "size"
 
 >>> (,) <$> (getKey "rev" >>= toOutputType) <*> (getKey "size" >>= toOutputType)
 
+If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for the document.
+
 Status: __Complete__ -}
 meta :: (FromJSON a, MonadIO m)
      => DocGetDoc -- ^ Parameters for the HEAD request
@@ -58,6 +60,8 @@ meta = Base.meta "_design"
 The return value is an object whose fields often vary, so it is most easily decoded as a 'Data.Aeson.Value':
 
 >>> value :: Result Value <- Design.get "pandas" Nothing ctx
+
+If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for the document.
 
 Status: __Complete__ -}
 get :: (FromJSON a, MonadIO m)

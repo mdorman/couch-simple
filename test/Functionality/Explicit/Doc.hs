@@ -11,7 +11,7 @@ import           Data.Function                    (($))
 import           Data.Maybe                       (Maybe (Just, Nothing))
 import qualified Database.Couch.Explicit.Database as Database (createDoc)
 import qualified Database.Couch.Explicit.Doc      as Doc (copy, delete, get,
-                                                          put, size)
+                                                          meta, put)
 import           Database.Couch.Response          (getKey)
 import           Database.Couch.Types             (Context, DocRev (DocRev),
                                                    Error (Conflict, NotFound),
@@ -29,7 +29,7 @@ _main = runTests tests
 
 tests :: Manager -> TestTree
 tests = makeTests "Tests of the doc interface"
-          [ docSize
+          [ docMeta
           , docGet
           , docPut
           , docDelete
@@ -40,21 +40,21 @@ testDoc :: Value
 testDoc = object [("_id", "foo"), ("llamas", Bool True)]
 
 -- Doc-oriented functions
-docSize :: IO Context -> TestTree
-docSize =
+docMeta :: IO Context -> TestTree
+docMeta =
   makeTests "Get document size and revision"
-    [ withDb $ testAgainstFailure "No size information for non-existent doc" (Doc.size docGetDoc "foo" Nothing) NotFound
+    [ withDb $ testAgainstFailure "No size information for non-existent doc" (Doc.meta docGetDoc "foo" Nothing) NotFound
     , withDb $ testAgainstSchema
                  "Add a record and get all docs"
                  (\c -> do
                     _ :: Result Value <- Database.createDoc False testDoc c
-                    Doc.size docGetDoc "foo" Nothing c)
+                    Doc.meta docGetDoc "foo" Nothing c)
                  "head--db-docid.json"
     ]
 
 docGet :: IO Context -> TestTree
 docGet =
-  makeTests "Get document size and revision"
+  makeTests "Get document"
     [ withDb $ testAgainstFailure "No information for non-existent doc" (Doc.get docGetDoc "foo" Nothing) NotFound
     , withDb $ testAgainstSchema
                  "Add a doc and get the docs"

@@ -31,43 +31,64 @@ import qualified Database.Couch.Explicit.DocBase as Base (copy, delete, get,
 import           Database.Couch.Types            (Context, DocGetDoc, DocId,
                                                   DocPut, DocRev, Result)
 
--- | Get the specified local document.
---
--- <http://docs.couchdb.org/en/1.6.1/api/local.html#get--db-_local-docid API documentation>
---
--- If the specified DocRev matches, returns a JSON Null, otherwise a
--- JSON value for the document.
---
--- Status: __Broken__
-get :: (FromJSON a, MonadIO m) => DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/local.html#get--db-_local-docid Get the specified local document>
+
+The return value is an object whose fields often vary, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- Doc.get "pandas" Nothing ctx
+
+If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for the document.
+
+Status: __Complete__ -}
+get :: (FromJSON a, MonadIO m)
+    => DocGetDoc -- ^ Parameters for document retrieval
+    -> DocId -- ^ The document ID
+    -> Maybe DocRev -- ^ An optional document revision
+    -> Context
+    -> m (Result a)
 get = Base.get "_local"
 
--- | Create or replace the specified local document.
---
--- <http://docs.couchdb.org/en/1.6.1/api/local.html#put--db-_local-docid API documentation>
---
--- Returns a JSON value.
---
--- Status: __Broken__
-put :: (FromJSON a, MonadIO m, ToJSON b) => DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/local.html#put--db-_local-docid Create or replace the specified local document>
+
+The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- DocBase.put docPut "pandas" Nothing SomeValue ctx >>= asBool
+
+Status: __Complete__ -}
+put :: (FromJSON a, MonadIO m, ToJSON b)
+    => DocPut -- ^ Parameters for document modification
+    -> DocId -- ^ The document ID
+    -> Maybe DocRev -- ^ An optional document revision
+    -> b -- ^ The document
+    -> Context -> m (Result a)
 put = Base.put "_local"
 
--- | Delete the specified local document.
---
--- <http://docs.couchdb.org/en/1.6.1/api/local.html#delete--db-_local-docid API documentation>
---
--- Returns a JSON value.
---
--- Status: __Complete__
-delete :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/local.html#delete--db-_local-docid Delete the specified local document>
+
+The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- DocBase.delete "prefix" docPut "pandas" Nothing ctx >>= asBool
+
+Status: __Complete__ -}
+delete :: (FromJSON a, MonadIO m)
+       => DocPut -- ^ Parameters for document modification
+       -> DocId -- ^ The document ID
+       -> Maybe DocRev -- ^ An optional document revision
+       -> Context
+       -> m (Result a)
 delete = Base.delete "_local"
 
--- | Copy the specified local document.
---
--- <http://docs.couchdb.org/en/1.6.1/api/local.html#copy--db-_local-docid API documentation>
---
--- Returns a JSON value.
---
--- Status: __Complete__
-copy :: (FromJSON a, MonadIO m) => DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (Result a)
+{- | <http://docs.couchdb.org/en/1.6.1/api/local.html#copy--db-_local-docid Copy the specified local document>
+
+The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- DocBase.delete "prefix" docPut "pandas" Nothing ctx >>= asBool
+
+Status: __Complete__ -}
+copy :: (FromJSON a, MonadIO m)
+     => DocPut -- ^ Parameters for document modification
+     -> DocId -- ^ The document ID
+     -> Maybe DocRev -- ^ An optional document revision
+     -> DocId -- ^ The destination document ID
+     -> Context -> m (Result a)
 copy = Base.copy "_local"
