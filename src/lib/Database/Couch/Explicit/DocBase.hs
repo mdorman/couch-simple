@@ -12,11 +12,11 @@ Maintainer  : mdorman@jaunder.io
 Stability   : experimental
 Portability : POSIX
 
-This module is not intended to be used directly---it is used to
-constructo a number of otherwise-similar modules.
+This module is not intended to be used directly---it is used to construct a number of otherwise-similar modules, where the modules are primarily concerned with the existence (or not) of a path prefix for documents.
 
-The functions here are derived from (and presented in the same order
-as) http://docs.couchdb.org/en/1.6.1/api/local/index.html.
+The functions here are effectively derived from (and presented in the same order as) the <http://docs.couchdb.org/en/1.6.1/api/document/common.html Document API documentation>, though we don't link back to the specific functions here, since they're not meant for direct use.
+
+Each function takes a 'Database.Couch.Types.Context'---which, among other things, holds the name of the database---as its final parameter, and returns a 'Database.Couch.Types.Result'.
 
 -}
 
@@ -49,25 +49,20 @@ import           Database.Couch.Types          (Context, DocGetDoc, DocId,
 import           GHC.Num                       (fromInteger)
 import           Network.HTTP.Types            (statusCode)
 
--- Everything sets up the path the same
-docPath :: ByteString -> DocId -> RequestBuilder ()
-docPath prefix docid = do
-  selectDb
-  unless (null prefix) $
-    addPath prefix
-  selectDoc docid
+{- | Get the size and revision of the specified document
 
--- All retrievals want to allow 304s
-accessBase :: ByteString -> DocId -> Maybe DocRev -> RequestBuilder ()
-accessBase prefix docid rev = do
-  docPath prefix docid
-  maybe (return ()) (setHeaders . return . ("If-None-Match" ,) . reqDocRev) rev
+The return value is an object that should only contain the keys "rev" and "size", that can be easily parsed into a pair of (DocRev, Int):
 
+>>> (,) <$> (getKey "rev" >>= toOutputType) <*> (getKey "size" >>= toOutputType)
+
+If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for the document.
+
+Status: __Complete__ -}
 meta :: (FromJSON a, MonadIO m)
      => ByteString -- ^ The prefix to use for the document
-     -> DocGetDoc -- ^ Parameters for the HEAD request
-     -> DocId -- ^ The ID of the design document
-     -> Maybe DocRev -- ^ A desired revision
+     -> DocGetDoc -- ^ Parameters for document retrieval
+     -> DocId -- ^ The document ID
+     -> Maybe DocRev -- ^ An optional document revision
      -> Context
      -> m (Result a)
 meta prefix param doc rev =
@@ -89,15 +84,22 @@ meta prefix param doc rev =
         304 -> toOutputType Null
         _   -> failed Unknown
 
--- | Get the specified local document.
---
--- <http://docs.couchdb.org/en/1.6.1/api/local.html#get--db-_local-docid API documentation>
---
--- If the specified DocRev matches, returns a JSON Null, otherwise a
--- JSON value for the document.
---
--- Status: __Broken__
-get :: (FromJSON a, MonadIO m) => ByteString -> DocGetDoc -> DocId -> Maybe DocRev -> Context -> m (Result a)
+{- | Get the specified document
+
+The return value is an object whose fields often vary, so it is most easily decoded as a 'Data.Aeson.Value':
+
+>>> value :: Result Value <- DocBase.get "prefix" "pandas" Nothing ctx
+
+If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for the document.
+
+Status: __Complete__ -}
+get :: (FromJSON a, MonadIO m)
+    => ByteString -- ^ A prefix for the document ID
+    -> DocGetDoc -- ^ Parameters for document retrieval
+    -> DocId -- ^ The document ID
+    -> Maybe DocRev -- ^ An optional document revision
+    -> Context
+    -> m (Result a)
 get prefix param doc rev =
   structureRequest request parse
   where
@@ -115,22 +117,21 @@ get prefix param doc rev =
         304 -> toOutputType Null
         _   -> failed Unknown
 
--- All modifications want to allow conflict recognition
-modBase :: ByteString -> DocPut -> DocId -> Maybe DocRev -> RequestBuilder ()
-modBase prefix param docid rev = do
-  docPath prefix docid
-  maybe (return ()) (setHeaders . return . ("If-Match" ,) . reqDocRev) rev
-  setHeaders $ toHTTPHeaders param
-  setQueryParam $ toQueryParameters param
+{- | Create or replace the specified document
 
--- | Create or replace the specified local document.
---
--- <http://docs.couchdb.org/en/1.6.1/api/local.html#put--db-_local-docid API documentation>
---
--- Returns a JSON value.
---
--- Status: __Broken__
-put :: (FromJSON a, MonadIO m, ToJSON b) => ByteString -> DocPut -> DocId -> Maybe DocRev -> b -> Context -> m (Result a)
+The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- DocBase.put "prefix" docPut "pandas" Nothing SomeValue ctx >>= asBool
+
+Status: __Complete__ -}
+put :: (FromJSON a, MonadIO m, ToJSON b)
+    => ByteString -- ^ A prefix for the document ID
+    -> DocPut -- ^ The parameters for modifying the document
+    -> DocId -- ^ The document ID
+    -> Maybe DocRev -- ^ An optional document revision
+    -> b -- ^ The document
+    -> Context
+    -> m (Result a)
 put prefix param docid rev doc =
   standardRequest request
   where
@@ -139,14 +140,20 @@ put prefix param docid rev doc =
       modBase prefix param docid rev
       setJsonBody doc
 
--- | Delete the specified local document.
---
--- <http://docs.couchdb.org/en/1.6.1/api/local.html#delete--db-_local-docid API documentation>
---
--- Returns a JSON value.
---
--- Status: __Complete__
-delete :: (FromJSON a, MonadIO m) => ByteString -> DocPut -> DocId -> Maybe DocRev -> Context -> m (Result a)
+{- | Delete the specified document
+
+The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- DocBase.delete "prefix" docPut "pandas" Nothing ctx >>= asBool
+
+Status: __Complete__ -}
+delete :: (FromJSON a, MonadIO m)
+       => ByteString -- ^ A prefix for the document ID
+       -> DocPut -- ^ The parameters for modifying the document
+       -> DocId -- ^ The document ID
+       -> Maybe DocRev -- ^ An optional document revision
+       -> Context
+       -> m (Result a)
 delete prefix param docid rev =
   standardRequest request
   where
@@ -154,14 +161,21 @@ delete prefix param docid rev =
       setMethod "DELETE"
       modBase prefix param docid rev
 
--- | Copy the specified local document.
---
--- <http://docs.couchdb.org/en/1.6.1/api/local.html#copy--db-_local-docid API documentation>
---
--- Returns a JSON value.
---
--- Status: __Complete__
-copy :: (FromJSON a, MonadIO m) => ByteString -> DocPut -> DocId -> Maybe DocRev -> DocId -> Context -> m (Result a)
+{- | Copy the specified document
+
+The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
+
+>>> value :: Result Bool <- DocBase.delete "prefix" docPut "pandas" Nothing ctx >>= asBool
+
+Status: __Complete__ -}
+copy :: (FromJSON a, MonadIO m)
+     => ByteString -- ^ A prefix for the document ID
+     -> DocPut -- ^ The parameters for modifying the document
+     -> DocId -- ^ The document ID
+     -> Maybe DocRev -- ^ An optional document revision
+     -> DocId -- ^ The destination document ID
+     -> Context
+     -> m (Result a)
 copy prefix param source rev dest =
   standardRequest request
   where
@@ -173,3 +187,36 @@ copy prefix param source rev dest =
       if null prefix
       then reqDocId dest
       else prefix <> "/" <> reqDocId dest
+
+-- | = Internal combinators
+
+-- | Construct a path in a consistent fashion
+docPath :: ByteString -- ^ A prefix for the document ID
+        -> DocId -- ^ The document ID
+        -> RequestBuilder ()
+docPath prefix docid = do
+  selectDb
+  unless (null prefix) $
+    addPath prefix
+  selectDoc docid
+
+-- | All retrievals want to allow 304s
+accessBase :: ByteString -- ^ A prefix for the document ID
+           -> DocId -- ^ The document ID
+           -> Maybe DocRev -- ^ An optional document revision
+           -> RequestBuilder ()
+accessBase prefix docid rev = do
+  docPath prefix docid
+  maybe (return ()) (setHeaders . return . ("If-None-Match" ,) . reqDocRev) rev
+
+-- | All modifications want to allow conflict recognition and parameters
+modBase :: ByteString -- ^ A prefix for the document ID
+        -> DocPut -- ^ The parameters for modifying the document
+        -> DocId -- ^ The document ID
+        -> Maybe DocRev -- ^ An optional document revision
+        -> RequestBuilder ()
+modBase prefix param docid rev = do
+  docPath prefix docid
+  maybe (return ()) (setHeaders . return . ("If-Match" ,) . reqDocRev) rev
+  setHeaders $ toHTTPHeaders param
+  setQueryParam $ toQueryParameters param
