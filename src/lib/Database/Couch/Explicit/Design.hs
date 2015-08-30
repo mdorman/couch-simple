@@ -23,28 +23,20 @@ Each function takes a 'Database.Couch.Types.Context'---which, among other things
 module Database.Couch.Explicit.Design where
 
 import           Control.Monad.IO.Class          (MonadIO)
-import           Data.Aeson                      (FromJSON, ToJSON,
-                                                  Value (Null, Number, String),
-                                                  object, toJSON)
+import           Data.Aeson                      (FromJSON, ToJSON, object,
+                                                  toJSON)
 import           Data.Function                   (($))
 import           Data.Maybe                      (Maybe (Nothing))
 import qualified Database.Couch.Explicit.DocBase as Base (accessBase, copy,
-                                                          delete, get, put)
-import           Database.Couch.Internal         (standardRequest,
-                                                  structureRequest)
+                                                          delete, get, meta,
+                                                          put)
+import           Database.Couch.Internal         (standardRequest)
 import           Database.Couch.RequestBuilder   (RequestBuilder, addPath,
                                                   selectDoc, setJsonBody,
                                                   setMethod, setQueryParam)
-import           Database.Couch.ResponseParser   (checkStatusCode, failed,
-                                                  getContentLength, getDocRev,
-                                                  responseStatus, toOutputType)
 import           Database.Couch.Types            (Context, DocGetDoc, DocId,
-                                                  DocPut, DocRev,
-                                                  Error (Unknown), Result,
-                                                  ViewParams, toQueryParameters,
-                                                  unwrapDocRev)
-import           GHC.Num                         (fromInteger)
-import           Network.HTTP.Types              (statusCode)
+                                                  DocPut, DocRev, Result,
+                                                  ViewParams, toQueryParameters)
 
 {- | <http://docs.couchdb.org/en/1.6.1/api/document/common.html#head--db-_design-ddoc Get the size and revision of the specified design document>
 
@@ -59,24 +51,7 @@ meta :: (FromJSON a, MonadIO m)
      -> Maybe DocRev -- ^ A desired revision
      -> Context
      -> m (Result a)
-meta param doc rev =
-  structureRequest request parse
-  where
-    request = do
-      setMethod "HEAD"
-      Base.accessBase "_design" doc rev
-      setQueryParam $ toQueryParameters param
-    parse = do
-      -- Do our standard status code checks
-      checkStatusCode
-      -- And then handle 304 appropriately
-      s <- responseStatus
-      docRev <- getDocRev
-      contentLength <- getContentLength
-      case statusCode s of
-        200 -> toOutputType $ object [("rev", String $ unwrapDocRev docRev), ("size", Number $ fromInteger contentLength)]
-        304 -> toOutputType Null
-        _   -> failed Unknown
+meta = Base.meta "_design"
 
 {- | <http://docs.couchdb.org/en/1.6.1/api/document/common.html#get--db-_design-ddoc Get the specified design document>
 

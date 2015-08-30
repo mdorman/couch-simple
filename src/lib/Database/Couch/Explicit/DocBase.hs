@@ -24,7 +24,9 @@ module Database.Couch.Explicit.DocBase where
 
 import           Control.Monad                 (return, unless)
 import           Control.Monad.IO.Class        (MonadIO)
-import           Data.Aeson                    (FromJSON, ToJSON, Value (Null))
+import           Data.Aeson                    (FromJSON, ToJSON,
+                                                Value (Null, Number, String),
+                                                object)
 import           Data.ByteString               (ByteString, null)
 import           Data.Function                 (($), (.))
 import           Data.Maybe                    (Maybe, maybe)
@@ -36,13 +38,15 @@ import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 setJsonBody, setMethod,
                                                 setQueryParam)
 import           Database.Couch.ResponseParser (checkStatusCode, failed,
+                                                getContentLength, getDocRev,
                                                 responseStatus, responseValue,
                                                 toOutputType)
 import           Database.Couch.Types          (Context, DocGetDoc, DocId,
                                                 DocPut, DocRev, Error (Unknown),
                                                 Result, reqDocId, reqDocRev,
                                                 toHTTPHeaders,
-                                                toQueryParameters)
+                                                toQueryParameters, unwrapDocRev)
+import           GHC.Num                       (fromInteger)
 import           Network.HTTP.Types            (statusCode)
 
 -- Everything sets up the path the same
@@ -58,6 +62,32 @@ accessBase :: ByteString -> DocId -> Maybe DocRev -> RequestBuilder ()
 accessBase prefix docid rev = do
   docPath prefix docid
   maybe (return ()) (setHeaders . return . ("If-None-Match" ,) . reqDocRev) rev
+
+meta :: (FromJSON a, MonadIO m)
+     => ByteString -- ^ The prefix to use for the document
+     -> DocGetDoc -- ^ Parameters for the HEAD request
+     -> DocId -- ^ The ID of the design document
+     -> Maybe DocRev -- ^ A desired revision
+     -> Context
+     -> m (Result a)
+meta prefix param doc rev =
+  structureRequest request parse
+  where
+    request = do
+      setMethod "HEAD"
+      accessBase prefix doc rev
+      setQueryParam $ toQueryParameters param
+    parse = do
+      -- Do our standard status code checks
+      checkStatusCode
+      -- And then handle 304 appropriately
+      s <- responseStatus
+      docRev <- getDocRev
+      contentLength <- getContentLength
+      case statusCode s of
+        200 -> toOutputType $ object [("rev", String $ unwrapDocRev docRev), ("size", Number $ fromInteger contentLength)]
+        304 -> toOutputType Null
+        _   -> failed Unknown
 
 -- | Get the specified local document.
 --
