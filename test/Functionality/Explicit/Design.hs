@@ -19,7 +19,7 @@ import           Database.Couch.Types           (Context, DesignDoc (..),
                                                  DocRev (..),
                                                  Error (NotFound, Conflict),
                                                  Result, ViewSpec (ViewSpec),
-                                                 ctxDb, docGetDoc, docPutParam,
+                                                 ctxDb, modifyDoc, retrieveDoc,
                                                  viewParams)
 import           Functionality.Util             (makeTests, runTests,
                                                  testAgainstFailure,
@@ -47,8 +47,8 @@ tests = makeTests "Tests of the design doc interface"
 ddocMeta :: IO Context -> TestTree
 ddocMeta =
   makeTests "Get design document size and revision"
-    [ testAgainstFailure "No size information for non-existent doc" (Design.meta docGetDoc "llamas" Nothing) NotFound
-    , testAgainstSchema "Get standard _auth ddoc in _users"  (\c -> Design.meta docGetDoc "_auth" Nothing c { ctxDb = Just "_users" })
+    [ testAgainstFailure "No size information for non-existent doc" (Design.meta retrieveDoc "llamas" Nothing) NotFound
+    , testAgainstSchema "Get standard _auth ddoc in _users"  (\c -> Design.meta retrieveDoc "_auth" Nothing c { ctxDb = Just "_users" })
 
                  "head--db-_design-ddoc.json"
     ]
@@ -56,24 +56,24 @@ ddocMeta =
 ddocGet :: IO Context -> TestTree
 ddocGet =
   makeTests "Get design document content"
-    [ testAgainstSchema "Get standard _auth ddoc in _users"  (\c -> Design.get docGetDoc "_auth" Nothing c { ctxDb = Just "_users" })
+    [ testAgainstSchema "Get standard _auth ddoc in _users"  (\c -> Design.get retrieveDoc "_auth" Nothing c { ctxDb = Just "_users" })
                  "get--db-_design-ddoc.json"
     ]
 
 ddocPut :: IO Context -> TestTree
 ddocPut =
   makeTests "Create and update a design document"
-    [ withDb $ testAgainstSchema "Simple add of document" (Design.put docPutParam "foo" Nothing initialDdoc) "put--db-_design-ddoc.json"
+    [ withDb $ testAgainstSchema "Simple add of document" (Design.put modifyDoc "foo" Nothing initialDdoc) "put--db-_design-ddoc.json"
     , withDb $ testAgainstFailure "Failure to update document" (\c -> do
-                                                                    _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
-                                                                    Design.put docPutParam "foo" Nothing initialDdoc c) Conflict
+                                                                    _ :: Result Value <- Design.put modifyDoc "foo" Nothing initialDdoc c
+                                                                    Design.put modifyDoc "foo" Nothing initialDdoc c) Conflict
     , withDb $ testAgainstSchema
                  "Add, then update a doc"
                  (\c -> do
-                    res <- Design.put docPutParam "foo" Nothing initialDdoc c
+                    res <- Design.put modifyDoc "foo" Nothing initialDdoc c
                     let (Right (id, _)) = getKey "id" res
                     let (Right (rev, _)) = getKey "rev" res
-                    Design.put docPutParam "foo" (Just rev) initialDdoc {ddocId = id, ddocRev = rev} c)
+                    Design.put modifyDoc "foo" (Just rev) initialDdoc {ddocId = id, ddocRev = rev} c)
                  "put--db-_design-ddoc.json"
     ]
   where
@@ -82,16 +82,16 @@ ddocPut =
 ddocDelete :: IO Context -> TestTree
 ddocDelete =
   makeTests "Create and update a design document"
-    [ withDb $ testAgainstFailure "Delete non-existent design document" (Design.delete docPutParam "foo" Nothing) NotFound
+    [ withDb $ testAgainstFailure "Delete non-existent design document" (Design.delete modifyDoc "foo" Nothing) NotFound
     , withDb $ testAgainstFailure "Delete design document with conflict" (\c -> do
-                                                                   _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
-                                                                   Design.delete docPutParam "foo" Nothing c) Conflict
+                                                                   _ :: Result Value <- Design.put modifyDoc "foo" Nothing initialDdoc c
+                                                                   Design.delete modifyDoc "foo" Nothing c) Conflict
     , withDb $ testAgainstSchema
                  "Add, then delete design doc"
                  (\c -> do
-                    res <- Design.put docPutParam "foo" Nothing initialDdoc c
+                    res <- Design.put modifyDoc "foo" Nothing initialDdoc c
                     let (Right (rev, _)) = getKey "rev" res
-                    Design.delete docPutParam "foo" rev c)
+                    Design.delete modifyDoc "foo" rev c)
                  "delete--db-_design-ddoc.json"
     ]
   where
@@ -100,22 +100,22 @@ ddocDelete =
 ddocCopy :: IO Context -> TestTree
 ddocCopy =
   makeTests "Copy a document"
-    [ withDb $ testAgainstFailure "Copy a non-existent document" (Design.copy docPutParam "foo" Nothing "bar") NotFound
+    [ withDb $ testAgainstFailure "Copy a non-existent document" (Design.copy modifyDoc "foo" Nothing "bar") NotFound
     , withDb $ testAgainstFailure "Copy a document with conflict" (\c -> do
-                                                                   _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
-                                                                   _ :: Result Value <- Design.put docPutParam "bar" Nothing initialDdoc c
-                                                                   Design.copy docPutParam "foo" Nothing "bar" c) Conflict
+                                                                   _ :: Result Value <- Design.put modifyDoc "foo" Nothing initialDdoc c
+                                                                   _ :: Result Value <- Design.put modifyDoc "bar" Nothing initialDdoc c
+                                                                   Design.copy modifyDoc "foo" Nothing "bar" c) Conflict
     , withDb $ testAgainstFailure
                  "Copy a document with a non-existent revision"
                  (\c -> do
-                    _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
-                    Design.copy docPutParam "foo" (Just $ DocRev "1-000000000") "bar" c)
+                    _ :: Result Value <- Design.put modifyDoc "foo" Nothing initialDdoc c
+                    Design.copy modifyDoc "foo" (Just $ DocRev "1-000000000") "bar" c)
                  NotFound
     , withDb $ testAgainstSchema
                  "Copy a document"
                  (\c -> do
-                    _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
-                    Design.copy docPutParam "foo" Nothing "bar" c)
+                    _ :: Result Value <- Design.put modifyDoc "foo" Nothing initialDdoc c
+                    Design.copy modifyDoc "foo" Nothing "bar" c)
                  "copy--db-_design-ddoc.json"
     ]
   where
@@ -135,8 +135,8 @@ viewAllDocs =
     ]
   where
     checkView c = do
-      _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
-      _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
+      _ :: Result Value <- Design.put modifyDoc "foo" Nothing initialDdoc c
+      _ :: Result Value <- Doc.put modifyDoc "foo" Nothing testDoc c
       Design.allDocs viewParams "foo" "test" c
     initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just $ fromList [("test", simpleView)])
     simpleView = ViewSpec "function(doc) {\n  if(doc.date && doc.title) {\n    emit(doc.date, doc.title);\n  }\n}\n" Nothing
@@ -149,9 +149,9 @@ viewSomeDocs =
     ]
   where
     checkView c = do
-      _ :: Result Value <- Design.put docPutParam "foo" Nothing initialDdoc c
+      _ :: Result Value <- Design.put modifyDoc "foo" Nothing initialDdoc c
       mapM_ (\testDoc -> do
-                 _ :: Result Value <- Doc.put docPutParam "foo" Nothing testDoc c
+                 _ :: Result Value <- Doc.put modifyDoc "foo" Nothing testDoc c
                  return ()) testDocs
       Design.someDocs viewParams "foo" "test" ["red-dragon"] c
     initialDdoc = DesignDoc "" "" Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just $ fromList [("test", simpleView)])

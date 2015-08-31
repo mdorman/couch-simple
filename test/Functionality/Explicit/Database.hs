@@ -36,8 +36,7 @@ import           Database.Couch.Types             (Context (ctxDb),
                                                    DocRev (DocRev),
                                                    DocRevMap (DocRevMap), Error (Conflict, NotFound, InvalidName, AlreadyExists),
                                                    Result, dbAllDocs,
-                                                   dbBulkDocsParam,
-                                                   dbChangesParam)
+                                                   dbBulkDocs, dbChangesParam)
 import           Functionality.Util               (makeTests, runTests,
                                                    testAgainstFailure,
                                                    testAgainstSchema,
@@ -185,7 +184,7 @@ databaseSomeDocs =
 databaseBulkDocs :: IO Context -> TestTree
 databaseBulkDocs =
   makeTests "Database update documents in bulk"
-    [ withDb $ testAgainstSchema "Empty list of documents" (Database.bulkDocs dbBulkDocsParam [])
+    [ withDb $ testAgainstSchema "Empty list of documents" (Database.bulkDocs dbBulkDocs [])
       "post--db-_bulk_docs.json"
     ]
 

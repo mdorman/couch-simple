@@ -29,9 +29,9 @@ import           Data.Maybe           (Maybe (Just), maybe)
 import           Data.Monoid          (mempty, (<>))
 import           Data.Tuple           (fst)
 import           Database.Couch.Types (Context, Credentials (Basic), DocId,
-                                       DocRev, basicPass, basicUser, ctxCookies,
-                                       ctxCred, reqDb, reqDocId, reqDocRev,
-                                       reqHost, reqPort)
+                                       DocRev, ctxCookies, ctxCred, reqDb,
+                                       reqDocId, reqDocRev, reqHost,
+                                       reqPassword, reqPort, reqUser)
 import           Network.HTTP.Client  (Request, RequestBody (RequestBodyLBS),
                                        applyBasicAuth, cookieJar, host, method,
                                        path, port, requestBody, requestHeaders,
@@ -111,7 +111,7 @@ setAuth = do
     doApply cred = do
       (BuilderState r q d p) <- get
       put $ BuilderState (applyCred cred r) q d p
-    applyCred (Basic u p) = applyBasicAuth (basicUser u) (basicPass p)
+    applyCred (Basic u p) = applyBasicAuth (reqUser u) (reqPassword p)
 
 -- | Set the host and port for the 'Request', based on what's in the 'Context'.
 setConnection :: RequestBuilder ()
