@@ -186,7 +186,7 @@ someDocs param ids =
 
 The return value is a list of objects whose fields often vary, so it is easily decoded as a 'Data.List.List' of 'Data.Aeson.Value':
 
->>> value :: Result [Value] <- Database.bulkDocs dbBulkDocsParam ["a", "b", "c"] ctx
+>>> value :: Result [Value] <- Database.bulkDocs dbBulkDocs ["a", "b", "c"] ctx
 
 Status: __Complete__ -}
 bulkDocs :: (FromJSON a, MonadIO m, ToJSON a)

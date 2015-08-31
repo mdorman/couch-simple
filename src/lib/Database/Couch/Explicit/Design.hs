@@ -34,9 +34,10 @@ import           Database.Couch.Internal         (standardRequest)
 import           Database.Couch.RequestBuilder   (RequestBuilder, addPath,
                                                   selectDoc, setJsonBody,
                                                   setMethod, setQueryParam)
-import           Database.Couch.Types            (Context, DocGetDoc, DocId,
-                                                  DocPut, DocRev, Result,
-                                                  ViewParams, toQueryParameters)
+import           Database.Couch.Types            (Context, DocId, DocRev,
+                                                  ModifyDoc, Result,
+                                                  RetrieveDoc, ViewParams,
+                                                  toQueryParameters)
 
 {- | <http://docs.couchdb.org/en/1.6.1/api/document/common.html#head--db-_design-ddoc Get the size and revision of the specified design document>
 
@@ -48,7 +49,7 @@ If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for
 
 Status: __Complete__ -}
 meta :: (FromJSON a, MonadIO m)
-     => DocGetDoc -- ^ Parameters for the HEAD request
+     => RetrieveDoc -- ^ Parameters for the HEAD request
      -> DocId -- ^ The ID of the design document
      -> Maybe DocRev -- ^ A desired revision
      -> Context
@@ -65,7 +66,7 @@ If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for
 
 Status: __Complete__ -}
 get :: (FromJSON a, MonadIO m)
-    => DocGetDoc -- ^ Parameters for the HEAD request
+    => RetrieveDoc -- ^ Parameters for the HEAD request
     -> DocId -- ^ The ID of the design document
     -> Maybe DocRev -- ^ A desired revision
     -> Context
@@ -76,11 +77,11 @@ get = Base.get "_design"
 
 The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
 
->>> value :: Result Bool <- Design.put docPut "pandas" Nothing SomeValue ctx >>= asBool
+>>> value :: Result Bool <- Design.put modifyDoc "pandas" Nothing SomeValue ctx >>= asBool
 
 Status: __Complete__ -}
 put :: (FromJSON a, MonadIO m, ToJSON b)
-    => DocPut -- ^ Parameters for the request
+    => ModifyDoc -- ^ Parameters for the request
     -> DocId -- ^ The ID of the design document
     -> Maybe DocRev -- ^ A desired revision
     -> b
@@ -92,11 +93,11 @@ put = Base.put "_design"
 
 The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
 
->>> value :: Result Bool <- Design.delete docPut "pandas" Nothing ctx >>= asBool
+>>> value :: Result Bool <- Design.delete modifyDoc "pandas" Nothing ctx >>= asBool
 
 Status: __Complete__ -}
 delete :: (FromJSON a, MonadIO m)
-       => DocPut -- ^ Parameters for the request
+       => ModifyDoc -- ^ Parameters for the request
        -> DocId -- ^ The ID of the design document
        -> Maybe DocRev -- ^ A desired revision
        -> Context
@@ -107,11 +108,11 @@ delete = Base.delete "_design"
 
 The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
 
->>> value :: Result Bool <- Design.delete docPut "pandas" Nothing ctx >>= asBool
+>>> value :: Result Bool <- Design.delete modifyDoc "pandas" Nothing ctx >>= asBool
 
 Status: __Complete__ -}
 copy :: (FromJSON a, MonadIO m)
-     => DocPut -- ^ Parameters for the request
+     => ModifyDoc -- ^ Parameters for the request
      -> DocId -- ^ The ID of the design document
      -> Maybe DocRev -- ^ A desired revision
      -> DocId

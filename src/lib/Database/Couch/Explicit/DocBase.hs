@@ -42,10 +42,10 @@ import           Database.Couch.ResponseParser (checkStatusCode,
                                                 getContentLength, getDocRev,
                                                 responseStatus, responseValue,
                                                 toOutputType)
-import           Database.Couch.Types          (Context, DocGetDoc, DocId,
-                                                DocPut, DocRev, Error (Unknown),
-                                                Result, reqDocId, reqDocRev,
-                                                toHTTPHeaders,
+import           Database.Couch.Types          (Context, DocId, DocRev,
+                                                Error (Unknown), ModifyDoc,
+                                                Result, RetrieveDoc, reqDocId,
+                                                reqDocRev, toHTTPHeaders,
                                                 toQueryParameters, unwrapDocRev)
 import           GHC.Num                       (fromInteger)
 import           Network.HTTP.Types            (statusCode)
@@ -61,7 +61,7 @@ If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for
 Status: __Complete__ -}
 meta :: (FromJSON a, MonadIO m)
      => ByteString -- ^ The prefix to use for the document
-     -> DocGetDoc -- ^ Parameters for document retrieval
+     -> RetrieveDoc -- ^ Parameters for document retrieval
      -> DocId -- ^ The document ID
      -> Maybe DocRev -- ^ An optional document revision
      -> Context
@@ -96,7 +96,7 @@ If the specified DocRev matches, returns a JSON Null, otherwise a JSON value for
 Status: __Complete__ -}
 get :: (FromJSON a, MonadIO m)
     => ByteString -- ^ A prefix for the document ID
-    -> DocGetDoc -- ^ Parameters for document retrieval
+    -> RetrieveDoc -- ^ Parameters for document retrieval
     -> DocId -- ^ The document ID
     -> Maybe DocRev -- ^ An optional document revision
     -> Context
@@ -122,12 +122,12 @@ get prefix param doc rev =
 
 The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
 
->>> value :: Result Bool <- DocBase.put "prefix" docPut "pandas" Nothing SomeValue ctx >>= asBool
+>>> value :: Result Bool <- DocBase.put "prefix" modifyDoc "pandas" Nothing SomeValue ctx >>= asBool
 
 Status: __Complete__ -}
 put :: (FromJSON a, MonadIO m, ToJSON b)
     => ByteString -- ^ A prefix for the document ID
-    -> DocPut -- ^ The parameters for modifying the document
+    -> ModifyDoc -- ^ The parameters for modifying the document
     -> DocId -- ^ The document ID
     -> Maybe DocRev -- ^ An optional document revision
     -> b -- ^ The document
@@ -145,12 +145,12 @@ put prefix param docid rev doc =
 
 The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
 
->>> value :: Result Bool <- DocBase.delete "prefix" docPut "pandas" Nothing ctx >>= asBool
+>>> value :: Result Bool <- DocBase.delete "prefix" modifyDoc "pandas" Nothing ctx >>= asBool
 
 Status: __Complete__ -}
 delete :: (FromJSON a, MonadIO m)
        => ByteString -- ^ A prefix for the document ID
-       -> DocPut -- ^ The parameters for modifying the document
+       -> ModifyDoc -- ^ The parameters for modifying the document
        -> DocId -- ^ The document ID
        -> Maybe DocRev -- ^ An optional document revision
        -> Context
@@ -166,12 +166,12 @@ delete prefix param docid rev =
 
 The return value is an object that can hold "id" and "rev" keys, but if you don't need those values, it is easily decoded into a 'Data.Bool.Bool' with our 'asBool' combinator:
 
->>> value :: Result Bool <- DocBase.delete "prefix" docPut "pandas" Nothing ctx >>= asBool
+>>> value :: Result Bool <- DocBase.delete "prefix" modifyDoc "pandas" Nothing ctx >>= asBool
 
 Status: __Complete__ -}
 copy :: (FromJSON a, MonadIO m)
      => ByteString -- ^ A prefix for the document ID
-     -> DocPut -- ^ The parameters for modifying the document
+     -> ModifyDoc -- ^ The parameters for modifying the document
      -> DocId -- ^ The document ID
      -> Maybe DocRev -- ^ An optional document revision
      -> DocId -- ^ The destination document ID
@@ -212,7 +212,7 @@ accessBase prefix docid rev = do
 
 -- | All modifications want to allow conflict recognition and parameters
 modBase :: ByteString -- ^ A prefix for the document ID
-        -> DocPut -- ^ The parameters for modifying the document
+        -> ModifyDoc -- ^ The parameters for modifying the document
         -> DocId -- ^ The document ID
         -> Maybe DocRev -- ^ An optional document revision
         -> RequestBuilder ()
