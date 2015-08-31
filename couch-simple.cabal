@@ -24,14 +24,13 @@ library
                , bifunctors
                , bytestring
                , data-default
-               , either
                , exceptions
                , http-client
                , http-types
                , integer-gmp
                , mtl
                , text
-               , transformers
+               , transformers >= 0.4
                , unordered-containers
                , uuid
                , vector
@@ -63,7 +62,6 @@ test-suite functionality
                , couch-simple
                , data-default
                , directory
-               , either
                , errors
                , filepath
                , hjsonschema >= 0.6
@@ -76,7 +74,7 @@ test-suite functionality
                , tasty
                , tasty-hunit
                , text
-               , transformers
+               , transformers >= 0.4
                , unordered-containers
                , uuid
   default-language: Haskell2010
