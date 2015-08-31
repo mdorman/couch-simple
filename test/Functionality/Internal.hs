@@ -26,12 +26,13 @@ import           Text.Show               (show)
 _main :: IO ()
 _main = runTests tests
 
-tests :: Manager -> TestTree
+tests :: IO Manager -> TestTree
 tests manager = testGroup "Raw JSON interface" [requestRoot manager]
 
 -- The root of the couchdb server provides predictable content
-requestRoot :: Manager -> TestTree
-requestRoot manager = testCaseSteps "Check rawJsonRequest" $ \step -> do
+requestRoot :: IO Manager -> TestTree
+requestRoot getManager = testCaseSteps "Check rawJsonRequest" $ \step -> do
+  manager <- getManager
   step "Request root"
   res <- rawJsonRequest manager def { requestHeaders = [], host = "localhost", method = "GET", path = "/", port = 5984, requestBody = RequestBodyLBS "" }
   step "No exception"

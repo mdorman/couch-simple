@@ -26,7 +26,7 @@ _main = runTests tests
 
 
 -- We specifically don't use makeTests here because we want no-databas-selected context
-tests :: Manager -> TestTree
+tests :: IO Manager -> TestTree
 tests manager = testGroup "Tests of the server interface" $
   ($ serverContext manager) <$> [serverMeta, activeTasks, allDbs, stats, uuids]
 

@@ -27,7 +27,7 @@ import           Test.Tasty                       (TestTree)
 _main :: IO ()
 _main = runTests tests
 
-tests :: Manager -> TestTree
+tests :: IO Manager -> TestTree
 tests = makeTests "Tests of the doc interface"
           [ docMeta
           , docGet

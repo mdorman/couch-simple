@@ -50,7 +50,7 @@ import           Test.Tasty.HUnit                 ((@=?))
 _main :: IO ()
 _main = runTests tests
 
-tests :: Manager -> TestTree
+tests :: IO Manager -> TestTree
 tests = makeTests "Tests of the database interface"
           [ databaseExists
           , databaseMeta
