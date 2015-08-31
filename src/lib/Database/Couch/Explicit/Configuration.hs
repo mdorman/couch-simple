@@ -114,7 +114,7 @@ delValue s k =
       setMethod "DELETE"
       itemPath s k
 
--- | = Internal combinators
+-- * Internal combinators
 
 -- | Base path for all config requests
 configPath :: RequestBuilder ()

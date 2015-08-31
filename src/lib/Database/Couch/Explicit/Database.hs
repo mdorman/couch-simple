@@ -155,7 +155,7 @@ The return value is a list of objects whose fields often vary, so it is easily d
 
 Status: __Complete__ -}
 allDocs :: (FromJSON a, MonadIO m)
-        => DbAllDocs -- ^ Parameters governing retrieval ('Couch.Types.dbAllDocs' is an empty default)
+        => DbAllDocs -- ^ Parameters governing retrieval ('Database.Couch.Types.dbAllDocs' is an empty default)
         -> Context
         -> m (Result a)
 allDocs =
@@ -169,7 +169,7 @@ The return value is a list of objects whose fields often vary, so it is easily d
 
 Status: __Complete__ -}
 someDocs :: (FromJSON a, MonadIO m)
-         => DbAllDocs -- ^ Parameters governing retrieval ('Couch.Types.dbAllDocs' is an empty default)
+         => DbAllDocs -- ^ Parameters governing retrieval ('Database.Couch.Types.dbAllDocs' is an empty default)
          -> [DocId] -- ^ List of ids documents to retrieve
          -> Context
          -> m (Result a)
@@ -190,7 +190,7 @@ The return value is a list of objects whose fields often vary, so it is easily d
 
 Status: __Complete__ -}
 bulkDocs :: (FromJSON a, MonadIO m, ToJSON a)
-         => DbBulkDocs -- ^ Parameters coverning retrieval ('Couch.Types.dbBulkDocs' is an empty default)
+         => DbBulkDocs -- ^ Parameters coverning retrieval ('Database.Couch.Types.dbBulkDocs' is an empty default)
          -> [a] -- ^ List of documents to add or update
          -> Context
          -> m (Result a)
@@ -232,7 +232,7 @@ The return value is an object whose fields often vary, so it is most easily deco
 
 Status: __Limited__ -}
 changes :: (FromJSON a, MonadIO m)
-        => DbChanges -- ^ Arguments governing changes contents ('Couch.Types.dbChanges' is an empty default)
+        => DbChanges -- ^ Arguments governing changes contents ('Database.Couch.Types.dbChanges' is an empty default)
         -> Context
         -> m (Result a)
 changes param =
@@ -461,7 +461,7 @@ setRevsLimit limit =
       revsLimitBase
       setJsonBody limit
 
--- | = Internal combinators
+-- * Internal combinators
 
 -- | Base bits for all _all_docs requests
 allDocsBase :: ToQueryParameters a => a -> RequestBuilder ()
