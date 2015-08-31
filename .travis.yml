@@ -34,6 +34,18 @@ matrix:
     - env: CABALVER=1.18 GHCVER=7.8.4
       compiler: ": #GHC 7.8.4"
       addons: {apt: {packages: [cabal-install-1.18,ghc-7.8.4,alex,happy], sources: [hvr-ghc]}}
+    - env: CABALVER=1.22 GHCVER=7.10.1
+      compiler: ": #GHC 7.10.1"
+      addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.1,alex,happy], sources: [hvr-ghc]}}
+    - env: CABALVER=1.22 GHCVER=7.10.2
+      compiler: ": #GHC 7.10.2"
+      addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.2,alex,happy], sources: [hvr-ghc]}}
+    - env: CABALVER=head GHCVER=head
+      compiler: ": #GHC head"
+      addons: {apt: {packages: [cabal-install-head,ghc-head,alex,happy], sources: [hvr-ghc]}}
+
+  allow_failures:
+    - env: CABALVER=head GHCVER=head
 
 before_install:
  - unset CC
