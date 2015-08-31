@@ -12,9 +12,7 @@ Maintainer  : mdorman@jaunder.io
 Stability   : experimental
 Portability : POSIX
 
-Calls to CouchDB can return values that sometimes have structure
-beyond their simple JSON content.  We want to provide convenient
-conversions when that is the case.
+Calls to CouchDB can return values that have well-defined structure beyond their simple JSON content, but that don't necessarily warrant full-blown data types with 'FromJSON' instances and the like.  We want to provide convenient conversions when that is the case.
 
 > result <- Database.compact cxt `ap` asBool
 > if result
@@ -42,7 +40,7 @@ import           Database.Couch.Types (Error (NotFound, ParseFail), Result)
 
 {- | Attempt to decode the value into anything with a FromJSON constraint.
 
--}
+This is really about translating 'Data.Aeson.Result' values into our 'Database.Couch.Types.Result' values. -}
 
 asAnything :: FromJSON a => Result Value -> Result a
 asAnything v =
@@ -54,18 +52,13 @@ asAnything v =
 
 {- | Attempt to construct a 'Data.Bool.Bool' value.
 
-This assumes the routine conforms to CouchDB's @{"ok": true}@ return convention.
-
--}
+This assumes the routine conforms to CouchDB's @{"ok": true}@ return convention. -}
 asBool :: Result Value -> Result Bool
 asBool = getKey "ok"
 
 {- | Attempt to construct a list of 'Data.UUID.UUID' values.
 
-CouchDB returns uuids as string values in a form that "Data.UUID"
-cannot consume directly, so we provide this standard conversion.
-
--}
+CouchDB returns uuids as string values in a form that "Data.UUID" cannot consume directly, so we provide this standard conversion. -}
 asUUID :: Result Value -> Result [UUID]
 asUUID v =
   case v of
@@ -85,9 +78,7 @@ asUUID v =
           (fourth, fifth) = splitAt 4 fourth'
       in intercalate "-" [first, second, third, fourth, fifth]
 
-{- | Attempt to extract the value of a particular key.
-
--}
+{- | Attempt to extract the value of a particular key. -}
 getKey :: FromJSON a => Text -> Result Value -> Result a
 getKey k v  =
   case v of
