@@ -6,16 +6,14 @@
 {- |
 
 Module      : Database.Couch.ResponseParser
-Description : Code for parsing responses from CouchDB
+Description : Code for parsing responses from Database.Couch.External
 Copyright   : Copyright (c) 2015, Michael Alan Dorman
 License     : MIT
 Maintainer  : mdorman@jaunder.io
 Stability   : experimental
 Portability : POSIX
 
-These relatively simple combinators can do simple extractions of data
-from a CouchDB response, as well as checking certain information about
-the actual response values.
+These relatively simple combinators can do simple extractions of data from the data returned by "Database.Couch.External" routines, as well as checking certain information about the actual response values.
 
 -}
 
@@ -45,32 +43,46 @@ import           Network.HTTP.Client        (HttpException (StatusCodeException)
 import           Network.HTTP.Types         (HeaderName, ResponseHeaders,
                                              Status, statusCode)
 
--- Just so we don't have to type this out Every. Damned. Time.
+-- * Our primary interface
+
+-- | Check the status code for a successful value and tries to decode to the user's desired type if so
+standardParse :: FromJSON a => ResponseParser a
+standardParse = do
+  checkStatusCode
+  responseValue >>= toOutputType
+
+-- * Lower-level interfaces
+
+-- | A type synonym for the Monad we're operating in
 type ResponseParser = ExceptT Error (Reader (ResponseHeaders, Status, Value))
 
--- Run a given parser over an initial value
+-- | Run a given parser over an initial value
 runParse :: ResponseParser a -> Either Error (ResponseHeaders, Status, Value) -> Either Error a
 runParse p (Right v) = (runReader . runExceptT) p v
 runParse _ (Left v) = Left v
 
+-- | Extract the response status from the Monad
 responseStatus :: ResponseParser Status
 responseStatus =
   asks status
   where
     status (_, s, _) = s
 
+-- | Extract the response headers from the Monad
 responseHeaders :: ResponseParser ResponseHeaders
 responseHeaders =
   asks headers
   where
     headers (h, _, _) = h
 
+-- | Extract the response value from the Monad
 responseValue :: ResponseParser Value
 responseValue =
   asks value
   where
     value (_, _, v) = v
 
+-- | Check the status code for the response
 checkStatusCode :: ResponseParser ()
 checkStatusCode = do
   h <- responseHeaders
@@ -90,25 +102,30 @@ checkStatusCode = do
     415 -> throwE $ ImplementationError "The server says we sent a bad content type, which shouldn't happen.  Please open an issue at https://github.com/mdorman/couch-simple/issues with a test case if possible."
     _   -> throwE $ HttpError (StatusCodeException s h mempty)
 
+-- | Try to retrieve a header from the response
 maybeGetHeader :: HeaderName -> ResponseParser (Maybe ByteString)
 maybeGetHeader header = do
   h <- responseHeaders
   return $ fmap snd (find ((== header) . fst) h)
 
+-- | Retrieve a header from the response, or return an error if it's not present
 getHeader :: HeaderName -> ResponseParser ByteString
 getHeader header =
   maybeGetHeader header >>= maybe (throwE NotFound) return
 
+-- | Decode the Content-Length header from the response, or return an error if it's not present
 getContentLength :: ResponseParser Integer
 getContentLength = do
   h <- getHeader "Content-Length"
   either (throwE . ParseFail . pack) (return . fst) $ decimal (decodeUtf8 h)
 
+-- | Get the document revision (ETag header), or return an error if it's not present
 getDocRev :: ResponseParser DocRev
 getDocRev = do
   h <- getHeader "ETag"
   return $ DocRev $ decodeUtf8 h
 
+-- | Get the value of a particular key from the response value, or return an error if it's not found
 getKey :: Text -> ResponseParser Value
 getKey key = do
   v <- responseValue
@@ -116,13 +133,9 @@ getKey key = do
     Object o -> maybe (throwE NotFound) return $ lookup key o
     _        -> throwE NotFound
 
+-- | Decode the response value to a particular type, or return an error if it can't be decoded
 toOutputType :: (FromJSON a) => Value -> ResponseParser a
 toOutputType v =
   case fromJSON v of
     Error e -> throwE $ ParseFail $ pack e
     Success a -> return a
-
-standardParse :: FromJSON a => ResponseParser a
-standardParse = do
-  checkStatusCode
-  responseValue >>= toOutputType
