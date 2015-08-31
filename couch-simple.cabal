@@ -1,17 +1,19 @@
 author:              Michael Alan Dorman
 bug-reports:         https://github.com/mdorman/couch-simple/issues
-build-type:          Simple
+build-type:          Custom
 cabal-version:       >= 1.10
 category:            Database
 copyright:           Copyright (c) 2015, Michael Alan Dorman
 description:         Based on http-client, with intended extensions for streaming through Conduit and other libraries.
+extra-source-files:  test/schema/schema/*.json
 homepage:            https://github.com/mdorman/couch-simple
 license-file:        LICENSE
 license:             MIT
 maintainer:          mdorman@jaunder.io
 name:                couch-simple
 synopsis:            A modern, lightweight, complete client for CouchDB
-version:             0.0.0.0
+tested-with:         GHC >= 7.6 && <= 7.10
+version:             0.0.1.0
 
 source-repository head
   type:     git
@@ -54,7 +56,6 @@ library
   if impl(ghc < 7.8)
     build-depends: bytestring-builder
 
-
 test-suite functionality
   build-depends: base >= 4.6 && < 4.10
                , aeson
@@ -62,14 +63,10 @@ test-suite functionality
                , couch-simple
                , data-default
                , directory
-               , errors
                , filepath
                , hjsonschema >= 0.6
-               , hspec
                , http-client >= 0.4.18
                , http-types
-               , lens
-               , lens-aeson
                , random
                , tasty
                , tasty-hunit
