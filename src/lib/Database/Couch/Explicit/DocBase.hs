@@ -24,6 +24,7 @@ module Database.Couch.Explicit.DocBase where
 
 import           Control.Monad                 (return, unless)
 import           Control.Monad.IO.Class        (MonadIO)
+import           Control.Monad.Trans.Except    (throwE)
 import           Data.Aeson                    (FromJSON, ToJSON,
                                                 Value (Null, Number, String),
                                                 object)
@@ -37,7 +38,7 @@ import           Database.Couch.RequestBuilder (RequestBuilder, addPath,
                                                 selectDb, selectDoc, setHeaders,
                                                 setJsonBody, setMethod,
                                                 setQueryParam)
-import           Database.Couch.ResponseParser (checkStatusCode, failed,
+import           Database.Couch.ResponseParser (checkStatusCode,
                                                 getContentLength, getDocRev,
                                                 responseStatus, responseValue,
                                                 toOutputType)
@@ -82,7 +83,7 @@ meta prefix param doc rev =
       case statusCode s of
         200 -> toOutputType $ object [("rev", String $ unwrapDocRev docRev), ("size", Number $ fromInteger contentLength)]
         304 -> toOutputType Null
-        _   -> failed Unknown
+        _   -> throwE Unknown
 
 {- | Get the specified document
 
@@ -115,7 +116,7 @@ get prefix param doc rev =
       case statusCode s of
         200 -> toOutputType v
         304 -> toOutputType Null
-        _   -> failed Unknown
+        _   -> throwE Unknown
 
 {- | Create or replace the specified document
 

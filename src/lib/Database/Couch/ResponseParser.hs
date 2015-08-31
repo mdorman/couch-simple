@@ -23,7 +23,7 @@ module Database.Couch.ResponseParser where
 
 import           Control.Monad              (return, (>>=))
 import           Control.Monad.Reader       (Reader, asks, runReader)
-import           Control.Monad.Trans.Either (EitherT, hoistEither, runEitherT)
+import           Control.Monad.Trans.Except (ExceptT, runExceptT, throwE)
 import           Data.Aeson                 (FromJSON, Result (Error, Success),
                                              Value (Object), fromJSON)
 import           Data.ByteString            (ByteString)
@@ -46,15 +46,12 @@ import           Network.HTTP.Types         (HeaderName, ResponseHeaders,
                                              Status, statusCode)
 
 -- Just so we don't have to type this out Every. Damned. Time.
-type ResponseParser = EitherT Error (Reader (ResponseHeaders, Status, Value))
+type ResponseParser = ExceptT Error (Reader (ResponseHeaders, Status, Value))
 
 -- Run a given parser over an initial value
 runParse :: ResponseParser a -> Either Error (ResponseHeaders, Status, Value) -> Either Error a
-runParse p (Right v) = (runReader . runEitherT) p v
+runParse p (Right v) = (runReader . runExceptT) p v
 runParse _ (Left v) = Left v
-
-failed :: Error -> ResponseParser a
-failed = hoistEither . Left
 
 responseStatus :: ResponseParser Status
 responseStatus =
@@ -85,13 +82,13 @@ checkStatusCode = do
     304 -> return ()
     400 -> do
       error <- getKey "reason" >>= toOutputType
-      failed $ InvalidName error
-    401 -> failed Unauthorized
-    404 -> failed NotFound
-    409 -> failed Conflict
-    412 -> failed AlreadyExists
-    415 -> failed $ ImplementationError "The server says we sent a bad content type, which shouldn't happen.  Please open an issue at https://github.com/mdorman/couch-simple/issues with a test case if possible."
-    _   -> failed $ HttpError (StatusCodeException s h mempty)
+      throwE $ InvalidName error
+    401 -> throwE Unauthorized
+    404 -> throwE NotFound
+    409 -> throwE Conflict
+    412 -> throwE AlreadyExists
+    415 -> throwE $ ImplementationError "The server says we sent a bad content type, which shouldn't happen.  Please open an issue at https://github.com/mdorman/couch-simple/issues with a test case if possible."
+    _   -> throwE $ HttpError (StatusCodeException s h mempty)
 
 maybeGetHeader :: HeaderName -> ResponseParser (Maybe ByteString)
 maybeGetHeader header = do
@@ -100,12 +97,12 @@ maybeGetHeader header = do
 
 getHeader :: HeaderName -> ResponseParser ByteString
 getHeader header =
-  maybeGetHeader header >>= maybe (failed NotFound) return
+  maybeGetHeader header >>= maybe (throwE NotFound) return
 
 getContentLength :: ResponseParser Integer
 getContentLength = do
   h <- getHeader "Content-Length"
-  either (failed . ParseFail . pack) (return . fst) $ decimal (decodeUtf8 h)
+  either (throwE . ParseFail . pack) (return . fst) $ decimal (decodeUtf8 h)
 
 getDocRev :: ResponseParser DocRev
 getDocRev = do
@@ -116,13 +113,13 @@ getKey :: Text -> ResponseParser Value
 getKey key = do
   v <- responseValue
   case v of
-    Object o -> maybe (failed NotFound) return $ lookup key o
-    _        -> failed NotFound
+    Object o -> maybe (throwE NotFound) return $ lookup key o
+    _        -> throwE NotFound
 
 toOutputType :: (FromJSON a) => Value -> ResponseParser a
 toOutputType v =
   case fromJSON v of
-    Error e -> failed $ ParseFail $ pack e
+    Error e -> throwE $ ParseFail $ pack e
     Success a -> return a
 
 standardParse :: FromJSON a => ResponseParser a
