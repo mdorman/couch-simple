@@ -176,7 +176,7 @@ someDocs params doc view ids =
       let docs = object [("keys", toJSON ids)]
       setJsonBody docs
 
--- | = Internal combinators
+-- * Internal combinators
 
 -- | Base bits for all view queries
 viewBase :: ViewParams -> DocId -> DocId -> RequestBuilder ()

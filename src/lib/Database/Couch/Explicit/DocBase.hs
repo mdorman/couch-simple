@@ -189,7 +189,7 @@ copy prefix param source rev dest =
       then reqDocId dest
       else prefix <> "/" <> reqDocId dest
 
--- | = Internal combinators
+-- * Internal combinators
 
 -- | Construct a path in a consistent fashion
 docPath :: ByteString -- ^ A prefix for the document ID
