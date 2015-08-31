@@ -6,6 +6,7 @@ category:            Database
 copyright:           Copyright (c) 2015, Michael Alan Dorman
 description:         Based on http-client, with intended extensions for streaming through Conduit and other libraries.
 extra-source-files:  test/schema/schema/*.json
+                     *.txt
 homepage:            https://github.com/mdorman/couch-simple
 license-file:        LICENSE
 license:             MIT

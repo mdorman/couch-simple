@@ -1,0 +1,33 @@
+              ____________________________________________
+
+                               CHANGELOG
+               A log of what's going on in `couch-simple'
+              ____________________________________________
+
+
+
+
+
+Stuff to do
+===========
+
+Better examples
+~~~~~~~~~~~~~~~
+
+
+Implicit interface
+~~~~~~~~~~~~~~~~~~
+
+
+Stuff that's been done
+======================
+
+v0.0.1.0
+~~~~~~~~
+
+Intial release on an unsuspecting world
+---------------------------------------
+
+
+Not yet complete, but what is here should be solid
+--------------------------------------------------

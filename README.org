@@ -1,0 +1,7 @@
+#+TITLE: couch-simple
+#+OPTIONS: author:nil creator:nil toc:nil
+#+SUBTITLE: A modern, lightweight, complete client for CouchDB
+
+~Database.Couch~ is intended to be a modern, lightweight, complete
+client for [[http://couchdb.apache.org][CouchDB]].  So far, it is modern and lightweight, but not yet
+complete.
