@@ -13,7 +13,7 @@ license:             MIT
 maintainer:          mdorman@jaunder.io
 name:                couch-simple
 synopsis:            A modern, lightweight, complete client for CouchDB
-tested-with:         GHC >= 7.6 && <= 7.10
+tested-with:         GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.2
 version:             0.0.1.0
 
 source-repository head
