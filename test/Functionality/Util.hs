@@ -41,20 +41,23 @@ import           Test.Tasty.HUnit                 (assertFailure, testCaseSteps,
                                                    (@=?))
 import           Text.Show                        (show)
 
-dbContext :: MonadIO m => Manager -> m Context
-dbContext manager = do
+dbContext :: MonadIO m => IO Manager -> m Context
+dbContext getManager = do
+  manager <- liftIO getManager
   uuid <- liftM (fromString . ("test-" <>) . toString) (liftIO randomIO)
   return $ Context manager "localhost" (Port 5984) Nothing def (Just uuid)
 
-serverContext :: MonadIO m => Manager -> m Context
-serverContext manager = return $ Context manager "localhost" (Port 5984) Nothing def Nothing
+serverContext :: MonadIO m => IO Manager -> m Context
+serverContext getManager = do
+  manager <- liftIO getManager
+  return $ Context manager "localhost" (Port 5984) Nothing def Nothing
 
 releaseContext :: Context -> IO ()
 releaseContext = const $ return ()
 
-runTests :: (Manager -> TestTree) -> IO ()
+runTests :: (IO Manager -> TestTree) -> IO ()
 runTests testTree = do
-  manager <- newManager defaultManagerSettings
+  let manager = newManager defaultManagerSettings
   defaultMain $ testTree manager
 
 testAgainstFailure :: String
@@ -173,7 +176,7 @@ class TestInput a where
 
   applyInput :: a -> (IO Context -> TestTree) -> TestTree
 
-instance TestInput Manager where
+instance TestInput (IO Manager) where
   applyInput input = ($ dbContext input)
 
 instance TestInput (IO Context) where
