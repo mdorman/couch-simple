@@ -64,6 +64,7 @@ test-suite test
                , couch-simple
                , data-default
                , directory
+               , exceptions
                , filepath
                , hjsonschema >= 0.6
                , hlint == 1.*
@@ -77,6 +78,7 @@ test-suite test
                , transformers >= 0.4
                , unordered-containers
                , uuid
+  build-tools: couchdb
   default-language: Haskell2010
   ghc-options: -Wall
   hs-source-dirs: test
