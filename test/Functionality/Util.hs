@@ -14,7 +14,8 @@ import           Data.Either                      (Either (Left, Right))
 import           Data.Eq                          ((==))
 import           Data.Function                    (const, id, ($), (.))
 import           Data.Functor                     (fmap, (<$>))
-import           Data.JsonSchema                  (RawSchema (..), compile,
+import           Data.JsonSchema                  (RawSchema (..),
+                                                   SchemaGraph (..), compile,
                                                    draft4, validate)
 import           Data.Maybe                       (Maybe (Just, Nothing))
 import           Data.Monoid                      (mempty, (<>))
@@ -146,7 +147,7 @@ checkSchema :: IsString s => (s -> IO ()) -> Value -> FilePath -> IO ()
 checkSchema step value schemaName = do
   step "Checking result against schema"
   schema <- loadSchema ("test/schema/schema" </> schemaName)
-  case validate (compile draft4 mempty schema) value of
+  case validate (compile draft4 (SchemaGraph schema mempty) schema) value of
     [] -> return ()
     failures -> assertFailure $ unwords ["Failed to validate", show value, ":", unlines $ fmap show failures]
 
@@ -154,7 +155,7 @@ loadSchema :: FilePath -> IO RawSchema
 loadSchema file = do
   (_, content) <- findRequestedFile
   case decode content of
-    Just (Object o) -> return RawSchema { _rsURI = "", _rsObject = o }
+    Just (Object o) -> return RawSchema { _rsURI = Nothing, _rsData = o }
     _               -> error "Couldn't extract object from file"
 
   where
