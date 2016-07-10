@@ -28,7 +28,7 @@ library
                , bytestring
                , data-default
                , exceptions
-               , http-client
+               , http-client < 0.5
                , http-types
                , integer-gmp
                , mtl
@@ -68,7 +68,7 @@ test-suite test
                , filepath
                , hjsonschema >= 0.8 && < 0.9
                , hlint == 1.*
-               , http-client >= 0.4.18
+               , http-client >= 0.4.30 && < 0.5
                , http-types
                , random
                , tasty
