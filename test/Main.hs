@@ -10,7 +10,7 @@ import           Data.Function             (($), (.))
 import           Data.Monoid               ((<>))
 import qualified Functionality             (tests)
 import           Network.HTTP.Client       (defaultManagerSettings, httpNoBody,
-                                            newManager, parseUrl,
+                                            newManager, parseRequest_,
                                             responseStatus)
 import           Network.HTTP.Types.Status (statusIsSuccessful)
 import qualified Quality                   (tests)
@@ -21,7 +21,7 @@ import           Test.Tasty                (TestTree, defaultMain, testGroup)
 main :: IO ()
 main = defaultMain . tests =<< do
   manager <- newManager defaultManagerSettings
-  request <- parseUrl "http://localhost:5984/"
+  let request = parseRequest_ "http://localhost:5984/"
   handle (\(_ :: SomeException) -> return False) $ liftM (statusIsSuccessful . responseStatus) (httpNoBody request manager)
 
 -- Everything we can throw at it

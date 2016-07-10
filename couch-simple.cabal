@@ -13,8 +13,8 @@ license:             MIT
 maintainer:          mdorman@jaunder.io
 name:                couch-simple
 synopsis:            A modern, lightweight, complete client for CouchDB
-tested-with:         GHC == 7.8.4, GHC == 7.10.2
-version:             0.0.1.0
+tested-with:         GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.1
+version:             0.0.1.1
 
 source-repository head
   type:     git
@@ -28,7 +28,7 @@ library
                , bytestring
                , data-default
                , exceptions
-               , http-client
+               , http-client < 0.5
                , http-types
                , integer-gmp
                , mtl
@@ -66,9 +66,9 @@ test-suite test
                , directory
                , exceptions
                , filepath
-               , hjsonschema >= 0.8 && < 0.9
+               , hjsonschema == 0.10.*
                , hlint == 1.*
-               , http-client >= 0.4.18
+               , http-client >= 0.4.30 && < 0.5
                , http-types
                , random
                , tasty

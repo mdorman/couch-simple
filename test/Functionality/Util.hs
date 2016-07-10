@@ -6,21 +6,21 @@ module Functionality.Util where
 
 import           Control.Monad                    (liftM, return, (>=>), (>>=))
 import           Control.Monad.IO.Class           (MonadIO, liftIO)
-import           Data.Aeson                       (FromJSON, Value (Object),
-                                                   decode)
-import           Data.ByteString.Lazy             (readFile)
+import           Data.Aeson                       (FromJSON, Value)
 import           Data.Default                     (def)
 import           Data.Either                      (Either (Left, Right))
-import           Data.Eq                          ((==))
 import           Data.Function                    (const, id, ($), (.))
 import           Data.Functor                     (fmap, (<$>))
-import           Data.JsonSchema                  (RawSchema (..),
-                                                   SchemaGraph (..), compile,
-                                                   draft4, validate)
+import           Data.JsonSchema.Draft4           (FilesystemValidationFailure (..),
+                                                   SchemaWithURI (..),
+                                                   emptySchema,
+                                                   fetchFilesystemAndValidate,
+                                                   _schemaRef)
 import           Data.Maybe                       (Maybe (Just, Nothing))
-import           Data.Monoid                      (mempty, (<>))
+import           Data.Monoid                      ((<>))
 import           Data.String                      (IsString, String, fromString,
-                                                   unlines, unwords)
+                                                   unwords)
+import           Data.Text                        (pack)
 import           Data.UUID                        (toString)
 import qualified Database.Couch.Explicit.Database as Database (create, delete)
 import qualified Database.Couch.Response          as Response (asBool)
@@ -30,9 +30,7 @@ import           GHC.Err                          (error)
 import           Network.HTTP.Client              (Manager,
                                                    defaultManagerSettings,
                                                    newManager)
-import           System.Directory                 (doesFileExist,
-                                                   getCurrentDirectory)
-import           System.FilePath                  (takeDirectory, (</>))
+import           System.FilePath                  ((</>))
 import           System.IO                        (FilePath, IO)
 import           System.Random                    (randomIO)
 import           Test.Tasty                       (TestName, TestTree,
@@ -146,33 +144,16 @@ checkCookiesAndSchema step schemaFile decoder checker res = do
 checkSchema :: IsString s => (s -> IO ()) -> Value -> FilePath -> IO ()
 checkSchema step value schemaName = do
   step "Checking result against schema"
-  schema <- loadSchema ("test/schema/schema" </> schemaName)
-  case validate (compile draft4 (SchemaGraph schema mempty) schema) value of
-    [] -> return ()
-    failures -> assertFailure $ unwords ["Failed to validate", show value, ":", unlines $ fmap show failures]
-
-loadSchema :: FilePath -> IO RawSchema
-loadSchema file = do
-  (_, content) <- findRequestedFile
-  case decode content of
-    Just (Object o) -> return RawSchema { _rsURI = Nothing, _rsData = o }
-    _               -> error "Couldn't extract object from file"
-
-  where
-    findRequestedFile = do
-      start <- getCurrentDirectory
-      checkDir start
-    checkDir dir =
-      let path = dir </> file
-      in doesFileExist path >>= \exists -> if exists
-                                             then readFile path >>= \c -> return (path, c)
-                                             else let upOne = takeDirectory dir
-                                                  in if upOne == dir
-                                                       then error "Cannot find file to embed as resource"
-                                                       else checkDir upOne
+  let schema = SchemaWithURI { _swSchema = emptySchema {_schemaRef = Just $ pack schemaName}, _swURI = Just $ pack $ "test/schema/schema" </> schemaName}
+  res <- liftIO $ fetchFilesystemAndValidate schema value
+  case res of
+    Right () -> return ()
+    Left (FVRead _) -> error "Error fetching a referenced schema (either during IO or parsing)."
+    Left (FVSchema _) -> error "Our 'schema' itself was invalid."
+    Left f@(FVData _) -> assertFailure $ unwords ["Failed to validate", show value, ":", show f]
 
 class TestInput a where
-  makeTests :: TestInput a => TestName -> [IO Context -> TestTree] -> a -> TestTree
+  makeTests :: TestName -> [IO Context -> TestTree] -> a -> TestTree
   makeTests desc tests input = testGroup desc $ fmap (applyInput input) tests
 
   applyInput :: a -> (IO Context -> TestTree) -> TestTree

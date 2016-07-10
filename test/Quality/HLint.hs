@@ -15,5 +15,5 @@ _main = defaultMain tests
 -- Run hlint over source and tests alike
 tests :: TestTree
 tests = testCase "HLint" $ do
-  hints <- hlint ["--quiet", "src", "test"]
+  hints <- hlint ["--ignore=Use fmap", "--quiet", "src", "test"]
   [] @=? hints
